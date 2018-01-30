@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/go-openapi/spec"
@@ -39,17 +38,15 @@ func init() {
 	openapiSpec.Paths.Paths["/api/layers"] = p0
 
 	r200 := spec.Response{}
-	r200.Description = "List of layer names available (JSON)."
+	r200.Description = "List of collection (layer) names available (JSON)."
 	r200.Schema = spec.ArrayProperty(spec.StringProperty())
+	r200.Examples = make(map[string]interface{})
+	example := []string{"roads", "buildings", "waterways"}
+	r200.Examples["application/json"] = example
 	p0.Get.Responses.StatusCodeResponses[200] = r200
-	fmt.Println("---")
-
-	json, e := p0.MarshalJSON()
-	fmt.Printf("p0.MarshalJSON: %v, %v\n", e, string(json))
 
 	//	openapiSpec.Paths.Paths["/api/layers"] = p0
-	json, e = openapiSpec.Paths.MarshalJSON()
-	fmt.Printf("openapiSpec.Paths.MarshalJSON: %v, %v\n", e, string(json))
+	//	json, e = openapiSpec.Paths.MarshalJSON()
 
 	//	openapiSpecText = `{
 	//	    "openapi": "3.0.0",
@@ -169,4 +166,13 @@ func getOpenapiSpec(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(status)
 	w.Write(jsonString)
+}
+
+func getLayers(w http.ResponseWriter, r *http.Request) {
+	layersJSON, err := json.Marshal(P.FeatureTables())
+	if err != nil {
+		panic("TODO")
+	}
+	w.Header().Set("content-type", "application/json")
+	w.Write(layersJSON)
 }

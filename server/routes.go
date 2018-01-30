@@ -8,7 +8,5 @@ import (
 
 func setUpRoutes() {
 	http.HandleFunc("/api", getOpenapiSpec)
-	http.HandleFunc("/deleteme", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Heyya"))
-	})
+	http.HandleFunc("/api/layers", getLayers)
 }

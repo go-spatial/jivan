@@ -2,12 +2,19 @@
 package main
 
 import (
-	"fmt"
+	//	"encoding/json"
+	//	"fmt"
 
+	"github.com/jivanamara/go-wfs/gpkg"
 	"github.com/jivanamara/go-wfs/server"
 )
 
 func main() {
-	fmt.Println("Hello World!")
-	server.StartServer(":9000")
+	filepath := "sandbox/athens-osm-20170921.gpkg"
+	athens := gpkg.OpenGPKG(filepath)
+
+	//	for _, tname := range athens.FeatureTables() {
+	//		fmt.Println(tname)
+	//	}
+	server.StartServer(":9000", &athens)
 }
