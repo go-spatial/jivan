@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/go-openapi/spec"
@@ -153,6 +154,7 @@ func init() {
 	//	}
 }
 
+// --- Return the json-encoded OpenAPI 2 spec for the WFS API available on this instance.
 func getOpenapiSpec(w http.ResponseWriter, r *http.Request) {
 	jsonString, err := json.MarshalIndent(openapiSpec, "", "    ")
 	var status int = 200
@@ -168,6 +170,7 @@ func getOpenapiSpec(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonString)
 }
 
+// --- Return the names of feature layers available in current provider (P)
 func getLayers(w http.ResponseWriter, r *http.Request) {
 	layersJSON, err := json.Marshal(P.FeatureTables())
 	if err != nil {
@@ -175,4 +178,33 @@ func getLayers(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("content-type", "application/json")
 	w.Write(layersJSON)
+}
+
+// --- Return the ids of features available in the named collection (layer) for current provider (P)
+func getLayerFeatures(w http.ResponseWriter, r *http.Request) {
+	reqQuery := r.URL.Query()
+	layerName := reqQuery.Get("name")
+
+	if len(layerName) < 1 {
+		w.WriteHeader(400)
+		w.Write([]byte(`{ detail: "'name' parameter required but not provided"}`))
+		return
+	}
+
+	ids, err := P.CollectionFeatureIds(layerName)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(fmt.Sprintf(`{ detail: "%v" }`, err)))
+		return
+	}
+
+	idsJSON, err := json.Marshal(ids)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(fmt.Sprintf(`{ detail: "%v"`, err)))
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.Write(idsJSON)
 }

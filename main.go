@@ -12,6 +12,7 @@ import (
 func main() {
 	filepath := "sandbox/athens-osm-20170921.gpkg"
 	athens := gpkg.OpenGPKG(filepath)
+	defer gpkg.CloseGPKG(filepath)
 
 	//	for _, tname := range athens.FeatureTables() {
 	//		fmt.Println(tname)
