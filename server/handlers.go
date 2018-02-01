@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-openapi/spec"
 )
@@ -182,29 +183,56 @@ func getLayers(w http.ResponseWriter, r *http.Request) {
 
 // --- Return the ids of features available in the named collection (layer) for current provider (P)
 func getLayerFeatures(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
 	reqQuery := r.URL.Query()
 	layerName := reqQuery.Get("name")
 
 	if len(layerName) < 1 {
 		w.WriteHeader(400)
-		w.Write([]byte(`{ detail: "'name' parameter required but not provided"}`))
+		w.Write([]byte(`{ "detail": "'name' parameter required but not provided"}`))
 		return
 	}
 
 	ids, err := P.CollectionFeatureIds(layerName)
 	if err != nil {
 		w.WriteHeader(500)
-		w.Write([]byte(fmt.Sprintf(`{ detail: "%v" }`, err)))
+		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v" }`, err)))
 		return
 	}
 
 	idsJSON, err := json.Marshal(ids)
 	if err != nil {
 		w.WriteHeader(500)
-		w.Write([]byte(fmt.Sprintf(`{ detail: "%v"`, err)))
+		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v"`, err)))
 		return
 	}
 
-	w.Header().Set("content-type", "application/json")
 	w.Write(idsJSON)
+}
+
+func getFeature(w http.ResponseWriter, r *http.Request) {
+	reqQuery := r.URL.Query()
+	collName := reqQuery.Get("collection")
+	idStr := reqQuery.Get("id")
+	featureId, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte(fmt.Sprintf(`{ "detail": "invalid 'id' parameter: '%v'"`, idStr)))
+	}
+
+	w.Header().Set("content-type", "application/json")
+	if len(collName) < 1 {
+		w.WriteHeader(400)
+		w.Write([]byte(`{ "detail": "'collection' parameter required but not provided"`))
+		return
+	}
+
+	feature, err := P.GetFeature(collName, featureId)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v" }`, err)))
+		return
+	}
+
+	w.Write(feature)
 }

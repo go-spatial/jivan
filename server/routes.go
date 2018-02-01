@@ -10,4 +10,5 @@ func setUpRoutes() {
 	http.HandleFunc("/api", getOpenapiSpec)
 	http.HandleFunc("/api/layers", getLayers)
 	http.HandleFunc("/api/layer", getLayerFeatures)
+	http.HandleFunc("/api/feature", getFeature)
 }

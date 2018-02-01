@@ -3,12 +3,16 @@ package gpkg
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"regexp"
 
-	"log"
-
+	"github.com/terranodo/tegola"
 	"github.com/terranodo/tegola/provider/gpkg"
+	"github.com/terranodo/tegola/wkb"
 )
+
+var idFieldname string = "fid"
+var geomFieldname string = "geom"
 
 func OpenGPKG(filepath string) (g GPKG) {
 	db, err := gpkg.GetGpkgConnection(filepath)
@@ -39,16 +43,20 @@ func (g *GPKG) FeatureTables() []string {
 	return g.featureTables
 }
 
-func (g *GPKG) CollectionFeatureIds(collectionName string) ([]int, error) {
-	// Treat all non-alphanumeric characters except underscore as unsafe
+func safeCollectionName(rawCollectionName string) string {
+	// Treat all alphanumeric characters plus underscore as safe
 	regexStr := `![a-zA-Z0-9_]`
 	unsafeChars, err := regexp.Compile(regexStr)
 	if err != nil {
 		panic(fmt.Sprintf("Invalid regexStr: '%v'", regexStr))
 	}
 
-	safeCollName := string(unsafeChars.ReplaceAll([]byte(collectionName), []byte("")))
-	idFieldname := "fid"
+	safeCollName := string(unsafeChars.ReplaceAll([]byte(rawCollectionName), []byte("")))
+	return safeCollName
+}
+
+func (g *GPKG) CollectionFeatureIds(collectionName string) ([]int, error) {
+	safeCollName := safeCollectionName(collectionName)
 	qtext := fmt.Sprintf("SELECT %v FROM %v;", idFieldname, safeCollName)
 
 	qparams := []interface{}{idFieldname, string(collectionName)}
@@ -94,4 +102,44 @@ func (g *GPKG) populateFeatureTableNames() {
 			&min_x, &min_y, &max_x, &max_y, &srs_id)
 		g.featureTables = append(g.featureTables, tablename)
 	}
+}
+
+func (g *GPKG) GetFeature(collectionName string, id int) ([]byte, error) {
+	safeCollName := safeCollectionName(collectionName)
+	qtext := fmt.Sprintf("SELECT * FROM %v WHERE %v = ?", safeCollName, idFieldname)
+	qparams := []interface{}{id}
+	rows, err := g.DB.Query(qtext, qparams...)
+	if err != nil {
+		log.Printf("Problem getting feature with id '%v' from collection '%v': %v", id, collectionName, err)
+		return nil, err
+	}
+
+	cols, err := rows.Columns()
+	if err != nil {
+		log.Printf("Unable to identify columns for collection '%v': %v", collectionName, err)
+		return nil, err
+	}
+
+	rowCount := 0
+	var geom tegola.Geometry
+	var tags map[string]interface{}
+	for rows.Next() {
+		_, geom, tags, err = gpkg.ReadFeatureRow(cols, rows, idFieldname, geomFieldname)
+		if err != nil {
+			log.Printf("Problem reading feature row: %v", err)
+		}
+		rowCount++
+	}
+
+	switch {
+	case rowCount == 0:
+		return nil, fmt.Errorf("Feature not found with id '%v' in collection '%v'", id, collectionName)
+	case rowCount > 1:
+		log.Printf("Warning: Multiple features with id '%v' in collection '%v'\n", id, collectionName)
+	}
+
+	// TODO: Cast columns appropriately & package nicely
+	ret := fmt.Sprintf(`{ "collection": "%v", "id": %v, "geometry": "%v",  "tags": "%v"}`,
+		safeCollName, id, wkb.WKT(geom), tags)
+	return []byte(ret), nil
 }
