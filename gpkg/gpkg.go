@@ -1,14 +1,15 @@
 package gpkg
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
 	"log"
 	"regexp"
 
-	"github.com/terranodo/tegola"
+	"github.com/terranodo/tegola/geom/encoding/geojson"
+	"github.com/terranodo/tegola/geom/encoding/wkb"
 	"github.com/terranodo/tegola/provider/gpkg"
-	"github.com/terranodo/tegola/wkb"
 )
 
 var idFieldname string = "fid"
@@ -121,10 +122,12 @@ func (g *GPKG) GetFeature(collectionName string, id int) ([]byte, error) {
 	}
 
 	rowCount := 0
-	var geom tegola.Geometry
-	var tags map[string]interface{}
+	//	var geomHeader *gpkg.GeoPackageBinaryHeader
+	var wkbGeom []byte
+	//	var tags map[string]interface{}
 	for rows.Next() {
-		_, geom, tags, err = gpkg.ReadFeatureRow(cols, rows, idFieldname, geomFieldname)
+		// id, geomHeader, tags not currently needed
+		_, _, wkbGeom, _, err = gpkg.ReadFeatureRow(cols, rows, idFieldname, geomFieldname)
 		if err != nil {
 			log.Printf("Problem reading feature row: %v", err)
 		}
@@ -138,8 +141,18 @@ func (g *GPKG) GetFeature(collectionName string, id int) ([]byte, error) {
 		log.Printf("Warning: Multiple features with id '%v' in collection '%v'\n", id, collectionName)
 	}
 
+	// Convert wkb to GeoJSON (TODO: Currently converting to WKT, need to make a GeoJSON encoder)
+	wkbReader := bytes.NewReader(wkbGeom)
+	geom, err := wkb.Decode(wkbReader)
+	if err != nil {
+		// TODO: Handle more appropriately
+		panic(err.Error())
+	}
 	// TODO: Cast columns appropriately & package nicely
-	ret := fmt.Sprintf(`{ "collection": "%v", "id": %v, "geometry": "%v",  "tags": "%v"}`,
-		safeCollName, id, wkb.WKT(geom), tags)
-	return []byte(ret), nil
+	encoding, err := geojson.Encode(geom)
+	if err != nil {
+		// TODO: Handle more appropriately
+		panic(err.Error())
+	}
+	return encoding, nil
 }

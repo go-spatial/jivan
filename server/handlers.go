@@ -228,6 +228,7 @@ func getFeature(w http.ResponseWriter, r *http.Request) {
 	}
 
 	feature, err := P.GetFeature(collName, featureId)
+
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v" }`, err)))
