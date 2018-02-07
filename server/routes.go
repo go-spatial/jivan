@@ -7,8 +7,10 @@ import (
 )
 
 func setUpRoutes() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/api", 307) })
+
 	http.HandleFunc("/api", getOpenapiSpec)
-	http.HandleFunc("/api/layers", getLayers)
-	http.HandleFunc("/api/layer", getLayerFeatures)
+	http.HandleFunc("/api/collectionIds", getCollectionIds)
+	http.HandleFunc("/api/featureIds", getFeatureIds)
 	http.HandleFunc("/api/feature", getFeature)
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jivanamara/go-wfs/provider"
+	"github.com/go-spatial/go-wfs/provider"
 )
 
 var P provider.Provider

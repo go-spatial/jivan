@@ -5,8 +5,8 @@ import (
 	//	"encoding/json"
 	//	"fmt"
 
-	"github.com/jivanamara/go-wfs/gpkg"
-	"github.com/jivanamara/go-wfs/server"
+	"github.com/go-spatial/go-wfs/gpkg"
+	"github.com/go-spatial/go-wfs/server"
 )
 
 func main() {
