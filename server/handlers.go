@@ -34,10 +34,12 @@ import (
 	"net/http"
 	"sort"
 
+	"strconv"
+	"strings"
+
+	"github.com/terranodo/tegola/geom/encoding/geojson"
 	"github.com/terranodo/tegola/geom/slippy"
 	"github.com/terranodo/tegola/provider"
-	//	"strconv"
-	//	"strings"
 )
 
 // --- Return the json-encoded OpenAPI 2 spec for the WFS API available on this instance.
@@ -132,31 +134,51 @@ func getFeatureIds(w http.ResponseWriter, r *http.Request) {
 }
 
 func getFeature(w http.ResponseWriter, r *http.Request) {
-	//	w.Header().Set("content-type", "application/json")
+	w.Header().Set("content-type", "application/json")
 
-	//	reqQuery := r.URL.Query()
-	//	idStr := reqQuery.Get("id")
+	reqQuery := r.URL.Query()
+	idStr := reqQuery.Get("id")
 
-	//	split := strings.Split(idStr, "-")
-	//	featureIdStr := split[len(split)-1]
-	//	// strip off the feature id portion of the string plus the "-" separator
-	//	collectionId := idStr[:len(idStr)-(len(featureIdStr)+1)]
+	split := strings.Split(idStr, "-")
+	featureIdStr := split[len(split)-1]
+	// strip off the feature id portion of the string plus the "-" separator
+	collectionId := idStr[:len(idStr)-(len(featureIdStr)+1)]
 
-	//	featureId, err := strconv.Atoi(featureIdStr)
+	featureId, err := strconv.ParseUint(featureIdStr, 10, 64)
 
-	//	if err != nil {
-	//		w.WriteHeader(400)
-	//		w.Write([]byte(fmt.Sprintf(`{ "detail": "invalid 'id' parameter: '%v'"`, idStr)))
-	//		return
-	//	}
+	if err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte(fmt.Sprintf(`{ "detail": "invalid 'id' parameter: '%v'"`, idStr)))
+		return
+	}
 
-	//	feature, err := P.GetFeature(collectionId, featureId)
+	// This scans the features in the indicated collection and grabs the one with 'featureId'
+	// With the current Tiler interface this is the method to filter features.
+	// TODO: Update Tiler interface to allow filtering
+	var desiredFeature *provider.Feature
+	collectGeom := func(f *provider.Feature) error {
+		if f.ID == featureId {
+			desiredFeature = f
+			return provider.ErrCanceled
+		}
+		return nil
+	}
 
-	//	if err != nil {
-	//		w.WriteHeader(500)
-	//		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v" }`, err)))
-	//		return
-	//	}
+	ctx := context.TODO()
+	err = Provider.TileFeatures(ctx, collectionId, &slippy.Tile{}, collectGeom)
 
-	//	w.Write(feature)
+	if err != nil && err != provider.ErrCanceled {
+		w.WriteHeader(500)
+		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v" }`, err)))
+		return
+	}
+
+	encoding, err := geojson.Encode(desiredFeature.Geometry)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v" }`, err)))
+		return
+	}
+
+	w.Write(encoding)
 }
