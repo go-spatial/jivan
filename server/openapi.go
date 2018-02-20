@@ -163,6 +163,128 @@ func init() {
 
 	openapiSpec.Paths.Paths["/api/feature"] = p2
 
-	//  p3 = ...
-	//	openapiSpec.Paths.Paths["/api/features"] = p3
+	// Path entry 3 (/api/collection?id=<collectionId>&page=<pageNumber>&pageSize=<pageSize>)
+	// TODO: param explode setting for array values
+	p3 := spec.PathItem{
+		PathItemProps: spec.PathItemProps{
+			Get: &spec.Operation{
+				OperationProps: spec.OperationProps{
+					Description: "Provides paged feature data for features in collection(s) requested.",
+					Parameters: []spec.Parameter{
+						spec.Parameter{
+							ParamProps: spec.ParamProps{
+								Name:            "collection",
+								Description:     "Limit to features in collection(s) identified by id(s).",
+								In:              "Query",
+								Required:        true,
+								Schema:          spec.ArrayProperty(spec.Int64Property()),
+								AllowEmptyValue: false,
+							},
+						},
+						spec.Parameter{
+							ParamProps: spec.ParamProps{
+								Name:            "page",
+								Description:     "Show data only for page indicated (default 0).",
+								In:              "Query",
+								Required:        false,
+								Schema:          spec.Int64Property(),
+								AllowEmptyValue: false,
+							},
+						},
+						spec.Parameter{
+							ParamProps: spec.ParamProps{
+								Name:            "pageSize",
+								Description:     "Include this many features per page (default 10)",
+								In:              "Query",
+								Required:        false,
+								Schema:          spec.Int64Property(),
+								AllowEmptyValue: false,
+							},
+						},
+					},
+					// TODO: Response schema & example
+					Responses: &spec.Responses{
+						ResponsesProps: spec.ResponsesProps{
+							StatusCodeResponses: map[int]spec.Response{
+								200: spec.Response{
+									ResponseProps: spec.ResponseProps{
+										Description: "Feature data for feature requested",
+										Schema:      spec.DateProperty(),
+										Examples: map[string]interface{}{
+											"application/json": `{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[23.6946291,37.942376],[23.6946775,37.9421025],[23.6942521,37.9420922]]]},"properties":{}}`,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	openapiSpec.Paths.Paths["/api/collection"] = p3
+
+	// Path entry 4 (/api/feature_set?extent=<geomBoundingArea>&<attribute>=<attributeValue>&collection=<collectionId>)
+	// TODO: Should we just make 'extent' an attribute?
+	// TODO: param explode setting for array values
+	p4 := spec.PathItem{
+		PathItemProps: spec.PathItemProps{
+			Get: &spec.Operation{
+				OperationProps: spec.OperationProps{
+					Description: "Provides feature data for features matching filters, consider paarameters as filters combined with a logical 'and'.",
+					Parameters: []spec.Parameter{
+						spec.Parameter{
+							ParamProps: spec.ParamProps{
+								Name:            "extent",
+								Description:     "Include only features partially or fully within this geometry.",
+								In:              "Query",
+								Required:        false,
+								Schema:          spec.StringProperty(),
+								AllowEmptyValue: false,
+							},
+						},
+						spec.Parameter{
+							ParamProps: spec.ParamProps{
+								Name:            "<attribute>",
+								Description:     "Include only features that have this attribute with this value, many different attributes are allowed.",
+								In:              "Query",
+								Required:        false,
+								Schema:          spec.StringProperty(),
+								AllowEmptyValue: false,
+							},
+						},
+						spec.Parameter{
+							ParamProps: spec.ParamProps{
+								Name:            "collection",
+								Description:     "Limit to features in collection(s) identified by id(s).",
+								In:              "Query",
+								Required:        false,
+								Schema:          spec.ArrayProperty(spec.StringProperty()),
+								AllowEmptyValue: false,
+							},
+						},
+					},
+					// TODO: Response schema & example
+					Responses: &spec.Responses{
+						ResponsesProps: spec.ResponsesProps{
+							StatusCodeResponses: map[int]spec.Response{
+								200: spec.Response{
+									ResponseProps: spec.ResponseProps{
+										Description: "Feature data for feature requested",
+										Schema:      spec.DateProperty(),
+										Examples: map[string]interface{}{
+											"application/json": `{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[23.6946291,37.942376],[23.6946775,37.9421025],[23.6942521,37.9420922]]]},"properties":{}}`,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	openapiSpec.Paths.Paths["/api/feature_set"] = p4
 }

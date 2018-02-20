@@ -30,14 +30,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/go-spatial/go-wfs/provider"
+	"github.com/terranodo/tegola/provider"
 )
 
-var P provider.Provider
+var Provider provider.Tiler
 
-func StartServer(bindAddress string, p provider.Provider) {
+func StartServer(bindAddress string, p provider.Tiler) {
 	fmt.Println("Listening on ", bindAddress)
-	P = p
+	Provider = p
 	setUpRoutes()
 	err := http.ListenAndServe(bindAddress, nil)
 	if err != nil {
