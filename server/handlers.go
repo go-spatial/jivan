@@ -27,11 +27,15 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
-	//	"fmt"
-	//	"log"
+	"fmt"
+	"log"
 	"net/http"
 	"sort"
+
+	"github.com/terranodo/tegola/geom/slippy"
+	"github.com/terranodo/tegola/provider"
 	//	"strconv"
 	//	"strings"
 )
@@ -78,37 +82,53 @@ func getCollectionIds(w http.ResponseWriter, r *http.Request) {
 
 // --- Return the ids of features available in the named collection (layer) for current provider
 func getFeatureIds(w http.ResponseWriter, r *http.Request) {
-	//	w.Header().Set("content-type", "application/json")
-	//	reqQuery := r.URL.Query()
-	//	var collectionNames []string = reqQuery["collection"]
+	w.Header().Set("content-type", "application/json")
+	reqQuery := r.URL.Query()
+	var collectionNames []string = reqQuery["collection"]
 
-	//	// No collection specified to filter on indicates all collections
-	//	if len(collectionNames) < 1 {
-	//		collectionNames = P.FeatureTables()
-	//		sort.Strings(collectionNames)
-	//	}
+	// No collection specified to filter on indicates all collections
+	var ftNames []string
+	if len(collectionNames) < 1 {
+		featureTableInfo, err := Provider.Layers()
+		if err != nil {
+			panic("TODO")
+		}
+		ftNames = make([]string, len(featureTableInfo))
+		for i, fti := range featureTableInfo {
+			ftNames[i] = fti.Name()
+		}
+		sort.Strings(ftNames)
+	} else {
+		ftNames = collectionNames
+	}
+	var ids []string
 
-	//	var ids []string
+	ctx := context.TODO()
+	fids := []uint64{}
+	collectFid := func(f *provider.Feature) error {
+		fids = append(fids, f.ID)
+		return nil
+	}
+	for _, ftn := range ftNames {
+		tile := slippy.Tile{}
+		err := Provider.TileFeatures(ctx, ftn, &tile, collectFid)
+		sort.Slice(fids, func(i, j int) bool { return fids[i] < fids[j] })
+		if err != nil {
+			log.Printf("Problem collecting feature ids for '%v': %v", ftn, err)
+			continue
+		}
+		for _, fid := range fids {
+			ids = append(ids, fmt.Sprintf("%v-%v", ftn, fid))
+		}
+	}
+	idsJSON, err := json.Marshal(ids)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v"`, err)))
+		return
+	}
 
-	//	for _, cn := range collectionNames {
-	//		fids, err := P.CollectionFeatureIds(cn)
-	//		sort.Ints(fids)
-	//		if err != nil {
-	//			log.Printf("Problem w/ P.CollectionFeatureIds(%v): %v", cn, err)
-	//			continue
-	//		}
-	//		for _, fid := range fids {
-	//			ids = append(ids, fmt.Sprintf("%v-%v", cn, fid))
-	//		}
-	//	}
-	//	idsJSON, err := json.Marshal(ids)
-	//	if err != nil {
-	//		w.WriteHeader(500)
-	//		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v"`, err)))
-	//		return
-	//	}
-
-	//	w.Write(idsJSON)
+	w.Write(idsJSON)
 }
 
 func getFeature(w http.ResponseWriter, r *http.Request) {
