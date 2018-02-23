@@ -4,11 +4,7 @@ server/
   server.go: simple interface to start the server.
   openapi.go: encapsulates generation of json OpenAPI document for WFS service.
 
-provider/
-  provider.go: Interface definition for data providers
-
-gpkg/
-  gpkg.go: GeoPackage data provider (Making heavy use of tegola GeoPackage provider utilities)
+main.go: Executable entry-point.
 
 Defaults to run on localhost:9000.  Visit http://localhost:9000/api for OpenAPI definition of
 service.  Take a look at server/routes.go for a concise list of supported URLs.
@@ -24,7 +20,7 @@ package from the tegola branch `issue-288_geojson_encoding`.
 Here is how you can make that happen:
 
 1. clone github.com/terranodo/tegola
-1. cd tegola, check out branch `issue-288_geojson_encoding`
+1. cd tegola, check out branch `gpkg_autoconfig`
 1. cp -r geom geom-bak
 1. check out branch `gpkg_autoconfig`
 1. mv geom-bak geom
