@@ -34,7 +34,7 @@ import (
 
 func main() {
 	// Instantiate a gpkg provider to send to the server.
-	gpkgPath := "sandbox/athens-osm-20170921.gpkg"
+	gpkgPath := "test-data/athens-osm-20170921.gpkg"
 	gpkgConfig, err := gpkg.AutoConfig(gpkgPath)
 	if err != nil {
 		panic(err)
