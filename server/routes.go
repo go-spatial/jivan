@@ -39,4 +39,5 @@ func setUpRoutes() {
 	http.HandleFunc("/api/collectionIds", getCollectionIds)
 	http.HandleFunc("/api/featureIds", getFeatureIds)
 	http.HandleFunc("/api/feature", getFeature)
+	http.HandleFunc("/api/collection", getCollection)
 }

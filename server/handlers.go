@@ -133,6 +133,7 @@ func getFeatureIds(w http.ResponseWriter, r *http.Request) {
 	w.Write(idsJSON)
 }
 
+// --- Return all data, esp. geometry for requested feature
 func getFeature(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 
@@ -155,6 +156,7 @@ func getFeature(w http.ResponseWriter, r *http.Request) {
 	// This scans the features in the indicated collection and grabs the one with 'featureId'
 	// With the current Tiler interface this is the method to filter features.
 	// TODO: Update Tiler interface to allow filtering
+
 	var desiredFeature *provider.Feature
 	collectGeom := func(f *provider.Feature) error {
 		if f.ID == featureId {
@@ -173,12 +175,116 @@ func getFeature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	encoding, err := geojson.Encode(desiredFeature.Geometry)
+	gf := geojson.Feature{ID: &desiredFeature.ID, Geometry: geojson.Geometry{Geometry: desiredFeature.Geometry}}
+	encoding, err := json.Marshal(gf)
 	if err != nil {
-		w.WriteHeader(500)
-		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v" }`, err)))
+		jsonError(w, err.Error(), 500)
 		return
 	}
 
 	w.Write(encoding)
+}
+
+const DEFAULT_PAGE_SIZE = 10
+
+// Sets response 'status', and writes a json-encoded object with property "detail" having value "msg".
+func jsonError(w http.ResponseWriter, msg string, status int) {
+	w.WriteHeader(status)
+
+	result, err := json.Marshal(struct {
+		Detail string `json:"detail"`
+	}{
+		Detail: msg,
+	})
+
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("problem marshaling error: %v", msg)))
+	} else {
+		w.Write(result)
+	}
+}
+
+// --- Provide paged access to data for all features in requested collection
+func getCollection(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	q := r.URL.Query()
+	var pageSize, pageNum uint64
+	var collectionId string
+	var err error
+
+	qPageSize := q["pageSize"]
+	if len(qPageSize) != 1 {
+		pageSize = DEFAULT_PAGE_SIZE
+	} else {
+		pageSize, err = strconv.ParseUint(qPageSize[0], 10, 64)
+		if err != nil {
+			jsonError(w, err.Error(), 400)
+			return
+		}
+	}
+
+	qPageNum := q["page"]
+	if len(qPageNum) != 1 {
+		pageNum = 0
+	} else {
+		pageNum, err = strconv.ParseUint(qPageNum[0], 10, 64)
+		if err != nil {
+			jsonError(w, err.Error(), 400)
+			return
+		}
+	}
+
+	qCollectionId := q["collection"]
+	if len(qCollectionId) != 1 {
+		jsonError(w, "'collection' is a required parameter", 400)
+		return
+	} else {
+		collectionId = qCollectionId[0]
+	}
+
+	resp, err := json.Marshal(struct {
+		pageSize     uint64
+		pageNum      uint64
+		collectionId string
+	}{
+		pageSize:     pageSize,
+		pageNum:      pageNum,
+		collectionId: collectionId,
+	})
+
+	// Get collection features
+	// Index of the feature currently passed to getFeatures()
+	var idx uint64
+	// First index we're interested in
+	startIndex := pageSize * pageNum
+	// Last index we're interested in +1
+	stopIndex := startIndex + pageSize
+	pFs := make([]*provider.Feature, 0, stopIndex-startIndex)
+
+	getFeatures := func(f *provider.Feature) error {
+		if idx >= startIndex && idx < stopIndex {
+			pFs = append(pFs, f)
+		} else if idx >= stopIndex {
+			return provider.ErrCanceled
+		}
+		idx += 1
+		return nil
+	}
+
+	Provider.TileFeatures(context.TODO(), collectionId, &slippy.Tile{}, getFeatures)
+
+	// Convert the provider features to geojson features.
+	gFs := make([]geojson.Feature, len(pFs))
+	for i, pf := range pFs {
+		gFs[i] = geojson.Feature{ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}}
+	}
+	resp, err = json.Marshal(gFs)
+
+	if err != nil {
+		jsonError(w, err.Error(), 500)
+		return
+	}
+
+	w.WriteHeader(200)
+	w.Write(resp)
 }

@@ -232,7 +232,7 @@ func init() {
 		PathItemProps: spec.PathItemProps{
 			Get: &spec.Operation{
 				OperationProps: spec.OperationProps{
-					Description: "Provides feature data for features matching filters, consider paarameters as filters combined with a logical 'and'.",
+					Description: "Provides feature data for features matching filters. Consider parameters as filters combined with a logical 'and'.",
 					Parameters: []spec.Parameter{
 						spec.Parameter{
 							ParamProps: spec.ParamProps{
