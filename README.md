@@ -4,6 +4,9 @@ server/
   server.go: simple interface to start the server.
   openapi.go: encapsulates generation of json OpenAPI document for WFS service.
 
+provider/
+  provider.go: wraps github.com/go-spatial/tegola/provider.Tiler to provide convenience methods & additional behavior
+
 main.go: Executable entry-point.
 
 Defaults to run on localhost:9000.  Visit http://localhost:9000/api for OpenAPI definition of
@@ -31,3 +34,12 @@ Then run / build like you normally would for go:
 
 1. Make sure your GOPATH & GOROOT are set to /<path>/<to>/go-wfs & /<path>/<to>/<golang-installation>
 1. `go run main.go` or `go build main.go`
+
+Overview
+--------
+Features are identified by a _collection name_ and _feature primary key_ pair.
+To see the collections available hit /api/collectionNames.
+To see the feature pks available hit /api/featurePks.
+To see the data for a single feature, hit /api/feature.
+To see all the feature data for a collection hit /api/collection.
+To create a new, filtered, temporary collection hit /api/feature_set.

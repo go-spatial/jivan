@@ -71,7 +71,7 @@ func init() {
 	p0.Get.Responses = new(spec.Responses)
 	p0.Get.Responses.StatusCodeResponses = make(map[int]spec.Response)
 	p0.Get.Responses.StatusCodeResponses[200] = spec.Response{}
-	openapiSpec.Paths.Paths["/api/collectionIds"] = p0
+	openapiSpec.Paths.Paths["/api/collectionNames"] = p0
 
 	r200 := spec.Response{}
 	r200.Description = "List of collection names available (JSON)."
@@ -81,18 +81,18 @@ func init() {
 	r200.Examples["application/json"] = example
 	p0.Get.Responses.StatusCodeResponses[200] = r200
 
-	openapiSpec.Paths.Paths["/api/collectionIds"] = p0
+	openapiSpec.Paths.Paths["/api/collectionNames"] = p0
 
 	// Path entry 1
 	p1 := spec.PathItem{
 		PathItemProps: spec.PathItemProps{
 			Get: &spec.Operation{
 				OperationProps: spec.OperationProps{
-					Description: "Provides all feature ids available; or those in collection if collection parameter is provided",
+					Description: "Provides all feature pks available; or those in collection if collection parameter is provided",
 					Parameters: []spec.Parameter{
 						spec.Parameter{
 							ParamProps: spec.ParamProps{
-								Description:     "Name identifying layer to retreive features for.",
+								Description:     "Name identifying collection to retreive features for.",
 								Name:            "collection",
 								In:              "Query",
 								Required:        false,
@@ -121,9 +121,9 @@ func init() {
 		},
 	}
 
-	openapiSpec.Paths.Paths["/api/featureIds"] = p1
+	openapiSpec.Paths.Paths["/api/featurePks"] = p1
 
-	// Path entry 2 (/api/feature?id=<featureId>)
+	// Path entry 2 (/api/feature?pk=<featurePk>)
 	p2 := spec.PathItem{
 		PathItemProps: spec.PathItemProps{
 			Get: &spec.Operation{

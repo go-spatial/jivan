@@ -35,10 +35,10 @@ import (
 func setUpRoutes() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/api", 307) })
 
-	http.HandleFunc("/api", getOpenapiSpec)
-	http.HandleFunc("/api/collectionIds", getCollectionIds)
-	http.HandleFunc("/api/featureIds", getFeatureIds)
+	http.HandleFunc("/api", openapiJson)
+	http.HandleFunc("/api/collectionNames", collectionNames)
+	http.HandleFunc("/api/featurePks", featurePks)
 	http.HandleFunc("/api/feature", getFeature)
-	http.HandleFunc("/api/collection", getCollection)
-	http.HandleFunc("/api/feature_set", makeFeatureSet)
+	http.HandleFunc("/api/collection", collectionData)
+	http.HandleFunc("/api/feature_set", filteredFeatures)
 }

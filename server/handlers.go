@@ -39,7 +39,6 @@ import (
 	"github.com/go-spatial/go-wfs/provider"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	prv "github.com/go-spatial/tegola/provider"
-	//	"github.com/terranodo/tegola/geom/slippy"
 )
 
 // Sets response 'status', and writes a json-encoded object with property "detail" having value "msg".
@@ -60,7 +59,7 @@ func jsonError(w http.ResponseWriter, msg string, status int) {
 }
 
 // --- Return the json-encoded OpenAPI 2 spec for the WFS API available on this instance.
-func getOpenapiSpec(w http.ResponseWriter, r *http.Request) {
+func openapiJson(w http.ResponseWriter, r *http.Request) {
 	var jsonSpec []byte
 	var err error
 	jsonSpec, err = OpenApiSpecJson()
@@ -79,7 +78,7 @@ func getOpenapiSpec(w http.ResponseWriter, r *http.Request) {
 }
 
 // --- Return the names of feature layers available in current provider
-func getCollectionIds(w http.ResponseWriter, r *http.Request) {
+func collectionNames(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 
 	ftNames, err := Provider.CollectionNames()
@@ -97,7 +96,7 @@ func getCollectionIds(w http.ResponseWriter, r *http.Request) {
 }
 
 // --- Return the ids of features available in the named collection (layer) for current provider
-func getFeatureIds(w http.ResponseWriter, r *http.Request) {
+func featurePks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	reqQuery := r.URL.Query()
 	var collectionNames []string = reqQuery["collection"]
@@ -171,7 +170,7 @@ func getFeature(w http.ResponseWriter, r *http.Request) {
 const DEFAULT_PAGE_SIZE = 10
 
 // --- Provide paged access to data for all features in requested collection
-func getCollection(w http.ResponseWriter, r *http.Request) {
+func collectionData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	q := r.URL.Query()
 	var pageSize, pageNum uint64
@@ -256,7 +255,7 @@ func getCollection(w http.ResponseWriter, r *http.Request) {
 
 // --- Create temporary collection w/ filtered features.
 // Returns a collection id for inspecting the resulting features.
-func makeFeatureSet(w http.ResponseWriter, r *http.Request) {
+func filteredFeatures(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	extentParam := q["extent"]
 	collectionParam := q["collection"]
