@@ -14,21 +14,18 @@ Build Instructions
 
 These are temporary while waiting on some tegola PRs.  Things will be simpler before long.
 
-Essentially go-wfs needs the tegola branch `gpkg_autoconfig` plus the `geom/`
-package from the tegola branch `issue-288_geojson_encoding`.
+go-wfs needs not-yet-merged features in the tegola branch `gpkg_autoconfig`.
 
 Here is how you can make that happen:
 
-1. clone github.com/terranodo/tegola
-1. cd tegola, check out branch `gpkg_autoconfig`
-1. cp -r geom geom-bak
+1. clone github.com/go-spatial/tegola
+1. cd tegola
 1. check out branch `gpkg_autoconfig`
-1. mv geom-bak geom
 1. cd ..
 1. clone github.com/go-spatial/go-wfs
 1. cd go-wfs
-1. mkdir -p src/github.com/teranodo/
-1. ln -s /<path>/<to>/tegola src/github.com/terranodo/tegola
+1. mkdir -p src/github.com/go-spatial/
+1. ln -s /<path>/<to>/tegola src/github.com/go-spatial/tegola
 
 Then run / build like you normally would for go:
 
