@@ -6,7 +6,7 @@
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
-// deal in the Software without restriction, including without limitation the 
+// deal in the Software without restriction, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
 // sell copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
@@ -19,7 +19,7 @@
 // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 // IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE 
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,20 +27,37 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"sort"
-
 	"strconv"
 	"strings"
 
-	"github.com/terranodo/tegola/geom/encoding/geojson"
-	"github.com/terranodo/tegola/geom/slippy"
-	"github.com/terranodo/tegola/provider"
+	"github.com/go-spatial/go-wfs/provider"
+	"github.com/go-spatial/tegola/geom/encoding/geojson"
+	prv "github.com/go-spatial/tegola/provider"
+	//	"github.com/terranodo/tegola/geom/slippy"
 )
+
+// Sets response 'status', and writes a json-encoded object with property "detail" having value "msg".
+func jsonError(w http.ResponseWriter, msg string, status int) {
+	w.WriteHeader(status)
+
+	result, err := json.Marshal(struct {
+		Detail string `json:"detail"`
+	}{
+		Detail: msg,
+	})
+
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("problem marshaling error: %v", msg)))
+	} else {
+		w.Write(result)
+	}
+}
 
 // --- Return the json-encoded OpenAPI 2 spec for the WFS API available on this instance.
 func getOpenapiSpec(w http.ResponseWriter, r *http.Request) {
@@ -63,22 +80,19 @@ func getOpenapiSpec(w http.ResponseWriter, r *http.Request) {
 
 // --- Return the names of feature layers available in current provider
 func getCollectionIds(w http.ResponseWriter, r *http.Request) {
-	featureTableInfo, err := Provider.Layers()
-	if err != nil {
-		panic("TODO")
-	}
+	w.Header().Set("content-type", "application/json")
 
-	ftNames := make([]string, len(featureTableInfo))
-	for i, fti := range featureTableInfo {
-		ftNames[i] = fti.Name()
+	ftNames, err := Provider.CollectionNames()
+	if err != nil {
+		jsonError(w, err.Error(), 500)
+		return
 	}
-	sort.Strings(ftNames)
 
 	layersJSON, err := json.Marshal(ftNames)
 	if err != nil {
-		panic("TODO")
+		jsonError(w, err.Error(), 500)
 	}
-	w.Header().Set("content-type", "application/json")
+
 	w.Write(layersJSON)
 }
 
@@ -88,42 +102,29 @@ func getFeatureIds(w http.ResponseWriter, r *http.Request) {
 	reqQuery := r.URL.Query()
 	var collectionNames []string = reqQuery["collection"]
 
-	// No collection specified to filter on indicates all collections
-	var ftNames []string
 	if len(collectionNames) < 1 {
-		featureTableInfo, err := Provider.Layers()
+		// No collection specified to filter on indicates all collections
+		var err error
+		collectionNames, err = Provider.CollectionNames()
 		if err != nil {
-			panic("TODO")
+			jsonError(w, err.Error(), 500)
 		}
-		ftNames = make([]string, len(featureTableInfo))
-		for i, fti := range featureTableInfo {
-			ftNames[i] = fti.Name()
-		}
-		sort.Strings(ftNames)
-	} else {
-		ftNames = collectionNames
 	}
-	var ids []string
+	sort.Strings(collectionNames)
 
-	ctx := context.TODO()
-	fids := []uint64{}
-	collectFid := func(f *provider.Feature) error {
-		fids = append(fids, f.ID)
-		return nil
-	}
-	for _, ftn := range ftNames {
-		tile := slippy.Tile{}
-		err := Provider.TileFeatures(ctx, ftn, &tile, collectFid)
-		sort.Slice(fids, func(i, j int) bool { return fids[i] < fids[j] })
+	fids := make([]provider.FeatureId, 0, 100)
+	for _, cn := range collectionNames {
+		fs, err := Provider.CollectionFeatures(cn)
 		if err != nil {
-			log.Printf("Problem collecting feature ids for '%v': %v", ftn, err)
-			continue
+			jsonError(w, err.Error(), 500)
 		}
-		for _, fid := range fids {
-			ids = append(ids, fmt.Sprintf("%v-%v", ftn, fid))
+		for _, f := range fs {
+			fids = append(fids, provider.FeatureId{Collection: cn, FeaturePk: f.ID})
 		}
 	}
-	idsJSON, err := json.Marshal(ids)
+
+	fmt.Printf("getFeatureIds len: %v\n", len(fids))
+	idsJSON, err := json.Marshal(fids)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v"`, err)))
@@ -141,41 +142,23 @@ func getFeature(w http.ResponseWriter, r *http.Request) {
 	idStr := reqQuery.Get("id")
 
 	split := strings.Split(idStr, "-")
-	featureIdStr := split[len(split)-1]
+	featurePkStr := split[len(split)-1]
 	// strip off the feature id portion of the string plus the "-" separator
-	collectionId := idStr[:len(idStr)-(len(featureIdStr)+1)]
+	collectionName := idStr[:len(idStr)-(len(featurePkStr)+1)]
 
-	featureId, err := strconv.ParseUint(featureIdStr, 10, 64)
+	featurePk, err := strconv.ParseUint(featurePkStr, 10, 64)
 
+	featureId := provider.FeatureId{Collection: collectionName, FeaturePk: featurePk}
+
+	featureData, err := Provider.GetFeatures([]provider.FeatureId{featureId})
 	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte(fmt.Sprintf(`{ "detail": "invalid 'id' parameter: '%v'"`, idStr)))
-		return
-	}
-
-	// This scans the features in the indicated collection and grabs the one with 'featureId'
-	// With the current Tiler interface this is the method to filter features.
-	// TODO: Update Tiler interface to allow filtering
-
-	var desiredFeature *provider.Feature
-	collectGeom := func(f *provider.Feature) error {
-		if f.ID == featureId {
-			desiredFeature = f
-			return provider.ErrCanceled
-		}
-		return nil
-	}
-
-	ctx := context.TODO()
-	err = Provider.TileFeatures(ctx, collectionId, &slippy.Tile{}, collectGeom)
-
-	if err != nil && err != provider.ErrCanceled {
 		w.WriteHeader(500)
 		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v" }`, err)))
 		return
 	}
+	f := featureData[0]
 
-	gf := geojson.Feature{ID: &desiredFeature.ID, Geometry: geojson.Geometry{Geometry: desiredFeature.Geometry}}
+	gf := geojson.Feature{ID: &f.ID, Geometry: geojson.Geometry{Geometry: f.Geometry}}
 	encoding, err := json.Marshal(gf)
 	if err != nil {
 		jsonError(w, err.Error(), 500)
@@ -187,29 +170,12 @@ func getFeature(w http.ResponseWriter, r *http.Request) {
 
 const DEFAULT_PAGE_SIZE = 10
 
-// Sets response 'status', and writes a json-encoded object with property "detail" having value "msg".
-func jsonError(w http.ResponseWriter, msg string, status int) {
-	w.WriteHeader(status)
-
-	result, err := json.Marshal(struct {
-		Detail string `json:"detail"`
-	}{
-		Detail: msg,
-	})
-
-	if err != nil {
-		w.Write([]byte(fmt.Sprintf("problem marshaling error: %v", msg)))
-	} else {
-		w.Write(result)
-	}
-}
-
 // --- Provide paged access to data for all features in requested collection
 func getCollection(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	q := r.URL.Query()
 	var pageSize, pageNum uint64
-	var collectionId string
+	var collectionName string
 	var err error
 
 	qPageSize := q["pageSize"]
@@ -234,49 +200,48 @@ func getCollection(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	qCollectionId := q["collection"]
-	if len(qCollectionId) != 1 {
-		jsonError(w, "'collection' is a required parameter", 400)
+	qCollection := q["collection"]
+	if len(qCollection) != 1 {
+		jsonError(w, fmt.Sprintf("'collection' is a required parameter of length 1, got: %v", qCollection), 400)
 		return
 	} else {
-		collectionId = qCollectionId[0]
+		collectionName = qCollection[0]
 	}
 
+	log.Printf("Getting page %v (size %v) for '%v'", pageNum, pageSize, collectionName)
+
 	resp, err := json.Marshal(struct {
-		pageSize     uint64
-		pageNum      uint64
-		collectionId string
+		pageSize       uint64
+		pageNum        uint64
+		collectionName string
 	}{
-		pageSize:     pageSize,
-		pageNum:      pageNum,
-		collectionId: collectionId,
+		pageSize:       pageSize,
+		pageNum:        pageNum,
+		collectionName: collectionName,
 	})
 
-	// Get collection features
-	// Index of the feature currently passed to getFeatures()
-	var idx uint64
+	// collection features
+	cFs, err := Provider.CollectionFeatures(collectionName)
+
 	// First index we're interested in
 	startIndex := pageSize * pageNum
 	// Last index we're interested in +1
-	stopIndex := startIndex + pageSize
-	pFs := make([]*provider.Feature, 0, stopIndex-startIndex)
-
-	getFeatures := func(f *provider.Feature) error {
-		if idx >= startIndex && idx < stopIndex {
-			pFs = append(pFs, f)
-		} else if idx >= stopIndex {
-			return provider.ErrCanceled
-		}
-		idx += 1
-		return nil
+	stopIndex := uint64(math.Min(float64(len(cFs)), float64(startIndex+pageSize)))
+	if startIndex > stopIndex {
+		startIndex = stopIndex
 	}
 
-	Provider.TileFeatures(context.TODO(), collectionId, &slippy.Tile{}, getFeatures)
+	// paged features
+	pFs := make([]*prv.Feature, 0, stopIndex-startIndex)
+
+	for _, f := range cFs[startIndex:stopIndex] {
+		pFs = append(pFs, f)
+	}
 
 	// Convert the provider features to geojson features.
 	gFs := make([]geojson.Feature, len(pFs))
 	for i, pf := range pFs {
-		gFs[i] = geojson.Feature{ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}}
+		gFs[i] = geojson.Feature{ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}, Properties: pf.Tags}
 	}
 	resp, err = json.Marshal(gFs)
 
@@ -285,6 +250,61 @@ func getCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.WriteHeader(200)
+	w.Write(resp)
+}
+
+// --- Create temporary collection w/ filtered features.
+// Returns a collection id for inspecting the resulting features.
+func makeFeatureSet(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	extentParam := q["extent"]
+	collectionParam := q["collection"]
+
+	// Grab any params besides "extent" & "collection" as attribute filters.
+	propParams := make(map[string]string, len(q))
+	for k, v := range r.URL.Query() {
+		if k == "extent" || k == "collection" {
+			continue
+		}
+		propParams[k] = v[0]
+		if len(v) > 1 {
+			log.Printf("Got multiple values for attribute filter, will only use the first '%v': %v", k, v)
+		}
+	}
+
+	var collectionNames []string
+	if len(collectionParam) > 0 {
+		collectionNames = collectionParam
+	} else {
+		var err error
+		collectionNames, err = Provider.CollectionNames()
+		if err != nil {
+			jsonError(w, err.Error(), 500)
+		}
+	}
+
+	if len(extentParam) > 0 {
+		// TODO: filter by extent
+		// extent = geojson.Unmarshal(extentParam[0])
+		if len(extentParam) > 1 {
+			log.Printf("Multiple extent filters, will only use the first '%v'", extentParam)
+		}
+	}
+
+	fIds, err := Provider.FilterFeatures(nil, collectionNames, propParams)
+	newCol, err := Provider.MakeCollection("tempcol", fIds)
+
+	if err != nil {
+		jsonError(w, err.Error(), 500)
+		return
+	}
+
+	resp, err := json.Marshal(struct{ Collection string }{Collection: newCol})
+	fmt.Printf("newCol / resp: %v / %v", newCol, string(resp))
+	if err != nil {
+		jsonError(w, err.Error(), 500)
+	}
 	w.WriteHeader(200)
 	w.Write(resp)
 }

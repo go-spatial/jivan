@@ -1,0 +1,180 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+	"sort"
+	"time"
+
+	//	"github.com/terranodo/tegola/geom/slippy"
+	prv "github.com/go-spatial/tegola/provider"
+)
+
+type EmptyTile struct{}
+
+func (_ EmptyTile) ZXY() (uint64, uint64, uint64) {
+	return 0, 0, 0
+}
+
+func (_ EmptyTile) Extent() (extent [2][2]float64, srid uint64) {
+	max := 20037508.34
+	srid = 3857
+	extent = [2][2]float64{{-max, -max}, {max, max}}
+	return extent, srid
+}
+
+func (_ EmptyTile) BufferedExtent() (extent [2][2]float64, srid uint64) {
+	max := 20037508.34
+	srid = 3857
+	extent = [2][2]float64{{-max, -max}, {max, max}}
+	return extent, srid
+}
+
+type ErrDuplicateCollectionName struct {
+	name string
+}
+
+func (e ErrDuplicateCollectionName) Error() string {
+	return fmt.Sprintf("collection name '%v' already in use", e.name)
+}
+
+type tempCollection struct {
+	lastAccess time.Time
+	featureIds []FeatureId
+}
+
+type Provider struct {
+	Tiler           prv.Tiler
+	tempCollections map[string]*tempCollection
+}
+
+type FeatureId struct {
+	Collection string
+	FeaturePk  uint64
+}
+
+// Filter out features based on params passed
+func (p *Provider) FilterFeatures(extent interface{}, collections []string, properties map[string]string) ([]FeatureId, error) {
+	if len(collections) < 1 {
+		var err error
+		collections, err = p.CollectionNames()
+		if err != nil {
+			return nil, err
+		}
+	}
+	// To maintain a consistent order for paging & testing
+	sort.Strings(collections)
+
+	fids := make([]FeatureId, 0, 100)
+	for _, col := range collections {
+		fs, err := p.CollectionFeatures(col)
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range fs {
+			for k, v := range f.Tags {
+				if v != properties[k] {
+					continue
+				}
+			}
+			fids = append(fids, FeatureId{Collection: col, FeaturePk: f.ID})
+		}
+	}
+
+	return fids, nil
+}
+
+// Create a new collection given collection/pk pairs to populate it
+func (p *Provider) MakeCollection(name string, featureIds []FeatureId) (string, error) {
+	collectionIds, err := p.CollectionNames()
+	if err != nil {
+		return "", err
+	}
+	for _, cid := range collectionIds {
+		if name == cid {
+			e := ErrDuplicateCollectionName{name: name}
+			return "", e
+		}
+	}
+
+	if p.tempCollections == nil {
+		p.tempCollections = make(map[string]*tempCollection)
+	}
+
+	p.tempCollections[name] = &tempCollection{lastAccess: time.Now(), featureIds: featureIds}
+	return name, nil
+}
+
+// Get all features for a particular collection
+func (p *Provider) CollectionFeatures(collectionName string) ([]*prv.Feature, error) {
+	// return a temp collection with this name if there is one
+	for tcn, _ := range p.tempCollections {
+		if collectionName == tcn {
+			p.tempCollections[collectionName].lastAccess = time.Now()
+			return p.GetFeatures(p.tempCollections[collectionName].featureIds)
+		}
+	}
+
+	// otherwise hit the Tiler provider to get features for this collectionName
+	pFs := make([]*prv.Feature, 0, 100)
+
+	getFeatures := func(f *prv.Feature) error {
+		pFs = append(pFs, f)
+		return nil
+	}
+
+	err := p.Tiler.TileFeatures(context.TODO(), collectionName, EmptyTile{}, getFeatures)
+	if err != nil {
+		return nil, err
+	}
+
+	return pFs, nil
+}
+
+// Get features given collection/pk pairs
+func (p *Provider) GetFeatures(featureIds []FeatureId) ([]*prv.Feature, error) {
+	// Feature pks grouped by collection
+	cf := make(map[string][]uint64)
+	fcount := 0
+	for _, fid := range featureIds {
+		cf[fid.Collection] = make([]uint64, 0, 100)
+		cf[fid.Collection] = append(cf[fid.Collection], fid.FeaturePk)
+		fcount += 1
+	}
+
+	// Desired features
+	fs := make([]*prv.Feature, 0, fcount)
+	for col, fpks := range cf {
+		colFs, err := p.CollectionFeatures(col)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, colF := range colFs {
+			for _, fpk := range fpks {
+				if colF.ID == fpk {
+					fs = append(fs, colF)
+					break
+				}
+			}
+		}
+	}
+
+	return fs, nil
+}
+
+// Fetch a list of all collection names from provider
+func (p *Provider) CollectionNames() ([]string, error) {
+	featureTableInfo, err := p.Tiler.Layers()
+	if err != nil {
+		return nil, err
+	}
+
+	ftNames := make([]string, len(featureTableInfo))
+	for i, fti := range featureTableInfo {
+		ftNames[i] = fti.Name()
+	}
+	sort.Strings(ftNames)
+
+	return ftNames, err
+}

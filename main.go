@@ -28,8 +28,9 @@
 package main
 
 import (
+	"github.com/go-spatial/go-wfs/provider"
 	"github.com/go-spatial/go-wfs/server"
-	"github.com/terranodo/tegola/provider/gpkg"
+	"github.com/go-spatial/tegola/provider/gpkg"
 )
 
 func main() {
@@ -44,5 +45,7 @@ func main() {
 		panic(err)
 	}
 
-	server.StartServer(":9000", gpkgProvider)
+	p := provider.Provider{Tiler: gpkgProvider}
+
+	server.StartServer(":9000", p)
 }
