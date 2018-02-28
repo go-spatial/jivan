@@ -6,7 +6,7 @@
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
-// deal in the Software without restriction, including without limitation the 
+// deal in the Software without restriction, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
 // sell copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
@@ -19,7 +19,7 @@
 // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 // IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE 
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -225,19 +225,18 @@ func init() {
 
 	openapiSpec.Paths.Paths["/api/collection"] = p3
 
-	// Path entry 4 (/api/feature_set?extent=<geomBoundingArea>&<attribute>=<attributeValue>&collection=<collectionId>)
-	// TODO: Should we just make 'extent' an attribute?
-	// TODO: param explode setting for array values
+	// Path entry 4 (/api/feature_set?extent=<geomBoundingArea>&<property>=<propertyValue>&collection=<collectionId>)
+	// TODO: Should we just make 'extent' a property?
 	p4 := spec.PathItem{
 		PathItemProps: spec.PathItemProps{
 			Get: &spec.Operation{
 				OperationProps: spec.OperationProps{
-					Description: "Provides feature data for features matching filters. Consider parameters as filters combined with a logical 'and'.",
+					Description: "Provides the name of a collection data for features matching filters. Consider parameters as filters combined with a logical 'and'.",
 					Parameters: []spec.Parameter{
 						spec.Parameter{
 							ParamProps: spec.ParamProps{
 								Name:            "extent",
-								Description:     "Include only features partially or fully within this geometry.",
+								Description:     "Include only features partially or fully within this geometry (Not yet implemented).",
 								In:              "Query",
 								Required:        false,
 								Schema:          spec.StringProperty(),
@@ -246,8 +245,8 @@ func init() {
 						},
 						spec.Parameter{
 							ParamProps: spec.ParamProps{
-								Name:            "<attribute>",
-								Description:     "Include only features that have this attribute with this value, many different attributes are allowed.",
+								Name:            "<property>",
+								Description:     "Include only features that have this property with this value, many different properties are allowed.",
 								In:              "Query",
 								Required:        false,
 								Schema:          spec.StringProperty(),
@@ -257,7 +256,7 @@ func init() {
 						spec.Parameter{
 							ParamProps: spec.ParamProps{
 								Name:            "collection",
-								Description:     "Limit to features in collection(s) identified by id(s).",
+								Description:     "Limit to features in collection(s) identified by name(s). If no collection is specified, all collections will be included",
 								In:              "Query",
 								Required:        false,
 								Schema:          spec.ArrayProperty(spec.StringProperty()),

@@ -261,7 +261,7 @@ func makeFeatureSet(w http.ResponseWriter, r *http.Request) {
 	extentParam := q["extent"]
 	collectionParam := q["collection"]
 
-	// Grab any params besides "extent" & "collection" as attribute filters.
+	// Grab any params besides "extent" & "collection" as property filters.
 	propParams := make(map[string]string, len(q))
 	for k, v := range r.URL.Query() {
 		if k == "extent" || k == "collection" {
@@ -269,7 +269,7 @@ func makeFeatureSet(w http.ResponseWriter, r *http.Request) {
 		}
 		propParams[k] = v[0]
 		if len(v) > 1 {
-			log.Printf("Got multiple values for attribute filter, will only use the first '%v': %v", k, v)
+			log.Printf("Got multiple values for property filter, will only use the first '%v': %v", k, v)
 		}
 	}
 
