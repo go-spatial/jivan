@@ -1,3 +1,7 @@
+# go-wfs
+
+go-wfs is a [Go](https://golang.org) server implementation of [OGC WFS 3.0](https://github.com/opengeospatial/WFS_FES).
+
 server/
   routes.go: maps urls to functions (from handlers.go)
   handlers.go: actual work done here
@@ -10,36 +14,42 @@ provider/
 main.go: Executable entry-point.
 
 Defaults to run on localhost:9000.  Visit http://localhost:9000/api for OpenAPI definition of
-service.  Take a look at server/routes.go for a concise list of supported URLs.
+service.  Take a look at `server/routes.go` for a concise list of supported URLs.
 
-Build Instructions
-------------------
+## Build Instructions
 
-These are temporary while waiting on some tegola PRs.  Things will be simpler before long.
+```bash
+# create directory for local env
+mkdir /path/to/golang-env
+export GOPATH=/path/to/golang-env
+# install tegola
+go get github.com/go-spatial/tegola
+# FIXME: temporary hack to check out gpkg_autoconfig branch
+cd $GOPATH/src/github.com/go-spatial/tegola
+git checkout gpkg_autoconfig
+go build
+# install go-wfs
+go get github.com/go-spatial/go-wfs
+```
 
-go-wfs needs not-yet-merged features in the tegola branch `gpkg_autoconfig`.
+## Running
 
-Here is how you can make that happen:
+```bash
+# start server on http://localhost:9000/
+go run main.go  # or go build main.go
+```
 
-1. clone github.com/go-spatial/tegola
-1. cd tegola
-1. check out branch `gpkg_autoconfig`
-1. cd ..
-1. clone github.com/go-spatial/go-wfs
-1. cd go-wfs
-1. mkdir -p src/github.com/go-spatial/
-1. ln -s /<path>/<to>/tegola src/github.com/go-spatial/tegola
 
-Then run / build like you normally would for go:
+## Requests Overview
 
-1. Make sure your GOPATH & GOROOT are set to /<path>/<to>/go-wfs & /<path>/<to>/<golang-installation>
-1. `go run main.go` or `go build main.go`
-
-Overview
---------
 Features are identified by a _collection name_ and _feature primary key_ pair.
-To see the collections available hit /api/collectionNames.
-To see the feature pks available hit /api/featurePks.
-To see the data for a single feature, hit /api/feature.
-To see all the feature data for a collection hit /api/collection.
-To create a new, filtered, temporary collection hit /api/feature_set.
+
+- Collections: http://localhost:9000/api/collectionNames
+- Features primary keys: http://localhost:9000/api/featurePks
+- Features from a single collection: http://localhost:9000/api/collection
+- Single feature from a single collection: http://localhost:9000/api/feature
+- Create new, filtered, temporary collection: http://localhost:9000/api/feature_set
+
+## Bugs and Issues
+
+All bugs, enhancements and issues are managed on [GitHub](https://github.com/go-spatial/go-wfs).
