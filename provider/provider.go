@@ -34,24 +34,31 @@ import (
 	prv "github.com/go-spatial/tegola/provider"
 )
 
-type EmptyTile struct{}
+type EmptyTile struct {
+	extent *[2][2]float64
+	srid   uint64
+}
 
 func (_ EmptyTile) ZXY() (uint64, uint64, uint64) {
 	return 0, 0, 0
 }
 
-func (_ EmptyTile) Extent() (extent [2][2]float64, srid uint64) {
-	max := 20037508.34
-	srid = 3857
-	extent = [2][2]float64{{-max, -max}, {max, max}}
-	return extent, srid
+func (et EmptyTile) Extent() (extent [2][2]float64, srid uint64) {
+	if et.extent == nil {
+		max := 20037508.34
+		et.srid = 3857
+		et.extent = &[2][2]float64{{-max, -max}, {max, max}}
+	}
+	return *et.extent, et.srid
 }
 
-func (_ EmptyTile) BufferedExtent() (extent [2][2]float64, srid uint64) {
-	max := 20037508.34
-	srid = 3857
-	extent = [2][2]float64{{-max, -max}, {max, max}}
-	return extent, srid
+func (et EmptyTile) BufferedExtent() (extent [2][2]float64, srid uint64) {
+	if et.extent == nil {
+		max := 20037508.34
+		et.srid = 3857
+		et.extent = &[2][2]float64{{-max, -max}, {max, max}}
+	}
+	return *et.extent, et.srid
 }
 
 type ErrDuplicateCollectionName struct {
@@ -78,7 +85,7 @@ type FeatureId struct {
 }
 
 // Filter out features based on params passed
-func (p *Provider) FilterFeatures(extent interface{}, collections []string, properties map[string]string) ([]FeatureId, error) {
+func (p *Provider) FilterFeatures(extent *[2][2]float64, collections []string, properties map[string]string) ([]FeatureId, error) {
 	if len(collections) < 1 {
 		var err error
 		collections, err = p.CollectionNames()
@@ -91,18 +98,21 @@ func (p *Provider) FilterFeatures(extent interface{}, collections []string, prop
 
 	fids := make([]FeatureId, 0, 100)
 	for _, col := range collections {
-		fs, err := p.CollectionFeatures(col)
+		fs, err := p.CollectionFeatures(col, extent)
 		if err != nil {
 			return nil, err
 		}
+
+	NEXT_FEATURE:
 		for _, f := range fs {
-			for k, v := range f.Tags {
-				if v != properties[k] {
-					continue
+			for k, v := range properties {
+				if v != f.Tags[k] {
+					continue NEXT_FEATURE
 				}
 			}
 			fids = append(fids, FeatureId{Collection: col, FeaturePk: f.ID})
 		}
+
 	}
 
 	return fids, nil
@@ -130,7 +140,7 @@ func (p *Provider) MakeCollection(name string, featureIds []FeatureId) (string, 
 }
 
 // Get all features for a particular collection
-func (p *Provider) CollectionFeatures(collectionName string) ([]*prv.Feature, error) {
+func (p *Provider) CollectionFeatures(collectionName string, extent *[2][2]float64) ([]*prv.Feature, error) {
 	// return a temp collection with this name if there is one
 	for tcn, _ := range p.tempCollections {
 		if collectionName == tcn {
@@ -147,7 +157,8 @@ func (p *Provider) CollectionFeatures(collectionName string) ([]*prv.Feature, er
 		return nil
 	}
 
-	err := p.Tiler.TileFeatures(context.TODO(), collectionName, EmptyTile{}, getFeatures)
+	t := EmptyTile{extent: extent, srid: 4326}
+	err := p.Tiler.TileFeatures(context.TODO(), collectionName, t, getFeatures)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +172,9 @@ func (p *Provider) GetFeatures(featureIds []FeatureId) ([]*prv.Feature, error) {
 	cf := make(map[string][]uint64)
 	fcount := 0
 	for _, fid := range featureIds {
-		cf[fid.Collection] = make([]uint64, 0, 100)
+		if _, ok := cf[fid.Collection]; !ok {
+			cf[fid.Collection] = make([]uint64, 0, 100)
+		}
 		cf[fid.Collection] = append(cf[fid.Collection], fid.FeaturePk)
 		fcount += 1
 	}
@@ -169,7 +182,7 @@ func (p *Provider) GetFeatures(featureIds []FeatureId) ([]*prv.Feature, error) {
 	// Desired features
 	fs := make([]*prv.Feature, 0, fcount)
 	for col, fpks := range cf {
-		colFs, err := p.CollectionFeatures(col)
+		colFs, err := p.CollectionFeatures(col, nil)
 		if err != nil {
 			return nil, err
 		}

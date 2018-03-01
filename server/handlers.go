@@ -113,7 +113,7 @@ func featurePks(w http.ResponseWriter, r *http.Request) {
 
 	fids := make([]provider.FeatureId, 0, 100)
 	for _, cn := range collectionNames {
-		fs, err := Provider.CollectionFeatures(cn)
+		fs, err := Provider.CollectionFeatures(cn, nil)
 		if err != nil {
 			jsonError(w, err.Error(), 500)
 		}
@@ -220,7 +220,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// collection features
-	cFs, err := Provider.CollectionFeatures(collectionName)
+	cFs, err := Provider.CollectionFeatures(collectionName, nil)
 
 	// First index we're interested in
 	startIndex := pageSize * pageNum
@@ -283,15 +283,23 @@ func filteredFeatures(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var extent [2][2]float64
 	if len(extentParam) > 0 {
+		// lat/lon bounding box arranged as [<minx>, <miny>, <maxx>, <maxy>]
+		var llbbox [4]float64
+		err := json.Unmarshal([]byte(extentParam[0]), &llbbox)
+		if err != nil {
+			jsonError(w, fmt.Sprintf("unable to unmarshal extent (%v) due to error: %v", extentParam[0], err), 400)
+			return
+		}
+		extent = [2][2]float64{{llbbox[0], llbbox[1]}, {llbbox[2], llbbox[3]}}
 		// TODO: filter by extent
-		// extent = geojson.Unmarshal(extentParam[0])
 		if len(extentParam) > 1 {
 			log.Printf("Multiple extent filters, will only use the first '%v'", extentParam)
 		}
 	}
 
-	fIds, err := Provider.FilterFeatures(nil, collectionNames, propParams)
+	fIds, err := Provider.FilterFeatures(&extent, collectionNames, propParams)
 	newCol, err := Provider.MakeCollection("tempcol", fIds)
 
 	if err != nil {
@@ -299,8 +307,10 @@ func filteredFeatures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := json.Marshal(struct{ Collection string }{Collection: newCol})
-	fmt.Printf("newCol / resp: %v / %v", newCol, string(resp))
+	resp, err := json.Marshal(struct {
+		Collection   string
+		FeatureCount int
+	}{Collection: newCol, FeatureCount: len(fIds)})
 	if err != nil {
 		jsonError(w, err.Error(), 500)
 	}
