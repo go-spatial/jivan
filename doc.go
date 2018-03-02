@@ -32,6 +32,6 @@ go-wfs document
 package main
 
 /* dependencies
-  github.com/go-openapi/spec
-  github.com/mattn/go-sqlite3
+github.com/go-openapi/spec
+github.com/mattn/go-sqlite3
 */
