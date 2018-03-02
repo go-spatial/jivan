@@ -64,6 +64,33 @@ func init() {
 		Paths: map[string]spec.PathItem{},
 	}
 
+	// Path entry conformance
+	pConformance := spec.PathItem{
+		PathItemProps: spec.PathItemProps{
+			Get: &spec.Operation{
+				OperationProps: spec.OperationProps{
+					Description: "Declares the requirements classes it implements and conforms to.",
+					Responses: &spec.Responses{
+						ResponsesProps: spec.ResponsesProps{
+							StatusCodeResponses: map[int]spec.Response{
+								200: {
+									ResponseProps: spec.ResponseProps{
+										Description: "List of supported requirements classes",
+										Schema:      spec.DateProperty(),
+										Examples: map[string]interface{}{
+											"application/json": `{ "conformsTo": [ "http://www.opengis.net/spec/wfs-1/3.0/req/core", "http://www.opengis.net/spec/wfs-1/3.0/req/oas30", "http://www.opengis.net/spec/wfs-1/3.0/req/html", "http://www.opengis.net/spec/wfs-1/3.0/req/geojson" ] }`,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	openapiSpec.Paths.Paths["/api/conformance"] = pConformance
+
 	// Path entry 0
 	p0 := spec.PathItem{}
 	p0.Get = new(spec.Operation)
@@ -90,7 +117,7 @@ func init() {
 				OperationProps: spec.OperationProps{
 					Description: "Provides all feature pks available; or those in collection if collection parameter is provided",
 					Parameters: []spec.Parameter{
-						spec.Parameter{
+						{
 							ParamProps: spec.ParamProps{
 								Description:     "Name identifying collection to retreive features for.",
 								Name:            "collection",
@@ -104,7 +131,7 @@ func init() {
 					Responses: &spec.Responses{
 						ResponsesProps: spec.ResponsesProps{
 							StatusCodeResponses: map[int]spec.Response{
-								200: spec.Response{
+								200: {
 									ResponseProps: spec.ResponseProps{
 										Description: "List of feature ids available",
 										Schema:      spec.ArrayProperty(spec.Int64Property()),
@@ -130,7 +157,7 @@ func init() {
 				OperationProps: spec.OperationProps{
 					Description: "Provides feature data for feature requested.",
 					Parameters: []spec.Parameter{
-						spec.Parameter{
+						{
 							ParamProps: spec.ParamProps{
 								Description:     "Id of feature to retreive.",
 								Name:            "id",
@@ -144,7 +171,7 @@ func init() {
 					Responses: &spec.Responses{
 						ResponsesProps: spec.ResponsesProps{
 							StatusCodeResponses: map[int]spec.Response{
-								200: spec.Response{
+								200: {
 									ResponseProps: spec.ResponseProps{
 										Description: "Feature data for feature requested",
 										Schema:      spec.DateProperty(),
@@ -171,7 +198,7 @@ func init() {
 				OperationProps: spec.OperationProps{
 					Description: "Provides paged feature data for features in collection(s) requested.",
 					Parameters: []spec.Parameter{
-						spec.Parameter{
+						{
 							ParamProps: spec.ParamProps{
 								Name:            "collection",
 								Description:     "Limit to features in collection(s) identified by id(s).",
@@ -181,7 +208,7 @@ func init() {
 								AllowEmptyValue: false,
 							},
 						},
-						spec.Parameter{
+						{
 							ParamProps: spec.ParamProps{
 								Name:            "page",
 								Description:     "Show data only for page indicated (default 0).",
@@ -191,7 +218,7 @@ func init() {
 								AllowEmptyValue: false,
 							},
 						},
-						spec.Parameter{
+						{
 							ParamProps: spec.ParamProps{
 								Name:            "pageSize",
 								Description:     "Include this many features per page (default 10)",
@@ -206,7 +233,7 @@ func init() {
 					Responses: &spec.Responses{
 						ResponsesProps: spec.ResponsesProps{
 							StatusCodeResponses: map[int]spec.Response{
-								200: spec.Response{
+								200: {
 									ResponseProps: spec.ResponseProps{
 										Description: "Feature data for feature requested",
 										Schema:      spec.DateProperty(),
@@ -233,7 +260,7 @@ func init() {
 				OperationProps: spec.OperationProps{
 					Description: "Provides the name of a collection data for features matching filters. Consider parameters as filters combined with a logical 'and'.",
 					Parameters: []spec.Parameter{
-						spec.Parameter{
+						{
 							ParamProps: spec.ParamProps{
 								Name:            "extent",
 								Description:     "Include only features partially or fully within this geometry (Not yet implemented).",
@@ -243,7 +270,7 @@ func init() {
 								AllowEmptyValue: false,
 							},
 						},
-						spec.Parameter{
+						{
 							ParamProps: spec.ParamProps{
 								Name:            "<property>",
 								Description:     "Include only features that have this property with this value, many different properties are allowed.",
@@ -253,7 +280,7 @@ func init() {
 								AllowEmptyValue: false,
 							},
 						},
-						spec.Parameter{
+						{
 							ParamProps: spec.ParamProps{
 								Name:            "collection",
 								Description:     "Limit to features in collection(s) identified by name(s). If no collection is specified, all collections will be included",
@@ -268,7 +295,7 @@ func init() {
 					Responses: &spec.Responses{
 						ResponsesProps: spec.ResponsesProps{
 							StatusCodeResponses: map[int]spec.Response{
-								200: spec.Response{
+								200: {
 									ResponseProps: spec.ResponseProps{
 										Description: "Feature data for feature requested",
 										Schema:      spec.DateProperty(),

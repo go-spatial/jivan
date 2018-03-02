@@ -41,6 +41,10 @@ import (
 	prv "github.com/go-spatial/tegola/provider"
 )
 
+type Conformance struct {
+	ConformsTo []string `json:"conformsTo"`
+}
+
 // Sets response 'status', and writes a json-encoded object with property "detail" having value "msg".
 func jsonError(w http.ResponseWriter, msg string, status int) {
 	w.WriteHeader(status)
@@ -55,6 +59,25 @@ func jsonError(w http.ResponseWriter, msg string, status int) {
 		w.Write([]byte(fmt.Sprintf("problem marshaling error: %v", msg)))
 	} else {
 		w.Write(result)
+	}
+}
+
+// --- Implements req/core/conformance-op
+func apiConformance(w http.ResponseWriter, r *http.Request) {
+	c := Conformance{}
+	c.ConformsTo = append(c.ConformsTo, "http://www.opengis.net/spec/wfs-1/3.0/req/core")
+	c.ConformsTo = append(c.ConformsTo, "http://www.opengis.net/spec/wfs-1/3.0/req/oas30")
+	//c.ConformsTo = append(c.ConformsTo, "http://www.opengis.net/spec/wfs-1/3.0/req/html")
+	c.ConformsTo = append(c.ConformsTo, "http://www.opengis.net/spec/wfs-1/3.0/req/geojson")
+
+	result, err := json.Marshal(c)
+
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte("problem marshaling error"))
+	} else {
+		w.WriteHeader(200)
+		w.Write([]byte(result))
 	}
 }
 
