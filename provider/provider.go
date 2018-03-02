@@ -142,7 +142,7 @@ func (p *Provider) MakeCollection(name string, featureIds []FeatureId) (string, 
 // Get all features for a particular collection
 func (p *Provider) CollectionFeatures(collectionName string, extent *[2][2]float64) ([]*prv.Feature, error) {
 	// return a temp collection with this name if there is one
-	for tcn, _ := range p.tempCollections {
+	for tcn := range p.tempCollections {
 		if collectionName == tcn {
 			p.tempCollections[collectionName].lastAccess = time.Now()
 			return p.GetFeatures(p.tempCollections[collectionName].featureIds)
