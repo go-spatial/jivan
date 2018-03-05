@@ -1,7 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // The MIT License (MIT)
-// Copyright (c) 2018 Jivan Amara
 // Copyright (c) 2018 Tom Kralidis
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,25 +25,64 @@
 
 package server
 
-// Provides mappings for URL routes to handler functions.
-
 import (
-	"net/http"
+	"github.com/BurntSushi/toml"
 )
 
-func setUpRoutes(c Config) {
+// Config provides an object model for configuration.
+type Config struct {
+	Server struct {
+		URL         string
+		MimeType    string
+		Encoding    string
+		Language    string
+		PrettyPrint bool
+		Limit       int
+	}
+	Logging struct {
+		Level   string
+		Logfile string
+	}
+	Metadata struct {
+		Identification struct {
+			Title             string
+			Abstract          string
+			Keywords          []string
+			KeywordsType      string
+			Fees              string
+			AccessConstraints string
+		}
+		Provider struct {
+			Name string
+			URL  string
+		}
+		Contact struct {
+			Name            string
+			Position        string
+			Address         string
+			City            string
+			StateOrProvince string
+			PostalCode      string
+			Country         string
+			Phone           string
+			Fax             string
+			Email           string
+			URL             string
+			Hours           string
+			Instructions    string
+			Role            string
+		}
+	}
+	Collections struct {
+		Data string
+	}
+}
 
-	OpenAPISpec := GenOpenAPISpec(c)
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/api", 307) })
-
-	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
-		openapiJson(w, r, OpenAPISpec)
-	})
-	http.HandleFunc("/api/conformance", apiConformance)
-	http.HandleFunc("/api/collectionNames", collectionNames)
-	http.HandleFunc("/api/featurePks", featurePks)
-	http.HandleFunc("/api/feature", getFeature)
-	http.HandleFunc("/api/collection", collectionData)
-	http.HandleFunc("/api/feature_set", filteredFeatures)
+// LoadFromFile read YAML into configuration
+func LoadConfigFromFile(tomlFile string) (Config, error) {
+	var config Config
+	if _, err := toml.DecodeFile(tomlFile, &config); err != nil {
+		return config, err
+	}
+	return config, nil
 }

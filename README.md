@@ -35,8 +35,15 @@ go get github.com/go-spatial/go-wfs
 ## Running
 
 ```bash
+cd $GOPATH/src/github.com/go-spatial/go-wfs
+# create configuration
+cp go-wfs-config.toml local.toml
+vi local.toml  # update accordingly
+# server.url
+# collections.data
+
 # start server on http://localhost:9000/
-go run main.go  # or go build main.go
+go run main.go local.toml
 ```
 
 

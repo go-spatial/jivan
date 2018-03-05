@@ -28,15 +28,26 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-spatial/go-wfs/provider"
 	"github.com/go-spatial/go-wfs/server"
 	"github.com/go-spatial/tegola/provider/gpkg"
+	"os"
 )
 
 func main() {
+	args := os.Args
+
+	if len(args) == 1 {
+		fmt.Printf("Usage: %v </path/to/config.toml>\n", os.Args[0])
+		os.Exit(1)
+	}
+
+	// load config from command line
+	c, err := server.LoadConfigFromFile(os.Args[1])
+
 	// Instantiate a gpkg provider to send to the server.
-	gpkgPath := "test-data/athens-osm-20170921.gpkg"
-	gpkgConfig, err := gpkg.AutoConfig(gpkgPath)
+	gpkgConfig, err := gpkg.AutoConfig(c.Collections.Data)
 	if err != nil {
 		panic(err)
 	}
@@ -47,5 +58,5 @@ func main() {
 
 	p := provider.Provider{Tiler: gpkgProvider}
 
-	server.StartServer(":9000", p)
+	server.StartServer(c, ":9000", p)
 }

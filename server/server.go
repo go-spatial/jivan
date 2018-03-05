@@ -35,10 +35,10 @@ import (
 
 var Provider provider.Provider
 
-func StartServer(bindAddress string, p provider.Provider) {
+func StartServer(c Config, bindAddress string, p provider.Provider) {
 	fmt.Println("Listening on ", bindAddress)
 	Provider = p
-	setUpRoutes()
+	setUpRoutes(c)
 	err := http.ListenAndServe(bindAddress, nil)
 	if err != nil {
 		panic(fmt.Sprintf("Problem starting web server: %v", err))
