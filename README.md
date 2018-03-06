@@ -2,6 +2,8 @@
 
 go-wfs is a [Go](https://golang.org) server implementation of [OGC WFS 3.0](https://github.com/opengeospatial/WFS_FES).
 
+**REQUIRES GO >= 1.7**
+
 server/
   routes.go: maps urls to functions (from handlers.go)
   handlers.go: actual work done here
