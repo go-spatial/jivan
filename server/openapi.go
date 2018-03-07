@@ -192,7 +192,7 @@ func init() {
 
 	openapiSpec.Paths.Paths["/api/feature"] = p2
 
-	// Path entry 3 (/api/collection?id=<collectionId>&page=<pageNumber>&pageSize=<pageSize>)
+	// Path entry 3 (/api/collection/collectionId&page=<pageNumber>&pageSize=<pageSize>)
 	// TODO: param explode setting for array values
 	p3 := spec.PathItem{
 		PathItemProps: spec.PathItemProps{
@@ -204,7 +204,7 @@ func init() {
 							ParamProps: spec.ParamProps{
 								Name:            "collection",
 								Description:     "Limit to features in collection(s) identified by id(s).",
-								In:              "Query",
+								In:              "Path",
 								Required:        true,
 								Schema:          spec.ArrayProperty(spec.Int64Property()),
 								AllowEmptyValue: false,
@@ -252,7 +252,7 @@ func init() {
 		},
 	}
 
-	openapiSpec.Paths.Paths["/api/collection"] = p3
+	openapiSpec.Paths.Paths["/api/collection/"] = p3
 
 	// Path entry 4 (/api/feature_set?extent=<geomBoundingArea>&<property>=<propertyValue>&collection=<collectionId>)
 	// TODO: Should we just make 'extent' a property?
