@@ -272,7 +272,12 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	for i, pf := range pFs {
 		gFs[i] = geojson.Feature{ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}, Properties: pf.Tags}
 	}
-	resp, err = json.Marshal(gFs)
+
+	// Wrap the features up in a FeatureCollection
+	fc := geojson.FeatureCollection{
+		Features: gFs,
+	}
+	resp, err = json.Marshal(fc)
 
 	if err != nil {
 		jsonError(w, err.Error(), 500)
