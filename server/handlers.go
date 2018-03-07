@@ -32,6 +32,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -60,6 +61,11 @@ func jsonError(w http.ResponseWriter, msg string, status int) {
 	} else {
 		w.Write(result)
 	}
+}
+
+// -- Writes a 404 response
+func notFoundError(w http.ResponseWriter) {
+	jsonError(w, "not found", 404)
 }
 
 // --- Implements req/core/conformance-op
@@ -190,14 +196,23 @@ func getFeature(w http.ResponseWriter, r *http.Request) {
 	w.Write(encoding)
 }
 
+var collectionPathRegexp = regexp.MustCompile(`^/collection/(\w+)$`)
+
 const DEFAULT_PAGE_SIZE = 10
 
 // --- Provide paged access to data for all features in requested collection
 func collectionData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
+
+	submatches := collectionPathRegexp.FindSubmatch([]byte(r.URL.Path))
+	if len(submatches) < 2 {
+		notFoundError(w)
+		return
+	}
+
 	q := r.URL.Query()
 	var pageSize, pageNum uint64
-	var collectionName string
+	collectionName := string(submatches[1])
 	var err error
 
 	qPageSize := q["pageSize"]
@@ -220,14 +235,6 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 			jsonError(w, err.Error(), 400)
 			return
 		}
-	}
-
-	qCollection := q["collection"]
-	if len(qCollection) != 1 {
-		jsonError(w, fmt.Sprintf("'collection' is a required parameter of length 1, got: %v", qCollection), 400)
-		return
-	} else {
-		collectionName = qCollection[0]
 	}
 
 	log.Printf("Getting page %v (size %v) for '%v'", pageNum, pageSize, collectionName)
