@@ -49,6 +49,7 @@ func OpenApiSpecJson() (result []byte, err error) {
 func init() {
 	openapiSpec.ID = "Go-WFS"
 	openapiSpec.Swagger = "2.0"
+	openapiSpec.Host = serverBindAddress // set in server.StartServer(), becomes "servers" in v3
 	openapiSpec.Info = &spec.Info{}
 	openapiSpec.Info.Title = "tegola-wfs"
 	openapiSpec.Info.Description = "Feature query service, providing features in GeoJSON format."

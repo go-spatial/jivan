@@ -35,7 +35,10 @@ import (
 
 var Provider provider.Provider
 
+var serverBindAddress string
+
 func StartServer(bindAddress string, p provider.Provider) {
+	serverBindAddress = bindAddress
 	fmt.Println("Listening on ", bindAddress)
 	Provider = p
 	setUpRoutes()

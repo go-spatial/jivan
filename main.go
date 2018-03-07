@@ -47,5 +47,5 @@ func main() {
 
 	p := provider.Provider{Tiler: gpkgProvider}
 
-	server.StartServer(":9000", p)
+	server.StartServer("127.0.0.1:9000", p)
 }
