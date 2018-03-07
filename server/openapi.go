@@ -94,6 +94,7 @@ func init() {
 	// Path entry 0
 	p0 := spec.PathItem{}
 	p0.Get = new(spec.Operation)
+	p0.Get.ID = "describeCollections"
 	p0.Get.Description = "Provide names of collections available in API.  Features are grouped by collection."
 	p0.Get.Responses = new(spec.Responses)
 	p0.Get.Responses.StatusCodeResponses = make(map[int]spec.Response)
