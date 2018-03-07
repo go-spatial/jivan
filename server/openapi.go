@@ -200,6 +200,16 @@ func init() {
 					Parameters: []spec.Parameter{
 						{
 							ParamProps: spec.ParamProps{
+								Name:            "collection",
+								Description:     "Limit to features in collection(s) identified by id(s).",
+								In:              "Path",
+								Required:        true,
+								Schema:          spec.ArrayProperty(spec.Int64Property()),
+								AllowEmptyValue: false,
+							},
+						},
+						{
+							ParamProps: spec.ParamProps{
 								Name:            "page",
 								Description:     "Show data only for page indicated (default 0).",
 								In:              "Query",
@@ -240,7 +250,7 @@ func init() {
 		},
 	}
 
-	openapiSpec.Paths.Paths["/api/collection/collectionId"] = p3
+	openapiSpec.Paths.Paths["/api/collection/"] = p3
 
 	// Path entry 4 (/api/feature_set?extent=<geomBoundingArea>&<property>=<propertyValue>&collection=<collectionId>)
 	// TODO: Should we just make 'extent' a property?
