@@ -36,6 +36,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-openapi/spec"
 	"github.com/go-spatial/go-wfs/provider"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	prv "github.com/go-spatial/tegola/provider"
@@ -82,10 +83,10 @@ func apiConformance(w http.ResponseWriter, r *http.Request) {
 }
 
 // --- Return the json-encoded OpenAPI 2 spec for the WFS API available on this instance.
-func openapiJson(w http.ResponseWriter, r *http.Request) {
+func openapiJson(w http.ResponseWriter, r *http.Request, s spec.Swagger) {
 	var jsonSpec []byte
 	var err error
-	jsonSpec, err = OpenApiSpecJson()
+	jsonSpec, err = OpenApiSpecJson(s)
 
 	var status int = 200
 	w.Header().Set("Content-Type", "application/json")

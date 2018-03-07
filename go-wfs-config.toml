@@ -1,0 +1,41 @@
+[server]
+  url = "http://localhost:9000/"
+  mimetype = "application/json; charset=UTF-8"
+  encoding = "utf-8"
+  language = "en-US"
+  pretty_print = true
+  limit = 10
+
+[logging]
+  level = "INFO"
+  #logfile = "/tmp/go-wfs.log"
+
+[metadata]
+  [metadata.identification]
+    title = "go-wfs"
+    abstract = "go-wfs is a Go server implementation of OGC WFS 3.0"
+    keywords = [ "geospatial", "features", "collections", "access" ]
+    keywords_type = "theme"
+    fees = "None"
+    accessconstraints = "None"
+    [metadata.provider]
+      name = "Organization Name"
+      url = "https://github.com/go-spatial/go-wfs"
+    [metadata.contact]
+      name = "Lastname, Firstname"
+      position = "Position Title"
+      address = "Mailing Address"
+      city = "City"
+      stateorprovince = "Administrative Area"
+      postalcode = "Zip or Postal Code"
+      country = "Country"
+      phone = "+xx-xxx-xxx-xxxx"
+      fax = "+xx-xxx-xxx-xxxx"
+      email = "you@example.org"
+      url = "Contact URL"
+      hours = "Hours of Service"
+      instructions = "During hours of service.  Off on weekends."
+      role = "pointOfContact"
+
+[collections]
+  data = "test-data/athens-osm-20170921.gpkg"

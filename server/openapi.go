@@ -28,16 +28,17 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/url"
 
 	"github.com/go-openapi/spec"
 )
 
-var openapiSpec spec.Swagger
-var openapiSpecJson []byte
+func OpenApiSpecJson(s spec.Swagger) (result []byte, err error) {
+	var openapiSpecJson []byte
 
-func OpenApiSpecJson() (result []byte, err error) {
 	if openapiSpecJson == nil {
-		openapiSpecJson, err = json.Marshal(openapiSpec)
+		openapiSpecJson, err = json.Marshal(s)
 	}
 	if err != nil {
 		return nil, err
@@ -46,19 +47,33 @@ func OpenApiSpecJson() (result []byte, err error) {
 	return openapiSpecJson, nil
 }
 
-func init() {
-	openapiSpec.ID = "Go-WFS"
+func GenOpenAPISpec(c Config) (s spec.Swagger) {
+	var openapiSpec spec.Swagger
+
+	serverURL, err := url.Parse(c.Server.URL)
+	if err != nil {
+		panic(err)
+	}
+
+	openapiSpec.ID = "go-wfs"
 	openapiSpec.Swagger = "2.0"
+	openapiSpec.Host = serverURL.Host
+	openapiSpec.Schemes = []string{serverURL.Scheme}
+	openapiSpec.BasePath = serverURL.Path
 	openapiSpec.Info = &spec.Info{}
-	openapiSpec.Info.Title = "tegola-wfs"
-	openapiSpec.Info.Description = "Feature query service, providing features in GeoJSON format."
-	openapiSpec.Info.TermsOfService = ""
-	//	openapiSpec.Info.Contact = ...
+	openapiSpec.Info.Title = c.Metadata.Identification.Title
+	openapiSpec.Info.Description = c.Metadata.Identification.Abstract
+	openapiSpec.Info.TermsOfService = c.Metadata.Identification.AccessConstraints
+	openapiSpec.Info.Contact = &spec.ContactInfo{
+		Name:  c.Metadata.Provider.Name,
+		URL:   c.Metadata.Provider.URL,
+		Email: c.Metadata.Contact.Email,
+	}
 	openapiSpec.Info.License = &spec.License{
-		Name: "Unchosen License",
-		URL:  "",
-	} // TODO: Choose a license
-	openapiSpec.Info.Version = "0.0.0"
+		Name: "MIT License",
+		URL:  "http://www.opensource.org/licenses/MIT",
+	}
+	openapiSpec.Info.Version = "3.0"
 
 	openapiSpec.Paths = &spec.Paths{
 		Paths: map[string]spec.PathItem{},
@@ -313,4 +328,6 @@ func init() {
 	}
 
 	openapiSpec.Paths.Paths["/api/feature_set"] = p4
+
+	return openapiSpec
 }
