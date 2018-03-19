@@ -27,29 +27,20 @@
 package server
 
 import (
-	"encoding/json"
-
 	"github.com/go-openapi/spec"
 )
 
 var openapiSpec spec.Swagger
 var openapiSpecJson []byte
 
-func OpenApiSpecJson() (result []byte, err error) {
-	if openapiSpecJson == nil {
-		openapiSpecJson, err = json.Marshal(openapiSpec)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return openapiSpecJson, nil
+func api() *spec.Swagger {
+	return &openapiSpec
 }
 
 func init() {
 	openapiSpec.ID = "Go-WFS"
 	openapiSpec.Swagger = "2.0"
-	openapiSpec.Host = serverBindAddress // set in server.StartServer(), becomes "servers" in v3
+	openapiSpec.Host = bindAddress // set in server.StartServer(), becomes "servers" in v3
 	openapiSpec.Info = &spec.Info{}
 	openapiSpec.Info.Title = "tegola-wfs"
 	openapiSpec.Info.Description = "Feature query service, providing features in GeoJSON format."
@@ -192,7 +183,7 @@ func init() {
 
 	openapiSpec.Paths.Paths["/api/feature"] = p2
 
-	// Path entry 3 (/api/collection/collectionId&page=<pageNumber>&pageSize=<pageSize>)
+	// Path entry 3 (/api/collections/<collectionName>?page=<pageNumber>&pageSize=<pageSize>)
 	// TODO: param explode setting for array values
 	p3 := spec.PathItem{
 		PathItemProps: spec.PathItemProps{

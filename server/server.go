@@ -35,11 +35,15 @@ import (
 
 var Provider provider.Provider
 
-var serverBindAddress string
+var bindAddress string
+var serveAddress string
 
-func StartServer(bindAddress string, p provider.Provider) {
-	serverBindAddress = bindAddress
-	fmt.Println("Listening on ", bindAddress)
+func StartServer(setBindAddress, setServeAddress string, p provider.Provider) {
+	bindAddress = setBindAddress
+	serveAddress = setServeAddress
+
+	fmt.Printf("Bound to: %v\n", bindAddress)
+	fmt.Printf("Expecting traffic at %v\n", serveAddress)
 	Provider = p
 	setUpRoutes()
 	err := http.ListenAndServe(bindAddress, nil)

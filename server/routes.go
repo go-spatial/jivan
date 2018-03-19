@@ -33,13 +33,12 @@ import (
 )
 
 func setUpRoutes() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/api", 307) })
-
+	http.HandleFunc("/", rootJson)
+	http.HandleFunc("/conformance", conformanceJson)
 	http.HandleFunc("/api", openapiJson)
-	http.HandleFunc("/api/conformance", apiConformance)
 	http.HandleFunc("/api/collectionNames", collectionNames)
 	http.HandleFunc("/api/featurePks", featurePks)
 	http.HandleFunc("/api/feature", getFeature)
-	http.HandleFunc("/collection/", collectionData)
+	http.HandleFunc("/collections/", collectionData)
 	http.HandleFunc("/api/feature_set", filteredFeatures)
 }

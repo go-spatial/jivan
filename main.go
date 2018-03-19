@@ -28,14 +28,24 @@
 package main
 
 import (
+	"path"
+	"runtime"
+
 	"github.com/go-spatial/go-wfs/provider"
 	"github.com/go-spatial/go-wfs/server"
 	"github.com/go-spatial/tegola/provider/gpkg"
 )
 
 func main() {
-	// Instantiate a gpkg provider to send to the server.
-	gpkgPath := "test-data/athens-osm-20170921.gpkg"
+	// Grab the path to the testing gpkg (we know where it is relative to this file)
+	// This will be a last-resort after the following are implemented:
+	//	* command-line data source & config file options
+	//	* search working directory for gpkg
+	_, execPath, _, _ := runtime.Caller(0)
+	execDir := path.Dir(execPath)
+	testGpkgPath := path.Join(execDir, "test-data", "athens-osm-20170921.gpkg")
+	gpkgPath := testGpkgPath
+
 	gpkgConfig, err := gpkg.AutoConfig(gpkgPath)
 	if err != nil {
 		panic(err)
@@ -45,7 +55,9 @@ func main() {
 		panic(err)
 	}
 
+	bindAddress := "127.0.0.1:9000"
+	serveAddress := bindAddress
 	p := provider.Provider{Tiler: gpkgProvider}
 
-	server.StartServer("127.0.0.1:9000", p)
+	server.StartServer(bindAddress, serveAddress, p)
 }

@@ -42,8 +42,10 @@ import (
 	prv "github.com/go-spatial/tegola/provider"
 )
 
-type Conformance struct {
-	ConformsTo []string `json:"conformsTo"`
+// Values returned by content providers (such as root(), conformance()) need to implement this interface
+type ContentUpdater interface {
+	// Updates any content type references in the struct and contained structs w/ contentType
+	ContentType(contentType string)
 }
 
 // Sets response 'status', and writes a json-encoded object with property "detail" having value "msg".
@@ -68,30 +70,42 @@ func notFoundError(w http.ResponseWriter) {
 	jsonError(w, "not found", 404)
 }
 
-// --- Implements req/core/conformance-op
-func apiConformance(w http.ResponseWriter, r *http.Request) {
-	c := Conformance{}
-	c.ConformsTo = append(c.ConformsTo, "http://www.opengis.net/spec/wfs-1/3.0/req/core")
-	c.ConformsTo = append(c.ConformsTo, "http://www.opengis.net/spec/wfs-1/3.0/req/oas30")
-	//c.ConformsTo = append(c.ConformsTo, "http://www.opengis.net/spec/wfs-1/3.0/req/html")
-	c.ConformsTo = append(c.ConformsTo, "http://www.opengis.net/spec/wfs-1/3.0/req/geojson")
-
+func conformanceJson(w http.ResponseWriter, r *http.Request) {
+	c := conformance()
 	result, err := json.Marshal(c)
+	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil {
-		w.WriteHeader(500)
-		w.Write([]byte("problem marshaling error"))
+		jsonError(w, "problem marshaling conformance declaration to json", 500)
+		return
 	} else {
 		w.WriteHeader(200)
 		w.Write([]byte(result))
 	}
 }
 
+func rootJson(w http.ResponseWriter, r *http.Request) {
+	rootContent := root()
+	ct := "application/json"
+	rootContent.ContentType(ct)
+	rJson, err := json.Marshal(rootContent)
+	w.Header().Set("Content-Type", ct)
+
+	if err != nil {
+		jsonError(w, err.Error(), 500)
+		return
+	}
+
+	w.WriteHeader(200)
+	w.Write(rJson)
+}
+
 // --- Return the json-encoded OpenAPI 2 spec for the WFS API available on this instance.
 func openapiJson(w http.ResponseWriter, r *http.Request) {
 	var jsonSpec []byte
 	var err error
-	jsonSpec, err = OpenApiSpecJson()
+	apiSpec := api()
+	jsonSpec, err = json.Marshal(apiSpec)
 
 	var status int = 200
 	w.Header().Set("Content-Type", "application/json")
@@ -200,13 +214,30 @@ var collectionPathRegexp = regexp.MustCompile(`^/collection/(\w+)$`)
 
 const DEFAULT_PAGE_SIZE = 10
 
-// --- Provide paged access to data for all features in requested collection
+func collectionsMetaDataJson(w http.ResponseWriter, r *http.Request) {
+	csmd := collectionsMetaData()
+	ct := "application/json"
+	csmd.ContentType(ct)
+	csmdJson, err := json.Marshal(csmd)
+	w.Header().Set("Content-Type", ct)
+
+	if err != nil {
+		jsonError(w, err.Error(), 500)
+		return
+	}
+
+	w.WriteHeader(200)
+	w.Write(csmdJson)
+}
+
+// --- Provide meta-data for collections at /collections &
+// paged access to data for all features in a requested collection at /collections/<collectionName>
 func collectionData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 
 	submatches := collectionPathRegexp.FindSubmatch([]byte(r.URL.Path))
 	if len(submatches) < 2 {
-		notFoundError(w)
+		collectionsMetaDataJson(w, r)
 		return
 	}
 
