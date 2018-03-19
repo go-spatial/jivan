@@ -23,7 +23,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+// go-wfs project provider.go
+
 package provider
+
+// Builds upon the tegola Tiler interface to reuse data providers from tegola.
+// Instantiate by:
+//	p := Provider{Tiler: <my Tiler-based provider>}
 
 import (
 	"context"
