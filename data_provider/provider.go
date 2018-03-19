@@ -25,7 +25,7 @@
 
 // go-wfs project provider.go
 
-package provider
+package data_provider
 
 // Builds upon the tegola Tiler interface to reuse data providers from tegola.
 // Instantiate by:

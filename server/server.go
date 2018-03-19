@@ -30,15 +30,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/go-spatial/go-wfs/provider"
+	"github.com/go-spatial/go-wfs/data_provider"
 )
 
-var Provider provider.Provider
+var Provider data_provider.Provider
 
 var bindAddress string
 var serveAddress string
 
-func StartServer(setBindAddress, setServeAddress string, p provider.Provider) {
+func StartServer(setBindAddress, setServeAddress string, p data_provider.Provider) {
 	bindAddress = setBindAddress
 	serveAddress = setServeAddress
 

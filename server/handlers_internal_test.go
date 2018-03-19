@@ -44,11 +44,6 @@ func TestTesting(t *testing.T) {
 //    /collections (relation type 'data')
 
 func TestRoot(t *testing.T) {
-	// Convert to strings.Builder when support for go versions < 1.10 is no longer needed
-	var responseWriter *httptest.ResponseRecorder = httptest.NewRecorder()
-	request := httptest.NewRequest("GET", "http://server.com/api", bytes.NewBufferString(""))
-	serveAddress = "server.com"
-	rootJson(responseWriter, request)
 	expectedBody, err := json.Marshal(rootContent{
 		Links: []*link{
 			NewLink("http://server.com/api", "service", "application/json", "", ""),
@@ -56,13 +51,28 @@ func TestRoot(t *testing.T) {
 			NewLink("http://server.com/collections", "data", "application/json", "", ""),
 		},
 	})
+	expectedStatusCode := 200
 
 	if err != nil {
 		t.Errorf("Problem marshalling expected content: %v", err.Error())
 	}
 
-	body, _ := ioutil.ReadAll(responseWriter.Body)
+	var responseWriter *httptest.ResponseRecorder = httptest.NewRecorder()
+	request := httptest.NewRequest("GET", "http://server.com/api", bytes.NewBufferString(""))
+	serveAddress = "server.com"
+	rootJson(responseWriter, request)
+	resp := responseWriter.Result()
+
+	if resp.StatusCode != expectedStatusCode {
+		t.Errorf("status code %v != %v", resp.StatusCode, expectedStatusCode)
+	}
+
+	body, _ := ioutil.ReadAll(resp.Body)
 	if string(body) != string(expectedBody) {
 		t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedBody))
 	}
+}
+
+func TestConformance(t *testing.T) {
+
 }

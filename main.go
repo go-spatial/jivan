@@ -31,7 +31,7 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/go-spatial/go-wfs/provider"
+	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/go-wfs/server"
 	"github.com/go-spatial/tegola/provider/gpkg"
 )
@@ -57,7 +57,7 @@ func main() {
 
 	bindAddress := "127.0.0.1:9000"
 	serveAddress := bindAddress
-	p := provider.Provider{Tiler: gpkgProvider}
+	p := data_provider.Provider{Tiler: gpkgProvider}
 
 	server.StartServer(bindAddress, serveAddress, p)
 }

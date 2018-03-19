@@ -37,7 +37,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-spatial/go-wfs/provider"
+	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	prv "github.com/go-spatial/tegola/provider"
 )
@@ -154,14 +154,14 @@ func featurePks(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Strings(collectionNames)
 
-	fids := make([]provider.FeatureId, 0, 100)
+	fids := make([]data_provider.FeatureId, 0, 100)
 	for _, cn := range collectionNames {
 		fs, err := Provider.CollectionFeatures(cn, nil)
 		if err != nil {
 			jsonError(w, err.Error(), 500)
 		}
 		for _, f := range fs {
-			fids = append(fids, provider.FeatureId{Collection: cn, FeaturePk: f.ID})
+			fids = append(fids, data_provider.FeatureId{Collection: cn, FeaturePk: f.ID})
 		}
 	}
 
@@ -190,9 +190,9 @@ func getFeature(w http.ResponseWriter, r *http.Request) {
 
 	featurePk, err := strconv.ParseUint(featurePkStr, 10, 64)
 
-	featureId := provider.FeatureId{Collection: collectionName, FeaturePk: featurePk}
+	featureId := data_provider.FeatureId{Collection: collectionName, FeaturePk: featurePk}
 
-	featureData, err := Provider.GetFeatures([]provider.FeatureId{featureId})
+	featureData, err := Provider.GetFeatures([]data_provider.FeatureId{featureId})
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(fmt.Sprintf(`{ "detail": "%v" }`, err)))
