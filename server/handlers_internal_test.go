@@ -30,6 +30,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
 	"testing"
@@ -74,5 +75,31 @@ func TestRoot(t *testing.T) {
 }
 
 func TestConformance(t *testing.T) {
+	serveAddress = "server.com" // pacakge variable in server.go
+	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
 
+	expectedBody, err := json.Marshal(conformanceClasses{
+		ConformsTo: []string{
+			"http://www.opengis.net/spec/wfs-1/3.0/req/core",
+			"http://www.opengis.net/spec/wfs-1/3.0/req/geojson",
+		},
+	})
+	if err != nil {
+		t.Errorf("problem marshalling expectedBody: %v", err.Error())
+	}
+	expectedStatusCode := 200
+
+	responseWriter := httptest.NewRecorder()
+	request := httptest.NewRequest("GET", conformanceUrl, bytes.NewBufferString(""))
+	conformanceJson(responseWriter, request)
+	resp := responseWriter.Result()
+
+	if resp.StatusCode != expectedStatusCode {
+		t.Errorf("status code %v != %v", resp.StatusCode, expectedStatusCode)
+	}
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	if string(body) != string(expectedBody) {
+		t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedBody))
+	}
 }

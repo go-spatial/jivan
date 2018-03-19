@@ -79,7 +79,7 @@ func (csi *collectionsInfo) ContentType(contentType string) {
 }
 
 // --- @See https://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/req-classes.yaml
-//  for ConformanceClass schema
-type conformanceClass struct {
+//  for ConformanceClasses schema
+type conformanceClasses struct {
 	ConformsTo []string `json:"conformsTo"`
 }
