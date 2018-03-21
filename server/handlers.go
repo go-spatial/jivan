@@ -100,24 +100,12 @@ func rootJson(w http.ResponseWriter, r *http.Request) {
 	w.Write(rJson)
 }
 
-// --- Return the json-encoded OpenAPI 2 spec for the WFS API available on this instance.
+// --- Return the json-encoded OpenAPI 3 spec for the WFS API available on this instance.
 func openapiJson(w http.ResponseWriter, r *http.Request) {
-	var jsonSpec []byte
-	var err error
-	apiSpec := api()
-	jsonSpec, err = json.Marshal(apiSpec)
-
-	var status int = 200
+	status := 200
 	w.Header().Set("Content-Type", "application/json")
-
-	if err != nil {
-		w.Header().Set("Content-Type", "text/plain")
-		jsonSpec = []byte("Error in openapi spec")
-		status = 500
-	}
-
 	w.WriteHeader(status)
-	w.Write(jsonSpec)
+	w.Write(OpenAPI3SchemaJSON)
 }
 
 // --- Return the names of feature layers available in current provider

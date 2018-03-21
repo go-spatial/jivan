@@ -29,10 +29,13 @@
 package server
 
 import (
+	"encoding/json"
+
 	"github.com/jban332/kin-openapi/openapi3"
 )
 
 var OpenAPI3Schema openapi3.Swagger
+var OpenAPI3SchemaJSON []byte
 
 func init() {
 	OpenAPI3Schema = openapi3.Swagger{
@@ -110,4 +113,12 @@ func init() {
 			},
 		},
 	}
+
+	schemaJSON, err := json.Marshal(OpenAPI3Schema)
+	if err != nil {
+		// TODO: log error
+		schemaJSON = []byte("{}")
+	}
+
+	OpenAPI3SchemaJSON = schemaJSON
 }

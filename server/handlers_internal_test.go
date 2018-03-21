@@ -25,6 +25,9 @@
 
 // go-wfs project handlers_internal_test.go
 
+// TODO: The package var serveAddress from server.go is used extensively here.  Update
+//	for safe test parallelism.
+
 package server
 
 import (
@@ -84,6 +87,27 @@ func TestRoot(t *testing.T) {
 	body, _ := ioutil.ReadAll(resp.Body)
 	if string(body) != string(expectedBody) {
 		t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedBody))
+	}
+}
+
+func TestApi(t *testing.T) {
+	// TODO: This is pretty circular logic, as the /api endpoint simply returns openapiSpecJson.
+	//	Make a better test plan.
+	expectedApiContent := OpenAPI3SchemaJSON
+	expectedStatusCode := 200
+	responseWriter := httptest.NewRecorder()
+	request := httptest.NewRequest("GET", "http://server.com/api", bytes.NewBufferString(""))
+	serveAddress = "server.com"
+	openapiJson(responseWriter, request)
+	resp := responseWriter.Result()
+
+	if resp.StatusCode != expectedStatusCode {
+		t.Errorf("status code %v != %v", resp.StatusCode, expectedStatusCode)
+	}
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	if string(body) != string(expectedApiContent) {
+		t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedApiContent))
 	}
 }
 
