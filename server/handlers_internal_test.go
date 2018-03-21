@@ -45,13 +45,26 @@ func TestTesting(t *testing.T) {
 //    /collections (relation type 'data')
 
 func TestRoot(t *testing.T) {
-	expectedBody, err := json.Marshal(rootContent{
+	rc := rootContent{
 		Links: []*link{
-			NewLink("http://server.com/api", "service", "application/json", "", ""),
-			NewLink("http://server.com/conformance", "conformance", "application/json", "", ""),
-			NewLink("http://server.com/collections", "data", "application/json", "", ""),
+			&link{
+				Href: "http://server.com/api",
+				Rel:  "service",
+			},
+			&link{
+				Href: "http://server.com/conformance",
+				Rel:  "conformance",
+			},
+			&link{
+				Href: "http://server.com/collections",
+				Rel:  "data",
+			},
 		},
-	})
+	}
+	rc.ContentType("application/json")
+
+	expectedBody, err := json.Marshal(rc)
+
 	expectedStatusCode := 200
 
 	if err != nil {

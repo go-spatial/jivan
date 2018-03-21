@@ -29,17 +29,6 @@ package server
 
 import "fmt"
 
-// What the endpoint at "/" returns
-type rootContent struct {
-	Links []*link `json:"links"`
-}
-
-func (rc rootContent) ContentType(contentType string) {
-	for _, l := range rc.Links {
-		l.ContentType(contentType)
-	}
-}
-
 func root() rootContent {
 	fmt.Printf("serveAddress in root.go/root(): %v\n", serveAddress)
 	apiUrl := fmt.Sprintf("http://%v/api", serveAddress)
@@ -48,9 +37,18 @@ func root() rootContent {
 
 	r := rootContent{
 		Links: []*link{
-			NewLink(apiUrl, "service", "", "", ""),
-			NewLink(conformanceUrl, "conformance", "", "", ""),
-			NewLink(collectionsUrl, "data", "", "", ""),
+			&link{
+				Href: apiUrl,
+				Rel:  "service",
+			},
+			&link{
+				Href: conformanceUrl,
+				Rel:  "conformance",
+			},
+			&link{
+				Href: collectionsUrl,
+				Rel:  "data",
+			},
 		},
 	}
 
