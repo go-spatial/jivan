@@ -27,12 +27,31 @@
 
 package server
 
-func collectionsMetaData() *collectionsInfo {
-	// TODO
-	csi := collectionsInfo{}
-	return &csi
+import (
+	"fmt"
+
+	"github.com/go-spatial/go-wfs/data_provider"
+)
+
+func collectionsMetaData(p *data_provider.Provider) (*collectionsInfo, error) {
+	cNames, err := p.CollectionNames()
+	if err != nil {
+		// TODO: Log error
+		return nil, err
+	}
+	csInfo := collectionsInfo{Links: []*link{}, Collections: []*collectionInfo{}}
+	for _, cn := range cNames {
+		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
+		cInfo := collectionInfo{Name: cn, Links: []*link{&link{Rel: "self", Href: collectionUrl}}}
+		cLink := link{Href: cn, Rel: "item"}
+
+		csInfo.Links = append(csInfo.Links, &cLink)
+		csInfo.Collections = append(csInfo.Collections, &cInfo)
+	}
+
+	return &csInfo, nil
 }
 
-func collectionMetaData() {
-	// TODO
+func collectionMetaData(name string) {
+
 }

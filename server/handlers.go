@@ -203,7 +203,12 @@ var collectionPathRegexp = regexp.MustCompile(`^/collection/(\w+)$`)
 const DEFAULT_PAGE_SIZE = 10
 
 func collectionsMetaDataJson(w http.ResponseWriter, r *http.Request) {
-	csmd := collectionsMetaData()
+	csmd, err := collectionsMetaData(&Provider)
+	if err != nil {
+		jsonError(w, err.Error(), 500)
+		return
+	}
+
 	ct := "application/json"
 	csmd.ContentType(ct)
 	csmdJson, err := json.Marshal(csmd)

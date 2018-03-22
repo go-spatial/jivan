@@ -63,6 +63,12 @@ var rootContentSchema openapi3.Schema = openapi3.Schema{
 //	for bbox schema
 // maxItems is needed for setting the bbox array MaxItems in the below Schema literal.
 var maxItems int64 = 4
+
+type bbox struct {
+	Crs  string    `json:"crs"`
+	Bbox []float64 `json:"bbox"`
+}
+
 var bboxSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"bbox"},
@@ -131,7 +137,18 @@ func (l *link) ContentType(contentType string) {
 // --- @See https://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/collectionInfo.yaml
 //  for collectionInfo schema
 type collectionInfo struct {
-	// TODO
+	Name        string   `json:"name"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Links       []*link  `json:"links"`
+	Extent      *bbox    `json:"extent"`
+	Crs         []string `json:"crs"`
+}
+
+func (ci *collectionInfo) ContentType(contentType string) {
+	for _, l := range ci.Links {
+		l.ContentType(contentType)
+	}
 }
 
 var collectionInfoSchema openapi3.Schema = openapi3.Schema{
@@ -180,13 +197,16 @@ var collectionInfoSchema openapi3.Schema = openapi3.Schema{
 // --- @See https://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/content.yaml
 //  for collectionsInfo schema.
 type collectionsInfo struct {
-	Links       []*link
-	Collections []*collectionInfo
+	Links       []*link           `json:"links"`
+	Collections []*collectionInfo `json:"collections"`
 }
 
 func (csi *collectionsInfo) ContentType(contentType string) {
 	for _, l := range csi.Links {
 		l.ContentType(contentType)
+	}
+	for _, c := range csi.Collections {
+		c.ContentType(contentType)
 	}
 }
 

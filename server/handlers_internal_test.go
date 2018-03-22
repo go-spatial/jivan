@@ -36,30 +36,39 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/go-spatial/go-wfs/data_provider"
+	"github.com/go-spatial/go-wfs/test_data"
 )
 
-func TestTesting(t *testing.T) {
-	t.Logf("It's working")
-}
+var testingProvider data_provider.Provider
 
-//    /api (relation type 'service')
-//    /conformance (relation type 'conformance')
-//    /collections (relation type 'data')
+func init() {
+	gpkgTiler := test_data.GetTestGPKGTiler()
+	testingProvider = data_provider.Provider{Tiler: gpkgTiler}
+
+	// @See server.go
+	// This is the host:port the server expects requests at & is used to create links in responses.
+	serveAddress = "server.com"
+	// This is the provider the server will use for data
+	Provider = testingProvider
+}
 
 func TestRoot(t *testing.T) {
 	rc := rootContent{
 		Links: []*link{
 			&link{
-				Href: "http://server.com/api",
+				Href: fmt.Sprintf("http://%v/api", serveAddress),
 				Rel:  "service",
 			},
 			&link{
-				Href: "http://server.com/conformance",
+				Href: fmt.Sprintf("http://%v/conformance", serveAddress),
 				Rel:  "conformance",
 			},
 			&link{
-				Href: "http://server.com/collections",
+				Href: fmt.Sprintf("http://%v/collections", serveAddress),
 				Rel:  "data",
 			},
 		},
@@ -71,12 +80,11 @@ func TestRoot(t *testing.T) {
 	expectedStatusCode := 200
 
 	if err != nil {
-		t.Errorf("Problem marshalling expected content: %v", err.Error())
+		t.Errorf("Problem marshalling expected content: %v", err)
 	}
 
 	var responseWriter *httptest.ResponseRecorder = httptest.NewRecorder()
-	request := httptest.NewRequest("GET", "http://server.com/api", bytes.NewBufferString(""))
-	serveAddress = "server.com"
+	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v/api", serveAddress), bytes.NewBufferString(""))
 	rootJson(responseWriter, request)
 	resp := responseWriter.Result()
 
@@ -96,8 +104,7 @@ func TestApi(t *testing.T) {
 	expectedApiContent := OpenAPI3SchemaJSON
 	expectedStatusCode := 200
 	responseWriter := httptest.NewRecorder()
-	request := httptest.NewRequest("GET", "http://server.com/api", bytes.NewBufferString(""))
-	serveAddress = "server.com"
+	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v/api", serveAddress), bytes.NewBufferString(""))
 	openapiJson(responseWriter, request)
 	resp := responseWriter.Result()
 
@@ -112,7 +119,6 @@ func TestApi(t *testing.T) {
 }
 
 func TestConformance(t *testing.T) {
-	serveAddress = "server.com" // pacakge variable in server.go
 	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
 
 	expectedBody, err := json.Marshal(conformanceClasses{
@@ -122,7 +128,7 @@ func TestConformance(t *testing.T) {
 		},
 	})
 	if err != nil {
-		t.Errorf("problem marshalling expectedBody: %v", err.Error())
+		t.Errorf("problem marshalling expectedBody: %v", err)
 	}
 	expectedStatusCode := 200
 
@@ -135,8 +141,95 @@ func TestConformance(t *testing.T) {
 		t.Errorf("status code %v != %v", resp.StatusCode, expectedStatusCode)
 	}
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf("Problem reading response: %v", err)
+	}
+
 	if string(body) != string(expectedBody) {
 		t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedBody))
+	}
+}
+
+func TestCollections(t *testing.T) {
+	collectionsUrl := fmt.Sprintf("http://%v/collections", serveAddress)
+	cNames, err := testingProvider.CollectionNames()
+	if err != nil {
+		t.Errorf("Problem getting collection names: %v", err)
+	}
+
+	csInfo := collectionsInfo{Links: []*link{}, Collections: []*collectionInfo{}}
+	for _, cn := range cNames {
+		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
+		cInfo := collectionInfo{Name: cn, Links: []*link{&link{Rel: "self", Href: collectionUrl, Type: "application/json"}}}
+		cLink := link{Href: cn, Rel: "item", Type: "application/json"}
+
+		csInfo.Links = append(csInfo.Links, &cLink)
+		csInfo.Collections = append(csInfo.Collections, &cInfo)
+	}
+
+	expectedStatus := 200
+	expectedContent, err := json.Marshal(csInfo)
+	if err != nil {
+		t.Errorf("Problem marshalling expected collections info: %v", err)
+	}
+
+	responseWriter := httptest.NewRecorder()
+	request := httptest.NewRequest("GET", collectionsUrl, bytes.NewBufferString(""))
+	collectionsMetaDataJson(responseWriter, request)
+
+	resp := responseWriter.Result()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf("Problem reading response body: %v", err)
+	}
+
+	if resp.StatusCode != expectedStatus {
+		t.Errorf("Status code %v != %v", resp.StatusCode, expectedStatus)
+	}
+
+	if string(body) != string(expectedContent) {
+		// Human readable versions of each
+		bBuf := bytes.NewBufferString("")
+		eBuf := bytes.NewBufferString("")
+		json.Indent(bBuf, body, "", "  ")
+		json.Indent(eBuf, expectedContent, "", "  ")
+
+		hrBody, err := ioutil.ReadAll(bBuf)
+		if err != nil {
+			t.Errorf("Problem reading human-friendly body: %v", err)
+		}
+		hrExpected, err := ioutil.ReadAll(eBuf)
+		if err != nil {
+			t.Errorf("Problem reading human-friendly expected: %v", err)
+		}
+
+		hrBodyLines := strings.Split(string(hrBody), "\n")
+		hrExpectedLines := strings.Split(string(hrExpected), "\n")
+		maxInt := func(a, b int) int {
+			if a > b {
+				return a
+			}
+			return b
+		}
+		minInt := func(a, b int) int {
+			if a < b {
+				return a
+			}
+			return b
+		}
+		for i, bLine := range hrBodyLines {
+			if bLine != hrExpectedLines[i] {
+				firstLineIdx := maxInt(i-5, 0)
+				lastLineIdxB := minInt(i+5, len(hrBodyLines))
+				lastLineIdxE := minInt(i+5, len(hrExpectedLines))
+
+				mismatchB := strings.Join(hrBodyLines[firstLineIdx:lastLineIdxB], "\n")
+				mismatchE := strings.Join(hrExpectedLines[firstLineIdx:lastLineIdxE], "\n")
+				t.Errorf("Result doesn't match expected at line %v, showing %v-%v:\n%v\n--- != ---\n%v\n",
+					i, firstLineIdx, lastLineIdxB, mismatchB, mismatchE)
+				break
+			}
+		}
 	}
 }
