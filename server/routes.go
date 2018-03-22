@@ -30,15 +30,18 @@ package server
 
 import (
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 func setUpRoutes() {
+	r := httprouter.New()
 	http.HandleFunc("/", rootJson)
 	http.HandleFunc("/conformance", conformanceJson)
 	http.HandleFunc("/api", openapiJson)
 	http.HandleFunc("/api/collectionNames", collectionNames)
 	http.HandleFunc("/api/featurePks", featurePks)
 	http.HandleFunc("/api/feature", getFeature)
-	http.HandleFunc("/collections/", collectionData)
+	r.GET("/collections/:name", collectionMetaDataJson)
 	http.HandleFunc("/api/feature_set", filteredFeatures)
 }

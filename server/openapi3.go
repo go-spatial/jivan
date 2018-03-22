@@ -96,16 +96,43 @@ func init() {
 					},
 				},
 			},
-			"/collections": &openapi3.PathItem{
-				Summary:     "Feature Collection MetaData",
-				Description: "Provides details about the feature collections available from this server",
+			"/collections/{name}": &openapi3.PathItem{
+				Summary:     "Feature collection metadata",
+				Description: "Provides details about the feature collection named, or all feature collections if {name} is omitted",
 				Get: &openapi3.Operation{
-					OperationID: "getCollections",
-					Parameters:  openapi3.Parameters{},
+					OperationID: "getCollectionMetaData",
+					Parameters: openapi3.Parameters{
+						&openapi3.ParameterRef{
+							Value: &openapi3.Parameter{
+								Description:     "Name of collection to retrieve metadata for.",
+								Name:            "name",
+								In:              "path",
+								Required:        false,
+								Schema:          &openapi3.SchemaRef{Value: openapi3.NewStringSchema()},
+								AllowEmptyValue: true,
+							},
+						},
+					},
 					Responses: openapi3.Responses{
 						"200": &openapi3.ResponseRef{
 							Value: &openapi3.Response{
-								Content: openapi3.NewContentWithJSONSchema(&collectionsInfoSchema),
+								// TODO: openapi3.NewContentWithJSONSchema() would help, but is broken
+								Content: openapi3.Content{
+									"application/json": &openapi3.ContentType{
+										Schema: &openapi3.SchemaRef{
+											Value: &openapi3.Schema{
+												OneOf: []*openapi3.SchemaRef{
+													&openapi3.SchemaRef{
+														Value: &collectionInfoSchema,
+													},
+													&openapi3.SchemaRef{
+														Value: &collectionsInfoSchema,
+													},
+												},
+											},
+										},
+									},
+								},
 							},
 						},
 					},

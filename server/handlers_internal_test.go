@@ -41,6 +41,7 @@ import (
 
 	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/go-wfs/test_data"
+	"github.com/julienschmidt/httprouter"
 )
 
 var testingProvider data_provider.Provider
@@ -151,7 +152,7 @@ func TestConformance(t *testing.T) {
 	}
 }
 
-func TestCollections(t *testing.T) {
+func TestCollectionsMetaData(t *testing.T) {
 	collectionsUrl := fmt.Sprintf("http://%v/collections", serveAddress)
 	cNames, err := testingProvider.CollectionNames()
 	if err != nil {
@@ -176,7 +177,10 @@ func TestCollections(t *testing.T) {
 
 	responseWriter := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", collectionsUrl, bytes.NewBufferString(""))
-	collectionsMetaDataJson(responseWriter, request)
+
+	router := httprouter.New()
+	router.GET("/collections", collectionMetaDataJson)
+	router.ServeHTTP(responseWriter, request)
 
 	resp := responseWriter.Result()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -189,47 +193,88 @@ func TestCollections(t *testing.T) {
 	}
 
 	if string(body) != string(expectedContent) {
-		// Human readable versions of each
-		bBuf := bytes.NewBufferString("")
-		eBuf := bytes.NewBufferString("")
-		json.Indent(bBuf, body, "", "  ")
-		json.Indent(eBuf, expectedContent, "", "  ")
+		reducedOutputError(t, body, expectedContent)
+	}
+}
 
-		hrBody, err := ioutil.ReadAll(bBuf)
-		if err != nil {
-			t.Errorf("Problem reading human-friendly body: %v", err)
-		}
-		hrExpected, err := ioutil.ReadAll(eBuf)
-		if err != nil {
-			t.Errorf("Problem reading human-friendly expected: %v", err)
-		}
+func TestSingleCollectionMetaData(t *testing.T) {
+	cName := "roads_lines"
+	cUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cName)
+	cInfo := collectionInfo{Name: cName, Links: []*link{&link{Rel: "self", Href: cUrl, Type: "application/json"}}}
 
-		hrBodyLines := strings.Split(string(hrBody), "\n")
-		hrExpectedLines := strings.Split(string(hrExpected), "\n")
-		maxInt := func(a, b int) int {
-			if a > b {
-				return a
-			}
-			return b
-		}
-		minInt := func(a, b int) int {
-			if a < b {
-				return a
-			}
-			return b
-		}
-		for i, bLine := range hrBodyLines {
-			if bLine != hrExpectedLines[i] {
-				firstLineIdx := maxInt(i-5, 0)
-				lastLineIdxB := minInt(i+5, len(hrBodyLines))
-				lastLineIdxE := minInt(i+5, len(hrExpectedLines))
+	expectedStatus := 200
+	expectedContent, err := json.Marshal(cInfo)
+	if err != nil {
+		t.Errorf("Problem marshalling expected collection info: %v", err)
+	}
 
-				mismatchB := strings.Join(hrBodyLines[firstLineIdx:lastLineIdxB], "\n")
-				mismatchE := strings.Join(hrExpectedLines[firstLineIdx:lastLineIdxE], "\n")
-				t.Errorf("Result doesn't match expected at line %v, showing %v-%v:\n%v\n--- != ---\n%v\n",
-					i, firstLineIdx, lastLineIdxB, mismatchB, mismatchE)
-				break
-			}
+	responseWriter := httptest.NewRecorder()
+	request := httptest.NewRequest("GET", cUrl, bytes.NewBufferString(""))
+
+	router := httprouter.New()
+	router.GET("/collections/:name", collectionMetaDataJson)
+	router.ServeHTTP(responseWriter, request)
+
+	resp := responseWriter.Result()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf("Problem reading response body: %v", err)
+	}
+
+	if resp.StatusCode != expectedStatus {
+		t.Errorf("Status code %v != %v", resp.StatusCode, expectedStatus)
+	}
+
+	if string(body) != string(expectedContent) {
+		reducedOutputError(t, body, expectedContent)
+	}
+}
+
+// For large human-readable returns like JSON, limit the output displayed on error to the
+//	mismatched line and a few surrounding lines
+func reducedOutputError(t *testing.T, body, expectedContent []byte) {
+	// Number of lines preceding & following mismatched line to output
+	surroundSize := 5
+	// Human readable versions of each
+	bBuf := bytes.NewBufferString("")
+	eBuf := bytes.NewBufferString("")
+	json.Indent(bBuf, body, "", "  ")
+	json.Indent(eBuf, expectedContent, "", "  ")
+
+	hrBody, err := ioutil.ReadAll(bBuf)
+	if err != nil {
+		t.Errorf("Problem reading human-friendly body: %v", err)
+	}
+	hrExpected, err := ioutil.ReadAll(eBuf)
+	if err != nil {
+		t.Errorf("Problem reading human-friendly expected: %v", err)
+	}
+
+	hrBodyLines := strings.Split(string(hrBody), "\n")
+	hrExpectedLines := strings.Split(string(hrExpected), "\n")
+	maxInt := func(a, b int) int {
+		if a > b {
+			return a
+		}
+		return b
+	}
+	minInt := func(a, b int) int {
+		if a < b {
+			return a
+		}
+		return b
+	}
+	for i, bLine := range hrBodyLines {
+		if bLine != hrExpectedLines[i] {
+			firstLineIdx := maxInt(i-surroundSize, 0)
+			lastLineIdxB := minInt(i+surroundSize, len(hrBodyLines))
+			lastLineIdxE := minInt(i+surroundSize, len(hrExpectedLines))
+
+			mismatchB := strings.Join(hrBodyLines[firstLineIdx:lastLineIdxB], "\n")
+			mismatchE := strings.Join(hrExpectedLines[firstLineIdx:lastLineIdxE], "\n")
+			t.Errorf("Result doesn't match expected at line %v, showing %v-%v:\n%v\n--- != ---\n%v\n",
+				i, firstLineIdx, lastLineIdxB, mismatchB, mismatchE)
+			break
 		}
 	}
 }

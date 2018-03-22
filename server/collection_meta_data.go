@@ -39,6 +39,7 @@ func collectionsMetaData(p *data_provider.Provider) (*collectionsInfo, error) {
 		// TODO: Log error
 		return nil, err
 	}
+
 	csInfo := collectionsInfo{Links: []*link{}, Collections: []*collectionInfo{}}
 	for _, cn := range cNames {
 		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
@@ -52,6 +53,26 @@ func collectionsMetaData(p *data_provider.Provider) (*collectionsInfo, error) {
 	return &csInfo, nil
 }
 
-func collectionMetaData(name string) {
+func collectionMetaData(name string, p *data_provider.Provider) (*collectionInfo, error) {
+	cNames, err := p.CollectionNames()
+	if err != nil {
+		// TODO: log error
+		return nil, err
+	}
 
+	validName := false
+	for _, cName := range cNames {
+		if name == cName {
+			validName = true
+			break
+		}
+	}
+	if !validName {
+		return nil, fmt.Errorf("Invalid collection name: %v", name)
+	}
+
+	collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, name)
+	cInfo := collectionInfo{Name: name, Links: []*link{&link{Rel: "self", Href: collectionUrl}}}
+
+	return &cInfo, nil
 }

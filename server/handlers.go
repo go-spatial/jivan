@@ -40,6 +40,7 @@ import (
 	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	prv "github.com/go-spatial/tegola/provider"
+	"github.com/julienschmidt/httprouter"
 )
 
 // Values returned by content providers (such as root(), conformance()) need to implement this interface
@@ -202,41 +203,58 @@ var collectionPathRegexp = regexp.MustCompile(`^/collection/(\w+)$`)
 
 const DEFAULT_PAGE_SIZE = 10
 
-func collectionsMetaDataJson(w http.ResponseWriter, r *http.Request) {
-	csmd, err := collectionsMetaData(&Provider)
-	if err != nil {
-		jsonError(w, err.Error(), 500)
-		return
-	}
-
+func collectionMetaDataJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	ct := "application/json"
-	csmd.ContentType(ct)
-	csmdJson, err := json.Marshal(csmd)
-	w.Header().Set("Content-Type", ct)
+
+	cName := params.ByName("name")
+
+	var mdI interface{}
+	var err error
+	if cName != "" {
+		mdI, err = collectionMetaData(cName, &Provider)
+	} else {
+		mdI, err = collectionsMetaData(&Provider)
+	}
 
 	if err != nil {
 		jsonError(w, err.Error(), 500)
 		return
 	}
 
+	var mdJson []byte
+	switch md := mdI.(type) {
+	case *collectionInfo:
+		md.ContentType(ct)
+		mdJson, err = json.Marshal(md)
+	case *collectionsInfo:
+		md.ContentType(ct)
+		mdJson, err = json.Marshal(md)
+	default:
+		msg := fmt.Sprintf("Got an unexpected metadata type: %T, %v", md, md)
+		jsonError(w, msg, 500)
+		return
+	}
+
+	if err != nil {
+		jsonError(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", ct)
 	w.WriteHeader(200)
-	w.Write(csmdJson)
+	w.Write(mdJson)
 }
 
-// --- Provide meta-data for collections at /collections &
-// paged access to data for all features in a requested collection at /collections/<collectionName>
-func collectionData(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", "application/json")
+// --- Provide paged access to data for all features at /collections/{name}/items/{feature_id}
+func collectionDataJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	ct := "application/json"
+	cName := params.ByName("name")
+	// fId := params.ByName("feature_id")
 
-	submatches := collectionPathRegexp.FindSubmatch([]byte(r.URL.Path))
-	if len(submatches) < 2 {
-		collectionsMetaDataJson(w, r)
-		return
-	}
+	w.Header().Set("content-type", ct)
 
 	q := r.URL.Query()
 	var pageSize, pageNum uint64
-	collectionName := string(submatches[1])
 	var err error
 
 	qPageSize := q["pageSize"]
@@ -261,7 +279,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Printf("Getting page %v (size %v) for '%v'", pageNum, pageSize, collectionName)
+	log.Printf("Getting page %v (size %v) for '%v'", pageNum, pageSize, cName)
 
 	resp, err := json.Marshal(struct {
 		pageSize       uint64
@@ -270,11 +288,11 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	}{
 		pageSize:       pageSize,
 		pageNum:        pageNum,
-		collectionName: collectionName,
+		collectionName: cName,
 	})
 
 	// collection features
-	cFs, err := Provider.CollectionFeatures(collectionName, nil)
+	cFs, err := Provider.CollectionFeatures(cName, nil)
 
 	// First index we're interested in
 	startIndex := pageSize * pageNum
