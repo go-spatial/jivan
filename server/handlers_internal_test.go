@@ -85,8 +85,12 @@ func TestRoot(t *testing.T) {
 	}
 
 	var responseWriter *httptest.ResponseRecorder = httptest.NewRecorder()
-	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v/api", serveAddress), bytes.NewBufferString(""))
-	rootJson(responseWriter, request)
+	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v/", serveAddress), bytes.NewBufferString(""))
+
+	router := httprouter.New()
+	router.GET("/", rootJson)
+	router.ServeHTTP(responseWriter, request)
+
 	resp := responseWriter.Result()
 
 	if resp.StatusCode != expectedStatusCode {
@@ -106,7 +110,11 @@ func TestApi(t *testing.T) {
 	expectedStatusCode := 200
 	responseWriter := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v/api", serveAddress), bytes.NewBufferString(""))
-	openapiJson(responseWriter, request)
+
+	router := httprouter.New()
+	router.GET("/api", openapiJson)
+	router.ServeHTTP(responseWriter, request)
+
 	resp := responseWriter.Result()
 
 	if resp.StatusCode != expectedStatusCode {
@@ -135,7 +143,11 @@ func TestConformance(t *testing.T) {
 
 	responseWriter := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", conformanceUrl, bytes.NewBufferString(""))
-	conformanceJson(responseWriter, request)
+
+	router := httprouter.New()
+	router.GET("/conformance", conformanceJson)
+	router.ServeHTTP(responseWriter, request)
+
 	resp := responseWriter.Result()
 
 	if resp.StatusCode != expectedStatusCode {
@@ -228,6 +240,14 @@ func TestSingleCollectionMetaData(t *testing.T) {
 	if string(body) != string(expectedContent) {
 		reducedOutputError(t, body, expectedContent)
 	}
+}
+
+func TestCollectionFeatures(t *testing.T) {
+	t.Errorf("Test not implemented")
+}
+
+func TestSingleCollectionFeature(t *testing.T) {
+	t.Errorf("Test not implemented")
 }
 
 // For large human-readable returns like JSON, limit the output displayed on error to the

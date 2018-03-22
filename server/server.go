@@ -45,8 +45,8 @@ func StartServer(setBindAddress, setServeAddress string, p data_provider.Provide
 	fmt.Printf("Bound to: %v\n", bindAddress)
 	fmt.Printf("Expecting traffic at %v\n", serveAddress)
 	Provider = p
-	setUpRoutes()
-	err := http.ListenAndServe(bindAddress, nil)
+	handler := setUpRoutes()
+	err := http.ListenAndServe(bindAddress, handler)
 	if err != nil {
 		panic(fmt.Sprintf("Problem starting web server: %v", err))
 	}

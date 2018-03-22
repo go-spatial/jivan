@@ -34,14 +34,16 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func setUpRoutes() {
+func setUpRoutes() http.Handler {
 	r := httprouter.New()
-	http.HandleFunc("/", rootJson)
-	http.HandleFunc("/conformance", conformanceJson)
-	http.HandleFunc("/api", openapiJson)
-	http.HandleFunc("/api/collectionNames", collectionNames)
-	http.HandleFunc("/api/featurePks", featurePks)
-	http.HandleFunc("/api/feature", getFeature)
+
+	r.GET("/", rootJson)
+	r.GET("/conformance", conformanceJson)
+	r.GET("/api", openapiJson)
+	r.GET("/collections", collectionMetaDataJson)
 	r.GET("/collections/:name", collectionMetaDataJson)
-	http.HandleFunc("/api/feature_set", filteredFeatures)
+	r.GET("/collections/:name/items", collectionDataJson)
+	r.GET("/collections/:name/items/:feature_id", collectionDataJson)
+
+	return r
 }

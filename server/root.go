@@ -30,7 +30,6 @@ package server
 import "fmt"
 
 func root() rootContent {
-	fmt.Printf("serveAddress in root.go/root(): %v\n", serveAddress)
 	apiUrl := fmt.Sprintf("http://%v/api", serveAddress)
 	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
 	collectionsUrl := fmt.Sprintf("http://%v/collections", serveAddress)

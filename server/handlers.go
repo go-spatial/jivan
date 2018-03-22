@@ -30,7 +30,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math"
 	"net/http"
 	"regexp"
 	"sort"
@@ -39,7 +38,6 @@ import (
 
 	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
-	prv "github.com/go-spatial/tegola/provider"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -71,7 +69,7 @@ func notFoundError(w http.ResponseWriter) {
 	jsonError(w, "not found", 404)
 }
 
-func conformanceJson(w http.ResponseWriter, r *http.Request) {
+func conformanceJson(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	c := conformance()
 	result, err := json.Marshal(c)
 	w.Header().Set("Content-Type", "application/json")
@@ -85,7 +83,7 @@ func conformanceJson(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func rootJson(w http.ResponseWriter, r *http.Request) {
+func rootJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	rootContent := root()
 	ct := "application/json"
 	rootContent.ContentType(ct)
@@ -102,7 +100,7 @@ func rootJson(w http.ResponseWriter, r *http.Request) {
 }
 
 // --- Return the json-encoded OpenAPI 3 spec for the WFS API available on this instance.
-func openapiJson(w http.ResponseWriter, r *http.Request) {
+func openapiJson(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	status := 200
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -249,85 +247,86 @@ func collectionMetaDataJson(w http.ResponseWriter, r *http.Request, params httpr
 func collectionDataJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	ct := "application/json"
 	cName := params.ByName("name")
-	// fId := params.ByName("feature_id")
-
-	w.Header().Set("content-type", ct)
+	fIdStr := params.ByName("feature_id")
+	var fId uint64
+	var err error
+	if fIdStr != "" {
+		cid, err := strconv.Atoi(fIdStr)
+		if err != nil {
+			jsonError(w, "Invalid feature_id: "+fIdStr, 400)
+		}
+		fId = uint64(cid)
+	}
 
 	q := r.URL.Query()
-	var pageSize, pageNum uint64
-	var err error
+	var pageSize, pageNum uint
 
 	qPageSize := q["pageSize"]
 	if len(qPageSize) != 1 {
 		pageSize = DEFAULT_PAGE_SIZE
 	} else {
-		pageSize, err = strconv.ParseUint(qPageSize[0], 10, 64)
+		ps, err := strconv.ParseUint(qPageSize[0], 10, 64)
 		if err != nil {
 			jsonError(w, err.Error(), 400)
 			return
 		}
+		pageSize = uint(ps)
 	}
 
 	qPageNum := q["page"]
 	if len(qPageNum) != 1 {
 		pageNum = 0
 	} else {
-		pageNum, err = strconv.ParseUint(qPageNum[0], 10, 64)
+		pn, err := strconv.ParseUint(qPageNum[0], 10, 64)
 		if err != nil {
 			jsonError(w, err.Error(), 400)
 			return
 		}
+		pageNum = uint(pn)
 	}
 
 	log.Printf("Getting page %v (size %v) for '%v'", pageNum, pageSize, cName)
 
-	resp, err := json.Marshal(struct {
-		pageSize       uint64
-		pageNum        uint64
-		collectionName string
-	}{
-		pageSize:       pageSize,
-		pageNum:        pageNum,
-		collectionName: cName,
-	})
+	var data interface{}
+	// If a feature_id was provided, get a single feature, otherwise get a feature collection
+	//	containing all of the collection's features
+	if fIdStr != "" {
+		data, err = feature(cName, fId, &Provider)
+	} else {
+		// First index we're interested in
+		startIdx := pageSize * pageNum
+		// Last index we're interested in +1
+		stopIdx := startIdx + pageSize
 
-	// collection features
-	cFs, err := Provider.CollectionFeatures(cName, nil)
-
-	// First index we're interested in
-	startIndex := pageSize * pageNum
-	// Last index we're interested in +1
-	stopIndex := uint64(math.Min(float64(len(cFs)), float64(startIndex+pageSize)))
-	if startIndex > stopIndex {
-		startIndex = stopIndex
+		data, err = featureCollection(cName, startIdx, stopIdx, &Provider)
 	}
-
-	// paged features
-	pFs := make([]*prv.Feature, 0, stopIndex-startIndex)
-
-	for _, f := range cFs[startIndex:stopIndex] {
-		pFs = append(pFs, f)
-	}
-
-	// Convert the provider features to geojson features.
-	gFs := make([]geojson.Feature, len(pFs))
-	for i, pf := range pFs {
-		gFs[i] = geojson.Feature{ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}, Properties: pf.Tags}
-	}
-
-	// Wrap the features up in a FeatureCollection
-	fc := geojson.FeatureCollection{
-		Features: gFs,
-	}
-	resp, err = json.Marshal(fc)
 
 	if err != nil {
-		jsonError(w, err.Error(), 500)
+		msg := fmt.Sprintf("Problem collecting feature data: %v", err)
+		jsonError(w, msg, 500)
 		return
 	}
 
+	var dataJson []byte
+	switch d := data.(type) {
+	case *geojson.Feature:
+		dataJson, err = json.Marshal(d)
+	case *geojson.FeatureCollection:
+		dataJson, err = json.Marshal(d)
+	default:
+		msg := fmt.Sprintf("Unexpected feature data type: %T, %v", data, data)
+		jsonError(w, msg, 500)
+		return
+	}
+
+	if err != nil {
+		msg := fmt.Sprintf("Problem marshalling feature data: %v", err)
+		jsonError(w, msg, 500)
+	}
+
+	w.Header().Set("Content-Type", ct)
 	w.WriteHeader(200)
-	w.Write(resp)
+	w.Write(dataJson)
 }
 
 // --- Create temporary collection w/ filtered features.
