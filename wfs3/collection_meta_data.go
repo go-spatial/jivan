@@ -25,7 +25,7 @@
 
 // go-wfs project collection_meta_data.go
 
-package server
+package wfs3
 
 import (
 	"fmt"
@@ -33,18 +33,18 @@ import (
 	"github.com/go-spatial/go-wfs/data_provider"
 )
 
-func collectionsMetaData(p *data_provider.Provider) (*collectionsInfo, error) {
+func CollectionsMetaData(p *data_provider.Provider, serveAddress string) (*CollectionsInfo, error) {
 	cNames, err := p.CollectionNames()
 	if err != nil {
 		// TODO: Log error
 		return nil, err
 	}
 
-	csInfo := collectionsInfo{Links: []*link{}, Collections: []*collectionInfo{}}
+	csInfo := CollectionsInfo{Links: []*Link{}, Collections: []*CollectionInfo{}}
 	for _, cn := range cNames {
 		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
-		cInfo := collectionInfo{Name: cn, Links: []*link{&link{Rel: "self", Href: collectionUrl}}}
-		cLink := link{Href: cn, Rel: "item"}
+		cInfo := CollectionInfo{Name: cn, Links: []*Link{&Link{Rel: "self", Href: collectionUrl}}}
+		cLink := Link{Href: cn, Rel: "item"}
 
 		csInfo.Links = append(csInfo.Links, &cLink)
 		csInfo.Collections = append(csInfo.Collections, &cInfo)
@@ -53,7 +53,7 @@ func collectionsMetaData(p *data_provider.Provider) (*collectionsInfo, error) {
 	return &csInfo, nil
 }
 
-func collectionMetaData(name string, p *data_provider.Provider) (*collectionInfo, error) {
+func CollectionMetaData(name string, p *data_provider.Provider, serveAddress string) (*CollectionInfo, error) {
 	cNames, err := p.CollectionNames()
 	if err != nil {
 		// TODO: log error
@@ -72,7 +72,7 @@ func collectionMetaData(name string, p *data_provider.Provider) (*collectionInfo
 	}
 
 	collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, name)
-	cInfo := collectionInfo{Name: name, Links: []*link{&link{Rel: "self", Href: collectionUrl}}}
+	cInfo := CollectionInfo{Name: name, Links: []*Link{&Link{Rel: "self", Href: collectionUrl}}}
 
 	return &cInfo, nil
 }

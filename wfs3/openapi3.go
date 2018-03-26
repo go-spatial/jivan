@@ -26,7 +26,7 @@
 
 // go-wfs project openapi3.go
 
-package server
+package wfs3
 
 import (
 	"encoding/json"
@@ -60,7 +60,7 @@ func init() {
 						"200": &openapi3.ResponseRef{
 							Ref: "",
 							Value: &openapi3.Response{
-								Content: openapi3.NewContentWithJSONSchema(&rootContentSchema),
+								Content: openapi3.NewContentWithJSONSchema(&RootContentSchema),
 							},
 						},
 					},
@@ -90,7 +90,7 @@ func init() {
 					Responses: openapi3.Responses{
 						"200": &openapi3.ResponseRef{
 							Value: &openapi3.Response{
-								Content: openapi3.NewContentWithJSONSchema(&conformanceClassesSchema),
+								Content: openapi3.NewContentWithJSONSchema(&ConformanceClassesSchema),
 							},
 						},
 					},
@@ -123,10 +123,10 @@ func init() {
 											Value: &openapi3.Schema{
 												OneOf: []*openapi3.SchemaRef{
 													&openapi3.SchemaRef{
-														Value: &collectionInfoSchema,
+														Value: &CollectionInfoSchema,
 													},
 													&openapi3.SchemaRef{
-														Value: &collectionsInfoSchema,
+														Value: &CollectionsInfoSchema,
 													},
 												},
 											},

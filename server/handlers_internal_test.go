@@ -41,6 +41,7 @@ import (
 
 	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/go-wfs/test_data"
+	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -58,17 +59,17 @@ func init() {
 }
 
 func TestRoot(t *testing.T) {
-	rc := rootContent{
-		Links: []*link{
-			&link{
+	rc := wfs3.RootContent{
+		Links: []*wfs3.Link{
+			&wfs3.Link{
 				Href: fmt.Sprintf("http://%v/api", serveAddress),
 				Rel:  "service",
 			},
-			&link{
+			&wfs3.Link{
 				Href: fmt.Sprintf("http://%v/conformance", serveAddress),
 				Rel:  "conformance",
 			},
-			&link{
+			&wfs3.Link{
 				Href: fmt.Sprintf("http://%v/collections", serveAddress),
 				Rel:  "data",
 			},
@@ -106,7 +107,7 @@ func TestRoot(t *testing.T) {
 func TestApi(t *testing.T) {
 	// TODO: This is pretty circular logic, as the /api endpoint simply returns openapiSpecJson.
 	//	Make a better test plan.
-	expectedApiContent := OpenAPI3SchemaJSON
+	expectedApiContent := wfs3.OpenAPI3SchemaJSON
 	expectedStatusCode := 200
 	responseWriter := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v/api", serveAddress), bytes.NewBufferString(""))
@@ -130,7 +131,7 @@ func TestApi(t *testing.T) {
 func TestConformance(t *testing.T) {
 	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
 
-	expectedBody, err := json.Marshal(conformanceClasses{
+	expectedBody, err := json.Marshal(wfs3.ConformanceClasses{
 		ConformsTo: []string{
 			"http://www.opengis.net/spec/wfs-1/3.0/req/core",
 			"http://www.opengis.net/spec/wfs-1/3.0/req/geojson",
@@ -171,11 +172,11 @@ func TestCollectionsMetaData(t *testing.T) {
 		t.Errorf("Problem getting collection names: %v", err)
 	}
 
-	csInfo := collectionsInfo{Links: []*link{}, Collections: []*collectionInfo{}}
+	csInfo := wfs3.CollectionsInfo{Links: []*wfs3.Link{}, Collections: []*wfs3.CollectionInfo{}}
 	for _, cn := range cNames {
 		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
-		cInfo := collectionInfo{Name: cn, Links: []*link{&link{Rel: "self", Href: collectionUrl, Type: "application/json"}}}
-		cLink := link{Href: cn, Rel: "item", Type: "application/json"}
+		cInfo := wfs3.CollectionInfo{Name: cn, Links: []*wfs3.Link{&wfs3.Link{Rel: "self", Href: collectionUrl, Type: "application/json"}}}
+		cLink := wfs3.Link{Href: cn, Rel: "item", Type: "application/json"}
 
 		csInfo.Links = append(csInfo.Links, &cLink)
 		csInfo.Collections = append(csInfo.Collections, &cInfo)
@@ -212,7 +213,7 @@ func TestCollectionsMetaData(t *testing.T) {
 func TestSingleCollectionMetaData(t *testing.T) {
 	cName := "roads_lines"
 	cUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cName)
-	cInfo := collectionInfo{Name: cName, Links: []*link{&link{Rel: "self", Href: cUrl, Type: "application/json"}}}
+	cInfo := wfs3.CollectionInfo{Name: cName, Links: []*wfs3.Link{&wfs3.Link{Rel: "self", Href: cUrl, Type: "application/json"}}}
 
 	expectedStatus := 200
 	expectedContent, err := json.Marshal(cInfo)

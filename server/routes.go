@@ -38,8 +38,10 @@ func setUpRoutes() http.Handler {
 	r := httprouter.New()
 
 	r.GET("/", rootJson)
+
 	r.GET("/conformance", conformanceJson)
 	r.GET("/api", openapiJson)
+
 	r.GET("/collections", collectionMetaDataJson)
 	r.GET("/collections/:name", collectionMetaDataJson)
 	r.GET("/collections/:name/items", collectionDataJson)

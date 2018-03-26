@@ -1,4 +1,4 @@
-package server
+package wfs3
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 )
 
-func feature(cname string, fid uint64, p *data_provider.Provider) (*geojson.Feature, error) {
+func Feature(cname string, fid uint64, p *data_provider.Provider) (*geojson.Feature, error) {
 	pfs, err := p.GetFeatures(
 		[]data_provider.FeatureId{
 			data_provider.FeatureId{Collection: cname, FeaturePk: fid},
@@ -28,7 +28,7 @@ func feature(cname string, fid uint64, p *data_provider.Provider) (*geojson.Feat
 	return gf, nil
 }
 
-func featureCollection(cName string, startIdx, stopIdx uint, p *data_provider.Provider) (
+func FeatureCollection(cName string, startIdx, stopIdx uint, p *data_provider.Provider) (
 	*geojson.FeatureCollection, error) {
 	// all collection features
 	cfs, err := p.CollectionFeatures(cName, nil)

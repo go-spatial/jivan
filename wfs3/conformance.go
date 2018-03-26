@@ -25,11 +25,11 @@
 
 // go-wfs project conformance.go
 
-package server
+package wfs3
 
 // --- Implements req/core/conformance-op
-func conformance() *conformanceClasses {
-	c := conformanceClasses{
+func Conformance() *ConformanceClasses {
+	c := ConformanceClasses{
 		ConformsTo: []string{
 			"http://www.opengis.net/spec/wfs-1/3.0/req/core",
 			"http://www.opengis.net/spec/wfs-1/3.0/req/geojson",

@@ -33,6 +33,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	"github.com/julienschmidt/httprouter"
 )
@@ -57,7 +58,7 @@ func jsonError(w http.ResponseWriter, msg string, status int) {
 }
 
 func rootJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	rootContent := root()
+	rootContent := wfs3.Root(serveAddress)
 	ct := "application/json"
 	rootContent.ContentType(ct)
 	rJson, err := json.Marshal(rootContent)
@@ -73,7 +74,7 @@ func rootJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) 
 }
 
 func conformanceJson(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	c := conformance()
+	c := wfs3.Conformance()
 	result, err := json.Marshal(c)
 	w.Header().Set("Content-Type", "application/json")
 
@@ -91,7 +92,7 @@ func openapiJson(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	status := 200
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(OpenAPI3SchemaJSON)
+	w.Write(wfs3.OpenAPI3SchemaJSON)
 }
 
 func collectionMetaDataJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -102,9 +103,9 @@ func collectionMetaDataJson(w http.ResponseWriter, r *http.Request, params httpr
 	var mdI interface{}
 	var err error
 	if cName != "" {
-		mdI, err = collectionMetaData(cName, &Provider)
+		mdI, err = wfs3.CollectionMetaData(cName, &Provider, serveAddress)
 	} else {
-		mdI, err = collectionsMetaData(&Provider)
+		mdI, err = wfs3.CollectionsMetaData(&Provider, serveAddress)
 	}
 
 	if err != nil {
@@ -114,10 +115,10 @@ func collectionMetaDataJson(w http.ResponseWriter, r *http.Request, params httpr
 
 	var mdJson []byte
 	switch md := mdI.(type) {
-	case *collectionInfo:
+	case *wfs3.CollectionInfo:
 		md.ContentType(ct)
 		mdJson, err = json.Marshal(md)
-	case *collectionsInfo:
+	case *wfs3.CollectionsInfo:
 		md.ContentType(ct)
 		mdJson, err = json.Marshal(md)
 	default:
@@ -184,14 +185,14 @@ func collectionDataJson(w http.ResponseWriter, r *http.Request, params httproute
 	// If a feature_id was provided, get a single feature, otherwise get a feature collection
 	//	containing all of the collection's features
 	if fIdStr != "" {
-		data, err = feature(cName, fId, &Provider)
+		data, err = wfs3.Feature(cName, fId, &Provider)
 	} else {
 		// First index we're interested in
 		startIdx := pageSize * pageNum
 		// Last index we're interested in +1
 		stopIdx := startIdx + pageSize
 
-		data, err = featureCollection(cName, startIdx, stopIdx, &Provider)
+		data, err = wfs3.FeatureCollection(cName, startIdx, stopIdx, &Provider)
 	}
 
 	if err != nil {

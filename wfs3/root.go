@@ -25,26 +25,26 @@
 
 // go-wfs project root.go
 
-package server
+package wfs3
 
 import "fmt"
 
-func root() rootContent {
+func Root(serveAddress string) RootContent {
 	apiUrl := fmt.Sprintf("http://%v/api", serveAddress)
 	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
 	collectionsUrl := fmt.Sprintf("http://%v/collections", serveAddress)
 
-	r := rootContent{
-		Links: []*link{
-			&link{
+	r := RootContent{
+		Links: []*Link{
+			&Link{
 				Href: apiUrl,
 				Rel:  "service",
 			},
-			&link{
+			&Link{
 				Href: conformanceUrl,
 				Rel:  "conformance",
 			},
-			&link{
+			&Link{
 				Href: collectionsUrl,
 				Rel:  "data",
 			},

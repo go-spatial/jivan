@@ -25,24 +25,24 @@
 
 // go-wfs project wfs3_schema.go
 
-package server
+package wfs3
 
 import "github.com/jban332/kin-openapi/openapi3"
 
 // --- @See http://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/root.yaml
 //	for rootContentSchema Definition
 // What the endpoint at "/" returns
-type rootContent struct {
-	Links []*link `json:"links"`
+type RootContent struct {
+	Links []*Link `json:"links"`
 }
 
-func (rc rootContent) ContentType(contentType string) {
+func (rc RootContent) ContentType(contentType string) {
 	for _, l := range rc.Links {
 		l.ContentType(contentType)
 	}
 }
 
-var rootContentSchema openapi3.Schema = openapi3.Schema{
+var RootContentSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"links"},
 	Properties: map[string]*openapi3.SchemaRef{
@@ -64,12 +64,12 @@ var rootContentSchema openapi3.Schema = openapi3.Schema{
 // maxItems is needed for setting the bbox array MaxItems in the below Schema literal.
 var maxItems int64 = 4
 
-type bbox struct {
+type Bbox struct {
 	Crs  string    `json:"crs"`
 	Bbox []float64 `json:"bbox"`
 }
 
-var bboxSchema openapi3.Schema = openapi3.Schema{
+var BboxSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"bbox"},
 	Properties: map[string]*openapi3.SchemaRef{
@@ -90,7 +90,7 @@ var bboxSchema openapi3.Schema = openapi3.Schema{
 
 // --- @See https://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/link.yaml
 //  for link schema
-type link struct {
+type Link struct {
 	Href     string `json:"href"`
 	Rel      string `json:"rel"`
 	Type     string `json:"type"`
@@ -98,7 +98,7 @@ type link struct {
 	Title    string `json:"title"`
 }
 
-var linkSchema openapi3.Schema = openapi3.Schema{
+var LinkSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"href"},
 	Properties: map[string]*openapi3.SchemaRef{
@@ -130,28 +130,28 @@ var linkSchema openapi3.Schema = openapi3.Schema{
 	},
 }
 
-func (l *link) ContentType(contentType string) {
+func (l *Link) ContentType(contentType string) {
 	l.Type = contentType
 }
 
 // --- @See https://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/collectionInfo.yaml
 //  for collectionInfo schema
-type collectionInfo struct {
+type CollectionInfo struct {
 	Name        string   `json:"name"`
 	Title       string   `json:"title"`
 	Description string   `json:"description"`
-	Links       []*link  `json:"links"`
-	Extent      *bbox    `json:"extent"`
+	Links       []*Link  `json:"links"`
+	Extent      *Bbox    `json:"extent"`
 	Crs         []string `json:"crs"`
 }
 
-func (ci *collectionInfo) ContentType(contentType string) {
+func (ci *CollectionInfo) ContentType(contentType string) {
 	for _, l := range ci.Links {
 		l.ContentType(contentType)
 	}
 }
 
-var collectionInfoSchema openapi3.Schema = openapi3.Schema{
+var CollectionInfoSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"name", "links"},
 	Properties: map[string]*openapi3.SchemaRef{
@@ -174,12 +174,12 @@ var collectionInfoSchema openapi3.Schema = openapi3.Schema{
 			Value: &openapi3.Schema{
 				Type: "array",
 				Items: &openapi3.SchemaRef{
-					Value: &linkSchema,
+					Value: &LinkSchema,
 				},
 			},
 		},
 		"extent": &openapi3.SchemaRef{
-			Value: &bboxSchema,
+			Value: &BboxSchema,
 		},
 		"crs": &openapi3.SchemaRef{
 			Value: &openapi3.Schema{
@@ -196,12 +196,12 @@ var collectionInfoSchema openapi3.Schema = openapi3.Schema{
 
 // --- @See https://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/content.yaml
 //  for collectionsInfo schema.
-type collectionsInfo struct {
-	Links       []*link           `json:"links"`
-	Collections []*collectionInfo `json:"collections"`
+type CollectionsInfo struct {
+	Links       []*Link           `json:"links"`
+	Collections []*CollectionInfo `json:"collections"`
 }
 
-func (csi *collectionsInfo) ContentType(contentType string) {
+func (csi *CollectionsInfo) ContentType(contentType string) {
 	for _, l := range csi.Links {
 		l.ContentType(contentType)
 	}
@@ -210,7 +210,7 @@ func (csi *collectionsInfo) ContentType(contentType string) {
 	}
 }
 
-var collectionsInfoSchema openapi3.Schema = openapi3.Schema{
+var CollectionsInfoSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"links", "collections"},
 	Properties: map[string]*openapi3.SchemaRef{
@@ -218,7 +218,7 @@ var collectionsInfoSchema openapi3.Schema = openapi3.Schema{
 			Value: &openapi3.Schema{
 				Type: "array",
 				Items: &openapi3.SchemaRef{
-					Value: &linkSchema,
+					Value: &LinkSchema,
 				},
 			},
 		},
@@ -226,7 +226,7 @@ var collectionsInfoSchema openapi3.Schema = openapi3.Schema{
 			Value: &openapi3.Schema{
 				Type: "array",
 				Items: &openapi3.SchemaRef{
-					Value: &collectionInfoSchema,
+					Value: &CollectionInfoSchema,
 				},
 			},
 		},
@@ -235,11 +235,11 @@ var collectionsInfoSchema openapi3.Schema = openapi3.Schema{
 
 // --- @See https://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/req-classes.yaml
 //  for ConformanceClasses schema
-type conformanceClasses struct {
+type ConformanceClasses struct {
 	ConformsTo []string `json:"conformsTo"`
 }
 
-var conformanceClassesSchema openapi3.Schema = openapi3.Schema{
+var ConformanceClassesSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"conformsTo"},
 	Properties: map[string]*openapi3.SchemaRef{
