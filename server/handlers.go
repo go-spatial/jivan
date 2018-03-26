@@ -40,6 +40,41 @@ import (
 
 const DEFAULT_PAGE_SIZE = 10
 
+const (
+	JSONContentType = "application/json"
+	HTMLContentType = "text/html" // Not yet supported
+)
+
+// Returns the Content-Type string that will be used for the response to this request.
+// This Content-Type will be chosen in order of increasing priority from:
+// request Content-Type, request Accept
+// If the type chosen from the request isn't supported, defaultContentType will be used.
+// TODO: Move defaultContentType to configuration.
+func contentType(r *http.Request) string {
+	defaultContentType := JSONContentType
+	supportedContentTypes := []string{JSONContentType}
+	ctType := r.Header.Get("Content-Type")
+	acceptTypes := r.Header.Get("Accept")
+	fmt.Printf("Content-Type: %v\n", ctType)
+	fmt.Printf("Accept: %v\n", acceptTypes)
+
+	useType := ""
+	typeSupported := false
+	for _, sct := range supportedContentTypes {
+		if useType == sct {
+			typeSupported = true
+			break
+		}
+	}
+
+	if typeSupported == false {
+		useType = defaultContentType
+	}
+
+	fmt.Printf("Using content type: %v\n", useType)
+	return useType
+}
+
 // Sets response 'status', and writes a json-encoded object with property "detail" having value "msg".
 func jsonError(w http.ResponseWriter, msg string, status int) {
 	w.WriteHeader(status)
@@ -59,45 +94,71 @@ func jsonError(w http.ResponseWriter, msg string, status int) {
 
 func rootJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	rootContent := wfs3.Root(serveAddress)
-	ct := "application/json"
+	ct := contentType(r)
 	rootContent.ContentType(ct)
-	rJson, err := json.Marshal(rootContent)
-	w.Header().Set("Content-Type", ct)
+
+	var encodedContent []byte
+	var err error
+	if ct == JSONContentType {
+		encodedContent, err = json.Marshal(rootContent)
+	} else {
+		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+		return
+	}
 
 	if err != nil {
 		jsonError(w, err.Error(), 500)
 		return
 	}
 
+	w.Header().Set("Content-Type", ct)
 	w.WriteHeader(200)
-	w.Write(rJson)
+	w.Write(encodedContent)
 }
 
 func conformanceJson(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	ct := contentType(r)
 	c := wfs3.Conformance()
-	result, err := json.Marshal(c)
-	w.Header().Set("Content-Type", "application/json")
+
+	var encodedContent []byte
+	var err error
+	if ct == JSONContentType {
+		encodedContent, err = json.Marshal(c)
+	} else {
+		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+		return
+	}
 
 	if err != nil {
-		jsonError(w, "problem marshaling conformance declaration to json", 500)
+		msg := fmt.Sprintf("problem marshaling conformance declaration to %v: %v", ct, err.Error())
+		jsonError(w, msg, 500)
 		return
-	} else {
-		w.WriteHeader(200)
-		w.Write([]byte(result))
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(encodedContent)
 }
 
 // --- Return the json-encoded OpenAPI 3 spec for the WFS API available on this instance.
 func openapiJson(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	status := 200
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(wfs3.OpenAPI3SchemaJSON)
+	ct := contentType(r)
+
+	var encodedContent []byte
+	if ct == JSONContentType {
+		encodedContent = wfs3.OpenAPI3SchemaJSON
+	} else {
+		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", ct)
+	w.WriteHeader(200)
+	w.Write(encodedContent)
 }
 
 func collectionMetaDataJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	ct := "application/json"
-
+	ct := contentType(r)
 	cName := params.ByName("name")
 
 	var mdI interface{}
@@ -113,14 +174,24 @@ func collectionMetaDataJson(w http.ResponseWriter, r *http.Request, params httpr
 		return
 	}
 
-	var mdJson []byte
+	var encodedContent []byte
 	switch md := mdI.(type) {
 	case *wfs3.CollectionInfo:
 		md.ContentType(ct)
-		mdJson, err = json.Marshal(md)
+		if ct == JSONContentType {
+			encodedContent, err = json.Marshal(md)
+		} else {
+			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+			return
+		}
 	case *wfs3.CollectionsInfo:
 		md.ContentType(ct)
-		mdJson, err = json.Marshal(md)
+		if ct == JSONContentType {
+			encodedContent, err = json.Marshal(md)
+		} else {
+			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+			return
+		}
 	default:
 		msg := fmt.Sprintf("Got an unexpected metadata type: %T, %v", md, md)
 		jsonError(w, msg, 500)
@@ -134,12 +205,13 @@ func collectionMetaDataJson(w http.ResponseWriter, r *http.Request, params httpr
 
 	w.Header().Set("Content-Type", ct)
 	w.WriteHeader(200)
-	w.Write(mdJson)
+	w.Write(encodedContent)
 }
 
 // --- Provide paged access to data for all features at /collections/{name}/items/{feature_id}
 func collectionDataJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	ct := "application/json"
+	ct := contentType(r)
+
 	cName := params.ByName("name")
 	fIdStr := params.ByName("feature_id")
 	var fId uint64
@@ -201,12 +273,22 @@ func collectionDataJson(w http.ResponseWriter, r *http.Request, params httproute
 		return
 	}
 
-	var dataJson []byte
+	var encodedContent []byte
 	switch d := data.(type) {
 	case *geojson.Feature:
-		dataJson, err = json.Marshal(d)
+		if ct == JSONContentType {
+			encodedContent, err = json.Marshal(d)
+		} else {
+			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+			return
+		}
 	case *geojson.FeatureCollection:
-		dataJson, err = json.Marshal(d)
+		if ct == JSONContentType {
+			encodedContent, err = json.Marshal(d)
+		} else {
+			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+			return
+		}
 	default:
 		msg := fmt.Sprintf("Unexpected feature data type: %T, %v", data, data)
 		jsonError(w, msg, 500)
@@ -220,7 +302,7 @@ func collectionDataJson(w http.ResponseWriter, r *http.Request, params httproute
 
 	w.Header().Set("Content-Type", ct)
 	w.WriteHeader(200)
-	w.Write(dataJson)
+	w.Write(encodedContent)
 }
 
 // --- Create temporary collection w/ filtered features.
