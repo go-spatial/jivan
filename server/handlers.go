@@ -45,33 +45,40 @@ const (
 	HTMLContentType = "text/html" // Not yet supported
 )
 
-// Returns the Content-Type string that will be used for the response to this request.
+// contentType() returns the Content-Type string that will be used for the response to this request.
 // This Content-Type will be chosen in order of increasing priority from:
 // request Content-Type, request Accept
 // If the type chosen from the request isn't supported, defaultContentType will be used.
 // TODO: Move defaultContentType to configuration.
-func contentType(r *http.Request) string {
-	defaultContentType := JSONContentType
+func supportedContentType(ct string) bool {
 	supportedContentTypes := []string{JSONContentType}
-	ctType := r.Header.Get("Content-Type")
-	acceptTypes := r.Header.Get("Accept")
-	fmt.Printf("Content-Type: %v\n", ctType)
-	fmt.Printf("Accept: %v\n", acceptTypes)
-
-	useType := ""
 	typeSupported := false
 	for _, sct := range supportedContentTypes {
-		if useType == sct {
+		if ct == sct {
 			typeSupported = true
 			break
 		}
 	}
+	return typeSupported
+}
 
-	if typeSupported == false {
+func contentType(r *http.Request) string {
+	defaultContentType := JSONContentType
+	useType := ""
+	ctType := r.Header.Get("Content-Type")
+	acceptTypes := r.Header.Get("Accept")
+
+	if supportedContentType(ctType) {
+		useType = ctType
+	}
+
+	// TODO: Parse acceptTypes properly
+	acceptTypes = acceptTypes
+
+	if !supportedContentType(useType) {
 		useType = defaultContentType
 	}
 
-	fmt.Printf("Using content type: %v\n", useType)
 	return useType
 }
 
@@ -92,7 +99,7 @@ func jsonError(w http.ResponseWriter, msg string, status int) {
 	}
 }
 
-func rootJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func root(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	rootContent := wfs3.Root(serveAddress)
 	ct := contentType(r)
 	rootContent.ContentType(ct)
@@ -116,7 +123,7 @@ func rootJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) 
 	w.Write(encodedContent)
 }
 
-func conformanceJson(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func conformance(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ct := contentType(r)
 	c := wfs3.Conformance()
 
@@ -141,7 +148,7 @@ func conformanceJson(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 }
 
 // --- Return the json-encoded OpenAPI 3 spec for the WFS API available on this instance.
-func openapiJson(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func openapi(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ct := contentType(r)
 
 	var encodedContent []byte
@@ -157,7 +164,7 @@ func openapiJson(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Write(encodedContent)
 }
 
-func collectionMetaDataJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func collectionMetaData(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	ct := contentType(r)
 	cName := params.ByName("name")
 
@@ -209,7 +216,7 @@ func collectionMetaDataJson(w http.ResponseWriter, r *http.Request, params httpr
 }
 
 // --- Provide paged access to data for all features at /collections/{name}/items/{feature_id}
-func collectionDataJson(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func collectionData(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	ct := contentType(r)
 
 	cName := params.ByName("name")

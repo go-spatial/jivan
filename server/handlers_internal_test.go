@@ -89,7 +89,7 @@ func TestRoot(t *testing.T) {
 	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v/", serveAddress), bytes.NewBufferString(""))
 
 	router := httprouter.New()
-	router.GET("/", rootJson)
+	router.GET("/", root)
 	router.ServeHTTP(responseWriter, request)
 
 	resp := responseWriter.Result()
@@ -113,7 +113,7 @@ func TestApi(t *testing.T) {
 	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v/api", serveAddress), bytes.NewBufferString(""))
 
 	router := httprouter.New()
-	router.GET("/api", openapiJson)
+	router.GET("/api", openapi)
 	router.ServeHTTP(responseWriter, request)
 
 	resp := responseWriter.Result()
@@ -146,7 +146,7 @@ func TestConformance(t *testing.T) {
 	request := httptest.NewRequest("GET", conformanceUrl, bytes.NewBufferString(""))
 
 	router := httprouter.New()
-	router.GET("/conformance", conformanceJson)
+	router.GET("/conformance", conformance)
 	router.ServeHTTP(responseWriter, request)
 
 	resp := responseWriter.Result()
@@ -192,7 +192,7 @@ func TestCollectionsMetaData(t *testing.T) {
 	request := httptest.NewRequest("GET", collectionsUrl, bytes.NewBufferString(""))
 
 	router := httprouter.New()
-	router.GET("/collections", collectionMetaDataJson)
+	router.GET("/collections", collectionMetaData)
 	router.ServeHTTP(responseWriter, request)
 
 	resp := responseWriter.Result()
@@ -225,7 +225,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 	request := httptest.NewRequest("GET", cUrl, bytes.NewBufferString(""))
 
 	router := httprouter.New()
-	router.GET("/collections/:name", collectionMetaDataJson)
+	router.GET("/collections/:name", collectionMetaData)
 	router.ServeHTTP(responseWriter, request)
 
 	resp := responseWriter.Result()

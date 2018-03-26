@@ -37,15 +37,15 @@ import (
 func setUpRoutes() http.Handler {
 	r := httprouter.New()
 
-	r.GET("/", rootJson)
+	r.GET("/", root)
 
-	r.GET("/conformance", conformanceJson)
-	r.GET("/api", openapiJson)
+	r.GET("/conformance", conformance)
+	r.GET("/api", openapi)
 
-	r.GET("/collections", collectionMetaDataJson)
-	r.GET("/collections/:name", collectionMetaDataJson)
-	r.GET("/collections/:name/items", collectionDataJson)
-	r.GET("/collections/:name/items/:feature_id", collectionDataJson)
+	r.GET("/collections", collectionMetaData)
+	r.GET("/collections/:name", collectionMetaData)
+	r.GET("/collections/:name/items", collectionData)
+	r.GET("/collections/:name/items/:feature_id", collectionData)
 
 	return r
 }
