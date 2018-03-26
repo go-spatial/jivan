@@ -36,19 +36,32 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
+	"path"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/go-spatial/go-wfs/data_provider"
-	"github.com/go-spatial/go-wfs/test_data"
 	"github.com/go-spatial/go-wfs/wfs3"
+	"github.com/go-spatial/tegola/provider/gpkg"
 	"github.com/julienschmidt/httprouter"
 )
 
 var testingProvider data_provider.Provider
 
 func init() {
-	gpkgTiler := test_data.GetTestGPKGTiler()
+	// Instantiate a provider from the codebase's testing gpkg.
+	_, thisFilePath, _, _ := runtime.Caller(0)
+	gpkgPath := path.Join(path.Dir(thisFilePath), "..", "test_data/athens-osm-20170921.gpkg")
+	fmt.Printf("thisFilePath: %v\ngpkgPath: %v\n", path.Dir(thisFilePath), gpkgPath)
+	gpkgConfig, err := gpkg.AutoConfig(gpkgPath)
+	if err != nil {
+		panic(err.Error())
+	}
+	gpkgTiler, err := gpkg.NewTileProvider(gpkgConfig)
+	if err != nil {
+		panic(err.Error())
+	}
 	testingProvider = data_provider.Provider{Tiler: gpkgTiler}
 
 	// @See server.go
