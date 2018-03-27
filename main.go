@@ -28,6 +28,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -58,7 +59,6 @@ func defaultGpkg() string {
 
 	for _, dir := range dirs {
 		searchGlob := path.Join(dir, "*.gpkg")
-		fmt.Println("Looking for gpkg here: " + searchGlob)
 		gpkgFiles, err := filepath.Glob(searchGlob)
 		if err != nil {
 			panic("Invalid glob pattern hardcoded")
@@ -72,15 +72,29 @@ func defaultGpkg() string {
 		break
 	}
 
-	fmt.Println("Returning gpkg path: " + gpkgPath)
 	return gpkgPath
 }
 
 func main() {
+	var bindIp string
+	flag.StringVar(&bindIp, "b", "127.0.0.1", "IP address for the server to listen on")
+	var bindPort int
+	flag.IntVar(&bindPort, "p", 9000, "port for the server to listen on")
+	var serveAddress string
+	flag.StringVar(&serveAddress, "s", "", "IP:Port that connectons will see the server at (defaults to bind address)")
+	flag.Parse()
+	bindAddress := fmt.Sprintf("%v:%v", bindIp, bindPort)
+	if serveAddress == "" {
+		serveAddress = bindAddress
+	}
+
 	// This will be a last-resort after the following are implemented:
 	//	* command-line data source & config file options
 	//	* search working directory for gpkg
 	gpkgPath := defaultGpkg()
+	if gpkgPath == "" {
+		panic("no datasource")
+	}
 	gpkgConfig, err := gpkg.AutoConfig(gpkgPath)
 	if err != nil {
 		panic(fmt.Sprintf("gpkg auto-config failure for '%v': %v", gpkgPath, err))
@@ -91,9 +105,6 @@ func main() {
 	}
 
 	p := data_provider.Provider{Tiler: gpkgProvider}
-
-	bindAddress := "127.0.0.1:9000"
-	serveAddress := bindAddress
 
 	server.StartServer(bindAddress, serveAddress, p)
 }

@@ -53,7 +53,6 @@ func init() {
 	// Instantiate a provider from the codebase's testing gpkg.
 	_, thisFilePath, _, _ := runtime.Caller(0)
 	gpkgPath := path.Join(path.Dir(thisFilePath), "..", "test_data/athens-osm-20170921.gpkg")
-	fmt.Printf("thisFilePath: %v\ngpkgPath: %v\n", path.Dir(thisFilePath), gpkgPath)
 	gpkgConfig, err := gpkg.AutoConfig(gpkgPath)
 	if err != nil {
 		panic(err.Error())
