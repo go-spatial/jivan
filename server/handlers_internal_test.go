@@ -71,6 +71,7 @@ func init() {
 }
 
 func TestRoot(t *testing.T) {
+	rootPath := "/"
 	rc := wfs3.RootContent{
 		Links: []*wfs3.Link{
 			&wfs3.Link{
@@ -98,10 +99,11 @@ func TestRoot(t *testing.T) {
 	}
 
 	var responseWriter *httptest.ResponseRecorder = httptest.NewRecorder()
-	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v/", serveAddress), bytes.NewBufferString(""))
+
+	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v%v", serveAddress, rootPath), bytes.NewBufferString(""))
 
 	router := httprouter.New()
-	router.GET("/", root)
+	router.GET(rootPath, root)
 	router.ServeHTTP(responseWriter, request)
 
 	resp := responseWriter.Result()
@@ -111,6 +113,13 @@ func TestRoot(t *testing.T) {
 	}
 
 	body, _ := ioutil.ReadAll(resp.Body)
+
+	respBodyRC := ioutil.NopCloser(bytes.NewReader(body))
+	err = wfs3.ValidateJSONResponse(request, rootPath, resp, respBodyRC)
+	if err != nil {
+		t.Errorf("response doesn't match schema: %v", err)
+	}
+
 	if string(body) != string(expectedBody) {
 		t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedBody))
 	}

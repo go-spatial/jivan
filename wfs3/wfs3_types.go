@@ -50,9 +50,7 @@ var RootContentSchema openapi3.Schema = openapi3.Schema{
 			Value: &openapi3.Schema{
 				Type: "array",
 				Items: &openapi3.SchemaRef{
-					Value: &openapi3.Schema{
-						Type: "string",
-					},
+					Value: &LinkSchema,
 				},
 			},
 		},

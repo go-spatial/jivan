@@ -1,0 +1,40 @@
+package wfs3
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+
+	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/jban332/kin-openapi/openapi3filter"
+)
+
+func ValidateJSONResponse(request *http.Request, path string, resp *http.Response, respBodyRC io.ReadCloser) error {
+	var op *openapi3.Operation
+	switch request.Method {
+	case "GET":
+		op = OpenAPI3Schema.Paths[path].Get
+	default:
+		return fmt.Errorf("unsupported request.Method: %v", request.Method)
+	}
+
+	rvi := openapi3filter.RequestValidationInput{
+		Request: request,
+		Route: &openapi3filter.Route{
+			Swagger:   &OpenAPI3Schema,
+			Server:    &openapi3.Server{},
+			Path:      path,
+			PathItem:  &openapi3.PathItem{},
+			Method:    request.Method,
+			Operation: op,
+		},
+	}
+
+	err := openapi3filter.ValidateResponse(nil, &openapi3filter.ResponseValidationInput{
+		RequestValidationInput: &rvi,
+		Status:                 resp.StatusCode,
+		Header:                 resp.Header,
+		Body:                   respBodyRC,
+	})
+	return err
+}
