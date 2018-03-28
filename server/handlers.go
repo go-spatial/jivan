@@ -36,6 +36,7 @@ import (
 	"strconv"
 
 	"github.com/go-spatial/go-wfs/wfs3"
+	"github.com/go-spatial/tegola/geom"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	"github.com/julienschmidt/httprouter"
 )
@@ -364,7 +365,7 @@ func filteredFeatures(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var extent [2][2]float64
+	var extent geom.Extent
 	if len(extentParam) > 0 {
 		// lat/lon bounding box arranged as [<minx>, <miny>, <maxx>, <maxy>]
 		var llbbox [4]float64
@@ -373,7 +374,7 @@ func filteredFeatures(w http.ResponseWriter, r *http.Request) {
 			jsonError(w, fmt.Sprintf("unable to unmarshal extent (%v) due to error: %v", extentParam[0], err), 400)
 			return
 		}
-		extent = [2][2]float64{{llbbox[0], llbbox[1]}, {llbbox[2], llbbox[3]}}
+		extent = geom.Extent{llbbox[0], llbbox[1], llbbox[2], llbbox[3]}
 		// TODO: filter by extent
 		if len(extentParam) > 1 {
 			log.Printf("Multiple extent filters, will only use the first '%v'", extentParam)

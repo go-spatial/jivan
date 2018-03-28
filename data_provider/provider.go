@@ -37,34 +37,35 @@ import (
 	"sort"
 	"time"
 
+	"github.com/go-spatial/tegola/geom"
 	prv "github.com/go-spatial/tegola/provider"
 )
 
 type EmptyTile struct {
-	extent *[2][2]float64
+	extent *geom.Extent
 	srid   uint64
 }
 
-func (_ EmptyTile) ZXY() (uint64, uint64, uint64) {
+func (_ EmptyTile) ZXY() (uint, uint, uint) {
 	return 0, 0, 0
 }
 
-func (et EmptyTile) Extent() (extent [2][2]float64, srid uint64) {
+func (et EmptyTile) Extent() (extent *geom.Extent, srid uint64) {
 	if et.extent == nil {
 		max := 20037508.34
 		et.srid = 3857
-		et.extent = &[2][2]float64{{-max, -max}, {max, max}}
+		et.extent = &geom.Extent{-max, -max, max, max}
 	}
-	return *et.extent, et.srid
+	return et.extent, et.srid
 }
 
-func (et EmptyTile) BufferedExtent() (extent [2][2]float64, srid uint64) {
+func (et EmptyTile) BufferedExtent() (extent *geom.Extent, srid uint64) {
 	if et.extent == nil {
 		max := 20037508.34
 		et.srid = 3857
-		et.extent = &[2][2]float64{{-max, -max}, {max, max}}
+		et.extent = &geom.Extent{-max, -max, max, max}
 	}
-	return *et.extent, et.srid
+	return et.extent, et.srid
 }
 
 type ErrDuplicateCollectionName struct {
@@ -91,7 +92,7 @@ type FeatureId struct {
 }
 
 // Filter out features based on params passed
-func (p *Provider) FilterFeatures(extent *[2][2]float64, collections []string, properties map[string]string) ([]FeatureId, error) {
+func (p *Provider) FilterFeatures(extent *geom.Extent, collections []string, properties map[string]string) ([]FeatureId, error) {
 	if len(collections) < 1 {
 		var err error
 		collections, err = p.CollectionNames()
@@ -146,7 +147,7 @@ func (p *Provider) MakeCollection(name string, featureIds []FeatureId) (string, 
 }
 
 // Get all features for a particular collection
-func (p *Provider) CollectionFeatures(collectionName string, extent *[2][2]float64) ([]*prv.Feature, error) {
+func (p *Provider) CollectionFeatures(collectionName string, extent *geom.Extent) ([]*prv.Feature, error) {
 	// return a temp collection with this name if there is one
 	for tcn := range p.tempCollections {
 		if collectionName == tcn {
