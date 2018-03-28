@@ -27,8 +27,10 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -44,6 +46,10 @@ const (
 	JSONContentType = "application/json"
 	HTMLContentType = "text/html" // Not yet supported
 )
+
+type HandlerError struct {
+	Details string `json:"detail"`
+}
 
 // contentType() returns the Content-Type string that will be used for the response to this request.
 // This Content-Type will be chosen in order of increasing priority from:
@@ -99,7 +105,11 @@ func jsonError(w http.ResponseWriter, msg string, status int) {
 	}
 }
 
-func root(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+// Serves the root content for WFS3.
+func root(w http.ResponseWriter, r *http.Request) {
+	// This allows tests to set the result to whatever they want.
+	overrideContent := r.Context().Value("overrideContent")
+
 	rootContent := wfs3.Root(serveAddress)
 	ct := contentType(r)
 	rootContent.ContentType(ct)
@@ -109,7 +119,7 @@ func root(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	if ct == JSONContentType {
 		encodedContent, err = json.Marshal(rootContent)
 	} else {
-		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+		jsonError(w, "Content-Type: '"+ct+"' not supported.", 500)
 		return
 	}
 
@@ -119,6 +129,18 @@ func root(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	}
 
 	w.Header().Set("Content-Type", ct)
+
+	if overrideContent != nil {
+		encodedContent = overrideContent.([]byte)
+	}
+	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
+	err = wfs3.ValidateJSONResponse(r, "/", 200, w.Header(), respBodyRC)
+	if err != nil {
+		log.Printf(fmt.Sprintf("%v", err))
+		jsonError(w, "response doesn't match schema", 500)
+		return
+	}
+
 	w.WriteHeader(200)
 	w.Write(encodedContent)
 }

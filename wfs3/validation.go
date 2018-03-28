@@ -9,7 +9,7 @@ import (
 	"github.com/jban332/kin-openapi/openapi3filter"
 )
 
-func ValidateJSONResponse(request *http.Request, path string, resp *http.Response, respBodyRC io.ReadCloser) error {
+func ValidateJSONResponse(request *http.Request, path string, status int, header http.Header, respBodyRC io.ReadCloser) error {
 	var op *openapi3.Operation
 	switch request.Method {
 	case "GET":
@@ -32,8 +32,8 @@ func ValidateJSONResponse(request *http.Request, path string, resp *http.Respons
 
 	err := openapi3filter.ValidateResponse(nil, &openapi3filter.ResponseValidationInput{
 		RequestValidationInput: &rvi,
-		Status:                 resp.StatusCode,
-		Header:                 resp.Header,
+		Status:                 status,
+		Header:                 header,
 		Body:                   respBodyRC,
 	})
 	return err

@@ -36,10 +36,11 @@ type RootContent struct {
 	Links []*Link `json:"links"`
 }
 
-func (rc RootContent) ContentType(contentType string) {
+func (rc RootContent) ContentType(contentType string) RootContent {
 	for _, l := range rc.Links {
 		l.ContentType(contentType)
 	}
+	return rc
 }
 
 var RootContentSchema openapi3.Schema = openapi3.Schema{

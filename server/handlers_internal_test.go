@@ -32,6 +32,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -71,57 +72,91 @@ func init() {
 }
 
 func TestRoot(t *testing.T) {
-	rootPath := "/"
-	rc := wfs3.RootContent{
-		Links: []*wfs3.Link{
-			&wfs3.Link{
-				Href: fmt.Sprintf("http://%v/api", serveAddress),
-				Rel:  "service",
+	rootUrl := fmt.Sprintf("http://%v/", serveAddress)
+
+	type TestCase struct {
+		goContent          interface{}
+		overrideContent    interface{}
+		contentType        string
+		expectedStatusCode int
+	}
+
+	testCases := []TestCase{
+		// Happy path test case
+		TestCase{
+			goContent: &wfs3.RootContent{
+				Links: []*wfs3.Link{
+					&wfs3.Link{
+						Href: fmt.Sprintf("http://%v/api", serveAddress),
+						Rel:  "service",
+					},
+					&wfs3.Link{
+						Href: fmt.Sprintf("http://%v/conformance", serveAddress),
+						Rel:  "conformance",
+					},
+					&wfs3.Link{
+						Href: fmt.Sprintf("http://%v/collections", serveAddress),
+						Rel:  "data",
+					},
+				},
 			},
-			&wfs3.Link{
-				Href: fmt.Sprintf("http://%v/conformance", serveAddress),
-				Rel:  "conformance",
-			},
-			&wfs3.Link{
-				Href: fmt.Sprintf("http://%v/collections", serveAddress),
-				Rel:  "data",
-			},
+			contentType:        "application/json",
+			expectedStatusCode: 200,
+		},
+		// Schema error, Links type as []string instead of []wfs3.Link
+		TestCase{
+			goContent:          &HandlerError{Details: "response doesn't match schema"},
+			overrideContent:    `{ links: ["http://doesntmatter.com"] }`,
+			expectedStatusCode: 500,
 		},
 	}
-	rc.ContentType("application/json")
 
-	expectedBody, err := json.Marshal(rc)
+	for i, tc := range testCases {
+		var expectedBody []byte
+		var err error
+		// --- Collect expected response body
+		switch gc := tc.goContent.(type) {
+		case *wfs3.RootContent:
+			gc.ContentType(tc.contentType)
+			expectedBody, err = json.Marshal(gc)
+			if err != nil {
+				t.Errorf("Problem marshalling expected content: %v", err)
+			}
+		case *HandlerError:
+			expectedBody, err = json.Marshal(gc)
+			if err != nil {
+				t.Errorf("Problem marshalling expected content: %v", err)
+			}
+		default:
+			t.Errorf("[%v] Unexpected type in tc.goContent: %T", i, tc.goContent)
+		}
 
-	expectedStatusCode := 200
+		// --- override the content produced in the handler if requested by this test case
+		ctx := context.TODO()
+		if tc.overrideContent != nil {
+			oc, err := json.Marshal(tc.overrideContent)
+			if err != nil {
+				t.Errorf("[%v] Problem marshalling overrideContent: %v", i, err)
+			}
+			ctx = context.WithValue(ctx, "overrideContent", oc)
+		}
 
-	if err != nil {
-		t.Errorf("Problem marshalling expected content: %v", err)
-	}
+		// --- perform the request & get the response
+		responseWriter := httptest.NewRecorder()
+		request := httptest.NewRequest("GET", rootUrl, bytes.NewBufferString("")).WithContext(ctx)
 
-	var responseWriter *httptest.ResponseRecorder = httptest.NewRecorder()
+		root(responseWriter, request)
+		resp := responseWriter.Result()
 
-	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v%v", serveAddress, rootPath), bytes.NewBufferString(""))
+		// --- check that the results match expected
+		if resp.StatusCode != tc.expectedStatusCode {
+			t.Errorf("[%v]: status code %v != %v", i, resp.StatusCode, tc.expectedStatusCode)
+		}
 
-	router := httprouter.New()
-	router.GET(rootPath, root)
-	router.ServeHTTP(responseWriter, request)
-
-	resp := responseWriter.Result()
-
-	if resp.StatusCode != expectedStatusCode {
-		t.Errorf("status code %v != %v", resp.StatusCode, expectedStatusCode)
-	}
-
-	body, _ := ioutil.ReadAll(resp.Body)
-
-	respBodyRC := ioutil.NopCloser(bytes.NewReader(body))
-	err = wfs3.ValidateJSONResponse(request, rootPath, resp, respBodyRC)
-	if err != nil {
-		t.Errorf("response doesn't match schema: %v", err)
-	}
-
-	if string(body) != string(expectedBody) {
-		t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedBody))
+		body, _ := ioutil.ReadAll(resp.Body)
+		if string(body) != string(expectedBody) {
+			t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedBody))
+		}
 	}
 }
 

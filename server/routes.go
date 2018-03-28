@@ -37,7 +37,7 @@ import (
 func setUpRoutes() http.Handler {
 	r := httprouter.New()
 
-	r.GET("/", root)
+	r.HandlerFunc("GET", "/", root)
 
 	r.GET("/conformance", conformance)
 	r.GET("/api", openapi)
