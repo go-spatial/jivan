@@ -77,34 +77,43 @@ func defaultGpkg() string {
 
 func main() {
 	var bindIp string
-	flag.StringVar(&bindIp, "b", "127.0.0.1", "IP address for the server to listen on")
 	var bindPort int
-	flag.IntVar(&bindPort, "p", 9000, "port for the server to listen on")
 	var serveAddress string
-	flag.StringVar(&serveAddress, "s", "", "IP:Port that connectons will see the server at (defaults to bind address)")
+	var dataSource string
+
+	flag.StringVar(&bindIp, "b", "127.0.0.1", "IP address for the server to listen on")
+	flag.IntVar(&bindPort, "p", 9000, "port for the server to listen on")
+	flag.StringVar(&serveAddress, "s", "", "IP:Port that connections will see the server at (defaults to bind address)")
+	flag.StringVar(&dataSource , "d", "", "data source (path to .gpkg file)")
+
 	flag.Parse()
+
 	bindAddress := fmt.Sprintf("%v:%v", bindIp, bindPort)
 	if serveAddress == "" {
 		serveAddress = bindAddress
 	}
 
-	// This will be a last-resort after the following are implemented:
-	//	* command-line data source & config file options
-	//	* search working directory for gpkg
-	gpkgPath := defaultGpkg()
-	if gpkgPath == "" {
+	if dataSource != "" {
+		if _, err := os.Stat(dataSource); os.IsNotExist(err) {
+			panic("datasource does not exist")
+		}
+	}
+	if dataSource == "" {
+		dataSource = defaultGpkg()
+	}
+	if dataSource == "" {
 		panic("no datasource")
 	}
-	gpkgConfig, err := gpkg.AutoConfig(gpkgPath)
+	dataConfig, err := gpkg.AutoConfig(dataSource)
 	if err != nil {
-		panic(fmt.Sprintf("gpkg auto-config failure for '%v': %v", gpkgPath, err))
+		panic(fmt.Sprintf("data auto-config failure for '%v': %v", dataSource, err))
 	}
-	gpkgProvider, err := gpkg.NewTileProvider(gpkgConfig)
+	dataProvider, err := gpkg.NewTileProvider(dataConfig)
 	if err != nil {
-		panic(fmt.Sprintf("gpkg tile provider creation error for '%v': %v", gpkgPath, err))
+		panic(fmt.Sprintf("data provider creation error for '%v': %v", dataSource, err))
 	}
 
-	p := data_provider.Provider{Tiler: gpkgProvider}
+	p := data_provider.Provider{Tiler: dataProvider}
 
 	server.StartServer(bindAddress, serveAddress, p)
 }
