@@ -200,11 +200,7 @@ func TestConformance(t *testing.T) {
 
 	responseWriter := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", conformanceUrl, bytes.NewBufferString(""))
-
-	router := httprouter.New()
-	router.GET("/conformance", conformance)
-	router.ServeHTTP(responseWriter, request)
-
+	conformance(responseWriter, request)
 	resp := responseWriter.Result()
 
 	if resp.StatusCode != expectedStatusCode {
@@ -246,10 +242,7 @@ func TestCollectionsMetaData(t *testing.T) {
 
 	responseWriter := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", collectionsUrl, bytes.NewBufferString(""))
-
-	router := httprouter.New()
-	router.GET("/collections", collectionMetaData)
-	router.ServeHTTP(responseWriter, request)
+	collectionsMetaData(responseWriter, request)
 
 	resp := responseWriter.Result()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -278,12 +271,10 @@ func TestSingleCollectionMetaData(t *testing.T) {
 	}
 
 	responseWriter := httptest.NewRecorder()
-	request := httptest.NewRequest("GET", cUrl, bytes.NewBufferString(""))
+	rctx := context.WithValue(context.TODO(), "name", cName)
+	request := httptest.NewRequest("GET", cUrl, bytes.NewBufferString("")).WithContext(rctx)
 
-	router := httprouter.New()
-	router.GET("/collections/:name", collectionMetaData)
-	router.ServeHTTP(responseWriter, request)
-
+	collectionMetaData(responseWriter, request)
 	resp := responseWriter.Result()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

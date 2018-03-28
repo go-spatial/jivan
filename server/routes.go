@@ -38,12 +38,11 @@ func setUpRoutes() http.Handler {
 	r := httprouter.New()
 
 	r.HandlerFunc("GET", "/", root)
-
-	r.GET("/conformance", conformance)
+	r.HandlerFunc("GET", "/conformance", conformance)
 	r.GET("/api", openapi)
 
-	r.GET("/collections", collectionMetaData)
-	r.GET("/collections/:name", collectionMetaData)
+	r.HandlerFunc("GET", "/collections", collectionsMetaData)
+	r.HandlerFunc("GET", "/collections/:name", collectionMetaData)
 	r.GET("/collections/:name/items", collectionData)
 	r.GET("/collections/:name/items/:feature_id", collectionData)
 

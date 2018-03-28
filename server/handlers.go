@@ -108,6 +108,7 @@ func jsonError(w http.ResponseWriter, msg string, status int) {
 
 // Serves the root content for WFS3.
 func root(w http.ResponseWriter, r *http.Request) {
+	rPath := "/"
 	// This allows tests to set the result to whatever they want.
 	overrideContent := r.Context().Value("overrideContent")
 
@@ -135,7 +136,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 		encodedContent = overrideContent.([]byte)
 	}
 	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	err = wfs3.ValidateJSONResponse(r, "/", 200, w.Header(), respBodyRC)
+	err = wfs3.ValidateJSONResponse(r, rPath, 200, w.Header(), respBodyRC)
 	if err != nil {
 		log.Printf(fmt.Sprintf("%v", err))
 		jsonError(w, "response doesn't match schema", 500)
@@ -146,7 +147,11 @@ func root(w http.ResponseWriter, r *http.Request) {
 	w.Write(encodedContent)
 }
 
-func conformance(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func conformance(w http.ResponseWriter, r *http.Request) {
+	cPath := "/conformance"
+	// This allows tests to set the result to whatever they want.
+	overrideContent := r.Context().Value("overrideContent")
+
 	ct := contentType(r)
 	c := wfs3.Conformance()
 
@@ -166,12 +171,29 @@ func conformance(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+
+	if overrideContent != nil {
+		encodedContent = overrideContent.([]byte)
+	}
+	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
+	err = wfs3.ValidateJSONResponse(r, cPath, 200, w.Header(), respBodyRC)
+	if err != nil {
+		log.Printf(fmt.Sprintf("%v", err))
+		jsonError(w, "response doesn't match schema", 500)
+		return
+	}
+
 	w.WriteHeader(200)
 	w.Write(encodedContent)
 }
 
 // --- Return the json-encoded OpenAPI 3 spec for the WFS API available on this instance.
 func openapi(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	// --- TODO: Disabled due to #34
+	// oapiPath := "/api"
+	// This allows tests to set the result to whatever they want.
+	overrideContent := r.Context().Value("overrideContent")
+
 	ct := contentType(r)
 
 	var encodedContent []byte
@@ -183,48 +205,52 @@ func openapi(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	w.Header().Set("Content-Type", ct)
+
+	if overrideContent != nil {
+		encodedContent = overrideContent.([]byte)
+	}
+	// --- TODO: Disabled due to #34
+	// respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
+	// err := wfs3.ValidateJSONResponse(r, oapiPath, 200, w.Header(), respBodyRC)
+	// if err != nil {
+	// 	log.Printf(fmt.Sprintf("%v", err))
+	// 	jsonError(w, "response doesn't match schema", 500)
+	// 	return
+	// }
+
 	w.WriteHeader(200)
 	w.Write(encodedContent)
 }
 
-func collectionMetaData(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	ct := contentType(r)
-	cName := params.ByName("name")
+func collectionMetaData(w http.ResponseWriter, r *http.Request) {
+	cmdPath := "/collections/{name}"
+	overrideContent := r.Context().Value("overrideContent")
 
-	var mdI interface{}
-	var err error
-	if cName != "" {
-		mdI, err = wfs3.CollectionMetaData(cName, &Provider, serveAddress)
-	} else {
-		mdI, err = wfs3.CollectionsMetaData(&Provider, serveAddress)
+	ct := contentType(r)
+	var cName string
+	switch cn := r.Context().Value("name").(type) {
+	case string:
+		cName = cn
 	}
 
+	var err error
+	if cName == "" {
+		jsonError(w, "No {name} provided", 400)
+		return
+	}
+
+	md, err := wfs3.CollectionMetaData(cName, &Provider, serveAddress)
 	if err != nil {
 		jsonError(w, err.Error(), 500)
 		return
 	}
 
 	var encodedContent []byte
-	switch md := mdI.(type) {
-	case *wfs3.CollectionInfo:
+	if ct == JSONContentType {
 		md.ContentType(ct)
-		if ct == JSONContentType {
-			encodedContent, err = json.Marshal(md)
-		} else {
-			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
-			return
-		}
-	case *wfs3.CollectionsInfo:
-		md.ContentType(ct)
-		if ct == JSONContentType {
-			encodedContent, err = json.Marshal(md)
-		} else {
-			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
-			return
-		}
-	default:
-		msg := fmt.Sprintf("Got an unexpected metadata type: %T, %v", md, md)
-		jsonError(w, msg, 500)
+		encodedContent, err = json.Marshal(md)
+	} else {
+		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
 		return
 	}
 
@@ -234,12 +260,71 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request, params httproute
 	}
 
 	w.Header().Set("Content-Type", ct)
+
+	if overrideContent != nil {
+		encodedContent = overrideContent.([]byte)
+	}
+
+	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
+	err = wfs3.ValidateJSONResponse(r, cmdPath, 200, w.Header(), respBodyRC)
+	if err != nil {
+		log.Printf(fmt.Sprintf("%v", err))
+		jsonError(w, "response doesn't match schema", 500)
+		return
+	}
+
+	w.WriteHeader(200)
+	w.Write(encodedContent)
+}
+
+func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
+	cmdPath := "/collections"
+	overrideContent := r.Context().Value("overrideContent")
+
+	ct := contentType(r)
+	md, err := wfs3.CollectionsMetaData(&Provider, serveAddress)
+	if err != nil {
+		jsonError(w, err.Error(), 500)
+		return
+	}
+
+	var encodedContent []byte
+	if ct == JSONContentType {
+		md.ContentType(JSONContentType)
+		encodedContent, err = json.Marshal(md)
+	} else {
+		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+		return
+	}
+
+	if err != nil {
+		jsonError(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", ct)
+
+	if overrideContent != nil {
+		encodedContent = overrideContent.([]byte)
+	}
+
+	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
+	err = wfs3.ValidateJSONResponse(r, cmdPath, 200, w.Header(), respBodyRC)
+	if err != nil {
+		log.Printf(fmt.Sprintf("%v", err))
+		jsonError(w, "response doesn't match schema", 500)
+		return
+	}
+
 	w.WriteHeader(200)
 	w.Write(encodedContent)
 }
 
 // --- Provide paged access to data for all features at /collections/{name}/items/{feature_id}
 func collectionData(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	cdPath := "/collection/{name}/items"
+	overrideContent := r.Context().Value("overrideContent")
+
 	ct := contentType(r)
 
 	cName := params.ByName("name")
@@ -331,6 +416,18 @@ func collectionData(w http.ResponseWriter, r *http.Request, params httprouter.Pa
 	}
 
 	w.Header().Set("Content-Type", ct)
+
+	if overrideContent != nil {
+		encodedContent = overrideContent.([]byte)
+	}
+	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
+	err = wfs3.ValidateJSONResponse(r, cdPath, 200, w.Header(), respBodyRC)
+	if err != nil {
+		log.Printf(fmt.Sprintf("%v", err))
+		jsonError(w, "response doesn't match schema", 500)
+		return
+	}
+
 	w.WriteHeader(200)
 	w.Write(encodedContent)
 }

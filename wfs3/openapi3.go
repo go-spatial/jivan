@@ -96,11 +96,11 @@ func init() {
 					},
 				},
 			},
-			"/collections/{name}": &openapi3.PathItem{
+			"/collections": &openapi3.PathItem{
 				Summary:     "Feature collection metadata",
-				Description: "Provides details about the feature collection named, or all feature collections if {name} is omitted",
+				Description: "Provides details about all feature collections served",
 				Get: &openapi3.Operation{
-					OperationID: "getCollectionMetaData",
+					OperationID: "getCollectionsMetaData",
 					Parameters: openapi3.Parameters{
 						&openapi3.ParameterRef{
 							Value: &openapi3.Parameter{
@@ -120,16 +120,41 @@ func init() {
 								Content: openapi3.Content{
 									"application/json": &openapi3.ContentType{
 										Schema: &openapi3.SchemaRef{
-											Value: &openapi3.Schema{
-												OneOf: []*openapi3.SchemaRef{
-													&openapi3.SchemaRef{
-														Value: &CollectionInfoSchema,
-													},
-													&openapi3.SchemaRef{
-														Value: &CollectionsInfoSchema,
-													},
-												},
-											},
+											Value: &CollectionsInfoSchema,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/collections/{name}": &openapi3.PathItem{
+				Summary:     "Feature collection metadata",
+				Description: "Provides details about the feature collection named",
+				Get: &openapi3.Operation{
+					OperationID: "getCollectionMetaData",
+					Parameters: openapi3.Parameters{
+						&openapi3.ParameterRef{
+							Value: &openapi3.Parameter{
+								Description:     "Name of collection to retrieve metadata for.",
+								Name:            "name",
+								In:              "path",
+								Required:        false,
+								Schema:          &openapi3.SchemaRef{Value: openapi3.NewStringSchema()},
+								AllowEmptyValue: true,
+							},
+						},
+					},
+					Responses: openapi3.Responses{
+						"200": &openapi3.ResponseRef{
+							Value: &openapi3.Response{
+								// TODO: openapi3.NewContentWithJSONSchema() would help, but is broken
+								//
+								Content: openapi3.Content{
+									"application/json": &openapi3.ContentType{
+										Schema: &openapi3.SchemaRef{
+											Value: &CollectionInfoSchema,
 										},
 									},
 								},

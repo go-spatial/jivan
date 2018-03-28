@@ -137,11 +137,11 @@ func (l *Link) ContentType(contentType string) {
 //  for collectionInfo schema
 type CollectionInfo struct {
 	Name        string   `json:"name"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
+	Title       string   `json:"title,omitempty"`
+	Description string   `json:"description,omitempty"`
 	Links       []*Link  `json:"links"`
-	Extent      *Bbox    `json:"extent"`
-	Crs         []string `json:"crs"`
+	Extent      *Bbox    `json:"extent,omitempty"`
+	Crs         []string `json:"crs,omitempty"`
 }
 
 func (ci *CollectionInfo) ContentType(contentType string) {
