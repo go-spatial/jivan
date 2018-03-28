@@ -26,10 +26,11 @@ mkdir /path/to/golang-env
 export GOPATH=/path/to/golang-env
 # install tegola
 go get github.com/go-spatial/tegola
-# FIXME: temporary hack to check out gpkg_autoconfig branch
 cd $GOPATH/src/github.com/go-spatial/tegola
-git checkout gpkg_autoconfig
-go build
+git checkout v0.7.0
+# install other supporting packages
+go get github.com/jban332/kin-openapi/openapi3
+go get github.com/julienschmidt/httprouter
 # install go-wfs
 go get github.com/go-spatial/go-wfs
 ```
@@ -46,11 +47,13 @@ go run main.go  # or go build main.go
 
 Features are identified by a _collection name_ and _feature primary key_ pair.
 
-- Collections: http://localhost:9000/api/collectionNames
-- Features primary keys: http://localhost:9000/api/featurePks
-- Features from a single collection: http://localhost:9000/api/collection
-- Single feature from a single collection: http://localhost:9000/api/feature
-- Create new, filtered, temporary collection: http://localhost:9000/api/feature_set
+- API landing: http://localhost:9000/
+- API definition: http://localhost:9000/api
+- Conformance: http://localhost:9000/conformance
+- Collections: http://localhost:9000/collections
+- Feature collection metadata: http://localhost:9000/collections/{name}
+- Features from a single feature collection: http://localhost:9000/collections/{name}/items
+- Single feature from a feature collection: http://localhost:9000/collections/{name}/items/{feature}
 
 ## Bugs and Issues
 
