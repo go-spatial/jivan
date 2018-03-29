@@ -39,7 +39,7 @@ func setUpRoutes() http.Handler {
 
 	r.HandlerFunc("GET", "/", root)
 	r.HandlerFunc("GET", "/conformance", conformance)
-	r.GET("/api", openapi)
+	r.HandlerFunc("GET", "/api", openapi)
 
 	r.HandlerFunc("GET", "/collections", collectionsMetaData)
 	r.HandlerFunc("GET", "/collections/:name", collectionMetaData)

@@ -45,7 +45,6 @@ import (
 	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/provider/gpkg"
-	"github.com/julienschmidt/httprouter"
 )
 
 var testingProvider data_provider.Provider
@@ -163,24 +162,52 @@ func TestRoot(t *testing.T) {
 func TestApi(t *testing.T) {
 	// TODO: This is pretty circular logic, as the /api endpoint simply returns openapiSpecJson.
 	//	Make a better test plan.
-	expectedApiContent := wfs3.OpenAPI3SchemaJSON
-	expectedStatusCode := 200
-	responseWriter := httptest.NewRecorder()
-	request := httptest.NewRequest("GET", fmt.Sprintf("http://%v/api", serveAddress), bytes.NewBufferString(""))
-
-	router := httprouter.New()
-	router.GET("/api", openapi)
-	router.ServeHTTP(responseWriter, request)
-
-	resp := responseWriter.Result()
-
-	if resp.StatusCode != expectedStatusCode {
-		t.Errorf("status code %v != %v", resp.StatusCode, expectedStatusCode)
+	type TestCase struct {
+		goContent          interface{}
+		overrideContent    interface{}
+		contentType        string
+		expectedStatusCode int
 	}
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	if string(body) != string(expectedApiContent) {
-		t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedApiContent))
+	testCases := []TestCase{
+		TestCase{
+			goContent:          wfs3.OpenAPI3Schema,
+			overrideContent:    nil,
+			contentType:        "application/json",
+			expectedStatusCode: 200,
+		},
+	}
+
+	for i, tc := range testCases {
+		var expectedContent []byte
+		var err error
+		if tc.contentType == JSONContentType {
+			expectedContent, err = json.Marshal(tc.goContent)
+			if err != nil {
+				t.Errorf("[%v] problem marshalling tc.goContent to JSON: %v", i, err)
+				return
+			}
+		} else {
+			t.Errorf("[%v] unsupported content type: '%v'", i, tc.contentType)
+			return
+		}
+
+		responseWriter := httptest.NewRecorder()
+		rctx := context.WithValue(context.TODO(), "overrideContent", tc.overrideContent)
+		request := httptest.NewRequest(
+			"GET", fmt.Sprintf("http://%v/api", serveAddress), bytes.NewBufferString("")).WithContext(rctx)
+		openapi(responseWriter, request)
+		resp := responseWriter.Result()
+
+		if resp.StatusCode != tc.expectedStatusCode {
+			t.Errorf("[%v] status code %v != %v", i, resp.StatusCode, tc.expectedStatusCode)
+		}
+
+		body, _ := ioutil.ReadAll(resp.Body)
+		if string(body) != string(expectedContent) {
+			t.Errorf("[%v] response content doesn't match expected:", i)
+			reducedOutputError(t, body, expectedContent)
+		}
 	}
 }
 

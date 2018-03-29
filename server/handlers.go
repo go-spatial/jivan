@@ -188,7 +188,7 @@ func conformance(w http.ResponseWriter, r *http.Request) {
 }
 
 // --- Return the json-encoded OpenAPI 3 spec for the WFS API available on this instance.
-func openapi(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func openapi(w http.ResponseWriter, r *http.Request) {
 	// --- TODO: Disabled due to #34
 	// oapiPath := "/api"
 	// This allows tests to set the result to whatever they want.
