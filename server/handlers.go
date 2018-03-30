@@ -198,7 +198,7 @@ func openapi(w http.ResponseWriter, r *http.Request) {
 
 	var encodedContent []byte
 	if ct == JSONContentType {
-		encodedContent = wfs3.OpenAPI3SchemaJSON
+		encodedContent = wfs3.GenerateOpenAPIDocument()
 	} else {
 		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
 		return

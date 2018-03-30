@@ -31,18 +31,19 @@ package wfs3
 import (
 	"encoding/json"
 
+	"github.com/go-spatial/go-wfs/config"
 	"github.com/jban332/kin-openapi/openapi3"
 )
 
 var OpenAPI3Schema openapi3.Swagger
 var OpenAPI3SchemaJSON []byte
 
-func init() {
+func GenerateOpenAPIDocument() []byte {
 	OpenAPI3Schema = openapi3.Swagger{
 		OpenAPI: "3.0.0",
 		Info: openapi3.Info{
-			Title:       "Go-WFS3 API",
-			Description: "WFS-3 compatible API",
+			Title:       config.Configuration.Metadata.Identification.Title,
+			Description: config.Configuration.Metadata.Identification.Description,
 			Version:     "0.0.1",
 			License: &openapi3.License{
 				Name: "MIT",
@@ -173,4 +174,5 @@ func init() {
 	}
 
 	OpenAPI3SchemaJSON = schemaJSON
+	return schemaJSON
 }

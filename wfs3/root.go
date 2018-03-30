@@ -33,9 +33,14 @@ func Root(serveAddress string) RootContent {
 	apiUrl := fmt.Sprintf("http://%v/api", serveAddress)
 	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
 	collectionsUrl := fmt.Sprintf("http://%v/collections", serveAddress)
+	selfUrl := fmt.Sprintf("http://%v/", serveAddress)
 
 	r := RootContent{
 		Links: []*Link{
+			{
+				Href: selfUrl,
+				Rel:  "self",
+			},
 			{
 				Href: apiUrl,
 				Rel:  "service",

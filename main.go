@@ -36,6 +36,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/go-wfs/server"
 	"github.com/go-spatial/tegola/provider/gpkg"
@@ -80,21 +81,43 @@ func main() {
 	var bindPort int
 	var serveAddress string
 	var dataSource string
+	var configFile string
+	var err error
 
 	flag.StringVar(&bindIp, "b", "127.0.0.1", "IP address for the server to listen on")
 	flag.IntVar(&bindPort, "p", 9000, "port for the server to listen on")
 	flag.StringVar(&serveAddress, "s", "", "IP:Port that connections will see the server at (defaults to bind address)")
 	flag.StringVar(&dataSource, "d", "", "data source (path to .gpkg file)")
+	flag.StringVar(&configFile, "c", "", "config (path to .toml file)")
 
 	flag.Parse()
 
+	// Configuration logic
+	// 1. config.Configuration gets set at startup (via config.init())
+	// 2. if -c is passed, config file overrides
+	// 3. if other command line arguments are passed, they override previous settings
+
+	if configFile != "" { // load config from command line
+		config.Configuration, err = config.LoadConfigFromFile(configFile)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	config.Configuration.Server.Host = bindIp
+	config.Configuration.Server.Port = bindPort
+
 	bindAddress := fmt.Sprintf("%v:%v", bindIp, bindPort)
+
 	if serveAddress == "" {
 		serveAddress = bindAddress
 	}
 
+	
+	config.Configuration.Server.Url = serveAddress
+
 	if dataSource != "" {
-		if _, err := os.Stat(dataSource); os.IsNotExist(err) {
+		if _, err := os.Stat(config.Configuration.Providers.Data); os.IsNotExist(err) {
 			panic("datasource does not exist")
 		}
 	}
@@ -104,6 +127,8 @@ func main() {
 	if dataSource == "" {
 		panic("no datasource")
 	}
+	config.Configuration.Providers.Data = dataSource
+
 	dataConfig, err := gpkg.AutoConfig(dataSource)
 	if err != nil {
 		panic(fmt.Sprintf("data auto-config failure for '%v': %v", dataSource, err))
