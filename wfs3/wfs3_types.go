@@ -47,7 +47,7 @@ var RootContentSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"links"},
 	Properties: map[string]*openapi3.SchemaRef{
-		"links": &openapi3.SchemaRef{
+		"links": {
 			Value: &openapi3.Schema{
 				Type: "array",
 				Items: &openapi3.SchemaRef{
@@ -72,11 +72,11 @@ var BboxSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"bbox"},
 	Properties: map[string]*openapi3.SchemaRef{
-		"crs": &openapi3.SchemaRef{
+		"crs": {
 			// TODO: This is supposed to have an enum & default based on: http://www.opengis.net/def/crs/OGC/1.3/CRS84
 			Value: openapi3.NewStringSchema(),
 		},
-		"bbox": &openapi3.SchemaRef{
+		"bbox": {
 			Value: &openapi3.Schema{
 				Type:     "array",
 				MinItems: 4,
@@ -101,27 +101,27 @@ var LinkSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"href"},
 	Properties: map[string]*openapi3.SchemaRef{
-		"href": &openapi3.SchemaRef{
+		"href": {
 			Value: &openapi3.Schema{
 				Type: "string",
 			},
 		},
-		"rel": &openapi3.SchemaRef{
+		"rel": {
 			Value: &openapi3.Schema{
 				Type: "string",
 			},
 		},
-		"type": &openapi3.SchemaRef{
+		"type": {
 			Value: &openapi3.Schema{
 				Type: "string",
 			},
 		},
-		"hreflang": &openapi3.SchemaRef{
+		"hreflang": {
 			Value: &openapi3.Schema{
 				Type: "string",
 			},
 		},
-		"title": &openapi3.SchemaRef{
+		"title": {
 			Value: &openapi3.Schema{
 				Type: "string",
 			},
@@ -154,22 +154,22 @@ var CollectionInfoSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"name", "links"},
 	Properties: map[string]*openapi3.SchemaRef{
-		"name": &openapi3.SchemaRef{
+		"name": {
 			Value: &openapi3.Schema{
 				Type: "string",
 			},
 		},
-		"title": &openapi3.SchemaRef{
+		"title": {
 			Value: &openapi3.Schema{
 				Type: "string",
 			},
 		},
-		"description": &openapi3.SchemaRef{
+		"description": {
 			Value: &openapi3.Schema{
 				Type: "string",
 			},
 		},
-		"links": &openapi3.SchemaRef{
+		"links": {
 			Value: &openapi3.Schema{
 				Type: "array",
 				Items: &openapi3.SchemaRef{
@@ -177,10 +177,10 @@ var CollectionInfoSchema openapi3.Schema = openapi3.Schema{
 				},
 			},
 		},
-		"extent": &openapi3.SchemaRef{
+		"extent": {
 			Value: &BboxSchema,
 		},
-		"crs": &openapi3.SchemaRef{
+		"crs": {
 			Value: &openapi3.Schema{
 				Type: "array",
 				Items: &openapi3.SchemaRef{
@@ -213,7 +213,7 @@ var CollectionsInfoSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"links", "collections"},
 	Properties: map[string]*openapi3.SchemaRef{
-		"links": &openapi3.SchemaRef{
+		"links": {
 			Value: &openapi3.Schema{
 				Type: "array",
 				Items: &openapi3.SchemaRef{
@@ -221,7 +221,7 @@ var CollectionsInfoSchema openapi3.Schema = openapi3.Schema{
 				},
 			},
 		},
-		"collections": &openapi3.SchemaRef{
+		"collections": {
 			Value: &openapi3.Schema{
 				Type: "array",
 				Items: &openapi3.SchemaRef{
@@ -242,7 +242,7 @@ var ConformanceClassesSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"conformsTo"},
 	Properties: map[string]*openapi3.SchemaRef{
-		"conformsTo": &openapi3.SchemaRef{
+		"conformsTo": {
 			Value: &openapi3.Schema{
 				Type: "array",
 				Items: &openapi3.SchemaRef{
