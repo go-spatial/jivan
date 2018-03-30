@@ -43,7 +43,7 @@ func CollectionsMetaData(p *data_provider.Provider, serveAddress string) (*Colle
 	csInfo := CollectionsInfo{Links: []*Link{}, Collections: []*CollectionInfo{}}
 	for _, cn := range cNames {
 		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
-		cInfo := CollectionInfo{Name: cn, Links: []*Link{&Link{Rel: "self", Href: collectionUrl}}}
+		cInfo := CollectionInfo{Name: cn, Links: []*Link{{Rel: "self", Href: collectionUrl}}}
 		cLink := Link{Href: collectionUrl, Rel: "item"}
 
 		csInfo.Links = append(csInfo.Links, &cLink)
@@ -72,7 +72,7 @@ func CollectionMetaData(name string, p *data_provider.Provider, serveAddress str
 	}
 
 	collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, name)
-	cInfo := CollectionInfo{Name: name, Links: []*Link{&Link{Rel: "self", Href: collectionUrl}}}
+	cInfo := CollectionInfo{Name: name, Links: []*Link{{Rel: "self", Href: collectionUrl}}}
 
 	return &cInfo, nil
 }

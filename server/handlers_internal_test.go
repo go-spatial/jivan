@@ -83,18 +83,18 @@ func TestRoot(t *testing.T) {
 
 	testCases := []TestCase{
 		// Happy path test case
-		TestCase{
+		{
 			goContent: &wfs3.RootContent{
 				Links: []*wfs3.Link{
-					&wfs3.Link{
+					{
 						Href: fmt.Sprintf("http://%v/api", serveAddress),
 						Rel:  "service",
 					},
-					&wfs3.Link{
+					{
 						Href: fmt.Sprintf("http://%v/conformance", serveAddress),
 						Rel:  "conformance",
 					},
-					&wfs3.Link{
+					{
 						Href: fmt.Sprintf("http://%v/collections", serveAddress),
 						Rel:  "data",
 					},
@@ -104,7 +104,7 @@ func TestRoot(t *testing.T) {
 			expectedStatusCode: 200,
 		},
 		// Schema error, Links type as []string instead of []wfs3.Link
-		TestCase{
+		{
 			goContent:          &HandlerError{Details: "response doesn't match schema"},
 			overrideContent:    `{ links: ["http://doesntmatter.com"] }`,
 			expectedStatusCode: 500,
@@ -171,7 +171,7 @@ func TestApi(t *testing.T) {
 	}
 
 	testCases := []TestCase{
-		TestCase{
+		{
 			goContent:          wfs3.OpenAPI3Schema,
 			overrideContent:    nil,
 			contentType:        "application/json",
@@ -223,7 +223,7 @@ func TestConformance(t *testing.T) {
 	}
 
 	testCases := []TestCase{
-		TestCase{
+		{
 			goContent: wfs3.ConformanceClasses{
 				ConformsTo: []string{
 					"http://www.opengis.net/spec/wfs-1/3.0/req/core",
@@ -283,7 +283,7 @@ func TestCollectionsMetaData(t *testing.T) {
 	csInfo := wfs3.CollectionsInfo{Links: []*wfs3.Link{}, Collections: []*wfs3.CollectionInfo{}}
 	for _, cn := range cNames {
 		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
-		cInfo := wfs3.CollectionInfo{Name: cn, Links: []*wfs3.Link{&wfs3.Link{Rel: "self", Href: collectionUrl, Type: "application/json"}}}
+		cInfo := wfs3.CollectionInfo{Name: cn, Links: []*wfs3.Link{{Rel: "self", Href: collectionUrl, Type: "application/json"}}}
 		cLink := wfs3.Link{Href: collectionUrl, Rel: "item", Type: "application/json"}
 
 		csInfo.Links = append(csInfo.Links, &cLink)
@@ -298,7 +298,7 @@ func TestCollectionsMetaData(t *testing.T) {
 	}
 
 	testCases := []TestCase{
-		TestCase{
+		{
 			goContent:          csInfo,
 			overrideContent:    nil,
 			contentType:        "application/json",
@@ -352,11 +352,11 @@ func TestSingleCollectionMetaData(t *testing.T) {
 	}
 
 	testCases := []TestCase{
-		TestCase{
+		{
 			goContent: wfs3.CollectionInfo{
 				Name: "roads_lines",
 				Links: []*wfs3.Link{
-					&wfs3.Link{
+					{
 						Rel:  "self",
 						Href: fmt.Sprintf("http://%v/collections/%v", serveAddress, "roads_lines"),
 						Type: "application/json",

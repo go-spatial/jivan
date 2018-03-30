@@ -36,15 +36,15 @@ func Root(serveAddress string) RootContent {
 
 	r := RootContent{
 		Links: []*Link{
-			&Link{
+			{
 				Href: apiUrl,
 				Rel:  "service",
 			},
-			&Link{
+			{
 				Href: conformanceUrl,
 				Rel:  "conformance",
 			},
-			&Link{
+			{
 				Href: collectionsUrl,
 				Rel:  "data",
 			},

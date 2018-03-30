@@ -84,7 +84,7 @@ func main() {
 	flag.StringVar(&bindIp, "b", "127.0.0.1", "IP address for the server to listen on")
 	flag.IntVar(&bindPort, "p", 9000, "port for the server to listen on")
 	flag.StringVar(&serveAddress, "s", "", "IP:Port that connections will see the server at (defaults to bind address)")
-	flag.StringVar(&dataSource , "d", "", "data source (path to .gpkg file)")
+	flag.StringVar(&dataSource, "d", "", "data source (path to .gpkg file)")
 
 	flag.Parse()
 

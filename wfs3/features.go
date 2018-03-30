@@ -10,7 +10,7 @@ import (
 func Feature(cname string, fid uint64, p *data_provider.Provider) (*geojson.Feature, error) {
 	pfs, err := p.GetFeatures(
 		[]data_provider.FeatureId{
-			data_provider.FeatureId{Collection: cname, FeaturePk: fid},
+			{Collection: cname, FeaturePk: fid},
 		})
 	if err != nil {
 		return nil, err
