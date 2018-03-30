@@ -111,18 +111,18 @@ func TestRoot(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
-		var expectedBody []byte
+		var expectedContent []byte
 		var err error
 		// --- Collect expected response body
 		switch gc := tc.goContent.(type) {
 		case *wfs3.RootContent:
 			gc.ContentType(tc.contentType)
-			expectedBody, err = json.Marshal(gc)
+			expectedContent, err = json.Marshal(gc)
 			if err != nil {
 				t.Errorf("Problem marshalling expected content: %v", err)
 			}
 		case *HandlerError:
-			expectedBody, err = json.Marshal(gc)
+			expectedContent, err = json.Marshal(gc)
 			if err != nil {
 				t.Errorf("Problem marshalling expected content: %v", err)
 			}
@@ -153,8 +153,8 @@ func TestRoot(t *testing.T) {
 		}
 
 		body, _ := ioutil.ReadAll(resp.Body)
-		if string(body) != string(expectedBody) {
-			t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedBody))
+		if string(body) != string(expectedContent) {
+			t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedContent))
 		}
 	}
 }
@@ -214,33 +214,60 @@ func TestApi(t *testing.T) {
 func TestConformance(t *testing.T) {
 	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
 
-	expectedBody, err := json.Marshal(wfs3.ConformanceClasses{
-		ConformsTo: []string{
-			"http://www.opengis.net/spec/wfs-1/3.0/req/core",
-			"http://www.opengis.net/spec/wfs-1/3.0/req/geojson",
+	type TestCase struct {
+		goContent          interface{}
+		overrideContent    interface{}
+		contentType        string
+		expectedStatusCode int
+	}
+
+	testCases := []TestCase{
+		TestCase{
+			goContent: wfs3.ConformanceClasses{
+				ConformsTo: []string{
+					"http://www.opengis.net/spec/wfs-1/3.0/req/core",
+					"http://www.opengis.net/spec/wfs-1/3.0/req/geojson",
+				},
+			},
+			overrideContent:    nil,
+			contentType:        "application/json",
+			expectedStatusCode: 200,
 		},
-	})
-	if err != nil {
-		t.Errorf("problem marshalling expectedBody: %v", err)
-	}
-	expectedStatusCode := 200
-
-	responseWriter := httptest.NewRecorder()
-	request := httptest.NewRequest("GET", conformanceUrl, bytes.NewBufferString(""))
-	conformance(responseWriter, request)
-	resp := responseWriter.Result()
-
-	if resp.StatusCode != expectedStatusCode {
-		t.Errorf("status code %v != %v", resp.StatusCode, expectedStatusCode)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Errorf("Problem reading response: %v", err)
-	}
+	for i, tc := range testCases {
+		var expectedContent []byte
+		var err error
+		if tc.contentType == "application/json" {
+			expectedContent, err = json.Marshal(tc.goContent)
+			if err != nil {
+				t.Errorf("[%v] problem marshalling expected content to json: %v", i, err)
+				return
+			}
+		} else {
+			t.Errorf("[%v] unexpected content type: %v", i, tc.contentType)
+			return
+		}
 
-	if string(body) != string(expectedBody) {
-		t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedBody))
+		responseWriter := httptest.NewRecorder()
+		rctx := context.WithValue(context.TODO(), "overrideContent", tc.overrideContent)
+		request := httptest.NewRequest("GET", conformanceUrl, bytes.NewBufferString("")).WithContext(rctx)
+		conformance(responseWriter, request)
+		resp := responseWriter.Result()
+
+		if resp.StatusCode != tc.expectedStatusCode {
+			t.Errorf("status code %v != %v", resp.StatusCode, tc.expectedStatusCode)
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Errorf("Problem reading response: %v", err)
+		}
+
+		if string(body) != string(expectedContent) {
+			t.Errorf("[%v] response content doesn't match expected:")
+			reducedOutputError(t, body, expectedContent)
+		}
 	}
 }
 
