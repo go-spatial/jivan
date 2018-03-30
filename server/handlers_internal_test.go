@@ -45,6 +45,7 @@ import (
 	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/provider/gpkg"
+	"github.com/julienschmidt/httprouter"
 )
 
 var testingProvider data_provider.Provider
@@ -347,7 +348,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 		contentOverride    interface{}
 		contentType        string
 		expectedStatusCode int
-		rctx               context.Context
+		urlParams          map[string]string
 	}
 
 	testCases := []TestCase{
@@ -357,7 +358,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 				Links: []*wfs3.Link{
 					&wfs3.Link{
 						Rel:  "self",
-						Href: fmt.Sprintf("http://collections/%v/%v", serveAddress, "roads_lines"),
+						Href: fmt.Sprintf("http://%v/collections/%v", serveAddress, "roads_lines"),
 						Type: "application/json",
 					},
 				},
@@ -365,12 +366,12 @@ func TestSingleCollectionMetaData(t *testing.T) {
 			contentOverride:    nil,
 			contentType:        "application/json",
 			expectedStatusCode: 200,
-			rctx:               context.WithValue(context.TODO(), "name", "roads_lines"),
+			urlParams:          map[string]string{"name": "roads_lines"},
 		},
 	}
 
 	for i, tc := range testCases {
-		url := fmt.Sprintf("http://collections/%v/%v", serveAddress, tc.rctx.Value("name"))
+		url := fmt.Sprintf("http://%v/collections/%v", serveAddress, tc.urlParams["name"])
 
 		var expectedContent []byte
 		var err error
@@ -386,7 +387,16 @@ func TestSingleCollectionMetaData(t *testing.T) {
 		}
 
 		responseWriter := httptest.NewRecorder()
-		request := httptest.NewRequest("GET", url, bytes.NewBufferString("")).WithContext(tc.rctx)
+		hrParams := make(httprouter.Params, 0, len(tc.urlParams))
+		for k, v := range tc.urlParams {
+			hrParams = append(hrParams, httprouter.Param{Key: k, Value: v})
+		}
+
+		request := httptest.NewRequest("GET", url, bytes.NewBufferString(""))
+		rctx := context.WithValue(request.Context(), httprouter.ParamsKey, hrParams)
+		rctx = context.WithValue(rctx, "contentOverride", tc.contentOverride)
+		request = request.WithContext(rctx)
+
 		collectionMetaData(responseWriter, request)
 		resp := responseWriter.Result()
 		body, err := ioutil.ReadAll(resp.Body)

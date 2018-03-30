@@ -227,13 +227,9 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 	overrideContent := r.Context().Value("overrideContent")
 
 	ct := contentType(r)
-	var cName string
-	switch cn := r.Context().Value("name").(type) {
-	case string:
-		cName = cn
-	}
+	ps := httprouter.ParamsFromContext(r.Context())
 
-	var err error
+	cName := ps.ByName("name")
 	if cName == "" {
 		jsonError(w, "No {name} provided", 400)
 		return
