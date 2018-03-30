@@ -272,6 +272,7 @@ func TestConformance(t *testing.T) {
 }
 
 func TestCollectionsMetaData(t *testing.T) {
+	// Build the expected result
 	collectionsUrl := fmt.Sprintf("http://%v/collections", serveAddress)
 	cNames, err := testingProvider.CollectionNames()
 	if err != nil {
@@ -282,34 +283,61 @@ func TestCollectionsMetaData(t *testing.T) {
 	for _, cn := range cNames {
 		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
 		cInfo := wfs3.CollectionInfo{Name: cn, Links: []*wfs3.Link{&wfs3.Link{Rel: "self", Href: collectionUrl, Type: "application/json"}}}
-		cLink := wfs3.Link{Href: cn, Rel: "item", Type: "application/json"}
+		cLink := wfs3.Link{Href: collectionUrl, Rel: "item", Type: "application/json"}
 
 		csInfo.Links = append(csInfo.Links, &cLink)
 		csInfo.Collections = append(csInfo.Collections, &cInfo)
 	}
 
-	expectedStatus := 200
-	expectedContent, err := json.Marshal(csInfo)
-	if err != nil {
-		t.Errorf("Problem marshalling expected collections info: %v", err)
+	type TestCase struct {
+		goContent          interface{}
+		overrideContent    interface{}
+		contentType        string
+		expectedStatusCode int
 	}
 
-	responseWriter := httptest.NewRecorder()
-	request := httptest.NewRequest("GET", collectionsUrl, bytes.NewBufferString(""))
-	collectionsMetaData(responseWriter, request)
-
-	resp := responseWriter.Result()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Errorf("Problem reading response body: %v", err)
+	testCases := []TestCase{
+		TestCase{
+			goContent:          csInfo,
+			overrideContent:    nil,
+			contentType:        "application/json",
+			expectedStatusCode: 200,
+		},
 	}
 
-	if resp.StatusCode != expectedStatus {
-		t.Errorf("Status code %v != %v", resp.StatusCode, expectedStatus)
-	}
+	for i, tc := range testCases {
+		var expectedContent []byte
+		var err error
+		if tc.contentType == "application/json" {
+			expectedContent, err = json.Marshal(csInfo)
+			if err != nil {
+				t.Errorf("[%v] problem marshalling expected collections info to json: %v", i, err)
+				return
+			}
+		} else {
+			t.Errorf("[%v] unsupported content type: %v", i, tc.contentType)
+			return
+		}
 
-	if string(body) != string(expectedContent) {
-		reducedOutputError(t, body, expectedContent)
+		responseWriter := httptest.NewRecorder()
+		rctx := context.WithValue(context.TODO(), "overrideContent", tc.overrideContent)
+		request := httptest.NewRequest("GET", collectionsUrl, bytes.NewBufferString("")).WithContext(rctx)
+		collectionsMetaData(responseWriter, request)
+
+		resp := responseWriter.Result()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Errorf("[%v] Problem reading response body: %v", i, err)
+		}
+
+		if resp.StatusCode != tc.expectedStatusCode {
+			t.Errorf("[%v] Status code %v != %v", i, resp.StatusCode, tc.expectedStatusCode)
+		}
+
+		if string(body) != string(expectedContent) {
+			t.Errorf("[%v] response content doesn't match expected")
+			reducedOutputError(t, body, expectedContent)
+		}
 	}
 }
 

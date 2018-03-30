@@ -44,7 +44,7 @@ func CollectionsMetaData(p *data_provider.Provider, serveAddress string) (*Colle
 	for _, cn := range cNames {
 		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
 		cInfo := CollectionInfo{Name: cn, Links: []*Link{&Link{Rel: "self", Href: collectionUrl}}}
-		cLink := Link{Href: cn, Rel: "item"}
+		cLink := Link{Href: collectionUrl, Rel: "item"}
 
 		csInfo.Links = append(csInfo.Links, &cLink)
 		csInfo.Collections = append(csInfo.Collections, &cInfo)
