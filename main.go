@@ -96,6 +96,8 @@ func main() {
 	// 1. config.Configuration gets set at startup (via config.init())
 	// 2. if -c is passed, config file overrides
 	// 3. if other command line arguments are passed, they override previous settings
+	// 4. If no data provider is supplied by any of these means, the working directory
+	//    is scanned for .gpkg files, then the 'data/' and 'test_data/' directories.
 
 	if configFile != "" { // load config from command line
 		config.Configuration, err = config.LoadConfigFromFile(configFile)
@@ -113,8 +115,7 @@ func main() {
 		serveAddress = bindAddress
 	}
 
-	
-	config.Configuration.Server.Url = serveAddress
+	config.Configuration.Server.Address = serveAddress
 
 	if dataSource != "" {
 		if _, err := os.Stat(config.Configuration.Providers.Data); os.IsNotExist(err) {

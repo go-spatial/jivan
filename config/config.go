@@ -53,7 +53,7 @@ func init() {
 				Fees:              "None",
 				AccessConstraints: "None",
 			},
-			Provider: Provider{
+			ServiceProvider: ServiceProvider{
 				Name: "Organization Name",
 				URL:  "https://github.com/go-spatial/go-wfs",
 			},
@@ -82,7 +82,7 @@ func init() {
 type Server struct {
 	Host        string
 	Port        int
-	Url         string
+	Address     string
 	MimeType    string
 	Encoding    string
 	Language    string
@@ -96,9 +96,9 @@ type Logging struct {
 }
 
 type Metadata struct {
-	Identification Identification
-	Provider       Provider
-	Contact        Contact
+	Identification  Identification
+	ServiceProvider ServiceProvider
+	Contact         Contact
 }
 
 type Identification struct {
@@ -110,7 +110,7 @@ type Identification struct {
 	AccessConstraints string
 }
 
-type Provider struct {
+type ServiceProvider struct {
 	Name string
 	URL  string
 }
