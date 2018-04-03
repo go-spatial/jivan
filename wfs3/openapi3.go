@@ -74,9 +74,9 @@ func init() {
 					Parameters:  openapi3.Parameters{},
 					Responses: openapi3.Responses{
 						"200": &openapi3.ResponseRef{
-							// TODO: There isn't an official json schema for openaip3 yet.  This is the best
-							//	I could find as of 2018-03-19
-							Ref: "https://github.com/googleapis/gnostic/blob/openapi-v3.0.0-rc2/OpenAPIv3/openapi-3.0.json",
+							// TODO: There isn't an official json schema for openaip3 yet.
+							// The best I can do as of 2018-03-30 is a json schema schema
+							Ref: "http://json-schema.org/draft-07/schema",
 						},
 					},
 				},
@@ -140,9 +140,9 @@ func init() {
 								Description:     "Name of collection to retrieve metadata for.",
 								Name:            "name",
 								In:              "path",
-								Required:        false,
+								Required:        true,
 								Schema:          &openapi3.SchemaRef{Value: openapi3.NewStringSchema()},
-								AllowEmptyValue: true,
+								AllowEmptyValue: false,
 							},
 						},
 					},
@@ -155,6 +155,80 @@ func init() {
 									"application/json": &openapi3.ContentType{
 										Schema: &openapi3.SchemaRef{
 											Value: &CollectionInfoSchema,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/collections/{name}/items": &openapi3.PathItem{
+				Summary:     "Feature data for collection",
+				Description: "Provides paged access to data for all features in collection",
+				Get: &openapi3.Operation{
+					OperationID: "getCollectionFeatures",
+					Parameters: openapi3.Parameters{
+						&openapi3.ParameterRef{
+							Value: &openapi3.Parameter{
+								Name:            "name",
+								Description:     "Name of collection to retrieve data for.",
+								In:              "path",
+								Required:        true,
+								Schema:          &openapi3.SchemaRef{Value: openapi3.NewStringSchema()},
+								AllowEmptyValue: false,
+							},
+						},
+					},
+					Responses: openapi3.Responses{
+						"200": &openapi3.ResponseRef{
+							Value: &openapi3.Response{
+								Content: openapi3.Content{
+									"application/json": &openapi3.ContentType{
+										Schema: &openapi3.SchemaRef{
+											Ref: "http://geojson.org/schema/FeatureCollection.json",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/collections/{name}/items/{feature_id}": &openapi3.PathItem{
+				Summary:     "Single feature data from collection",
+				Description: "Provides access to a single feature identitfied by {feature_id} from the named collection",
+				Get: &openapi3.Operation{
+					OperationID: "getCollectionFeature",
+					Parameters: openapi3.Parameters{
+						&openapi3.ParameterRef{
+							Value: &openapi3.Parameter{
+								Name:            "name",
+								Description:     "Name of collection to retrieve data for.",
+								In:              "path",
+								Required:        true,
+								Schema:          &openapi3.SchemaRef{Value: openapi3.NewStringSchema()},
+								AllowEmptyValue: false,
+							},
+						},
+						&openapi3.ParameterRef{
+							Value: &openapi3.Parameter{
+								Name:            "feature_id",
+								Description:     "Id of feature in collection to retrieve data for.",
+								In:              "path",
+								Required:        true,
+								Schema:          &openapi3.SchemaRef{Value: openapi3.NewStringSchema()},
+								AllowEmptyValue: false,
+							},
+						},
+					},
+					Responses: openapi3.Responses{
+						"200": &openapi3.ResponseRef{
+							Value: &openapi3.Response{
+								Content: openapi3.Content{
+									"application/json": &openapi3.ContentType{
+										Schema: &openapi3.SchemaRef{
+											Ref: "http://geojson.org/schema/Feature.json",
 										},
 									},
 								},

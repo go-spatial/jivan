@@ -43,8 +43,8 @@ func setUpRoutes() http.Handler {
 
 	r.HandlerFunc("GET", "/collections", collectionsMetaData)
 	r.HandlerFunc("GET", "/collections/:name", collectionMetaData)
-	r.GET("/collections/:name/items", collectionData)
-	r.GET("/collections/:name/items/:feature_id", collectionData)
+	r.HandlerFunc("GET", "/collections/:name/items", collectionData)
+	r.HandlerFunc("GET", "/collections/:name/items/:feature_id", collectionData)
 
 	return r
 }

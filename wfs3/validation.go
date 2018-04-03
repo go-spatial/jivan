@@ -7,8 +7,11 @@ import (
 
 	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/jban332/kin-openapi/openapi3filter"
+	"github.com/xeipuuv/gojsonschema"
 )
 
+// Validate a json response provided by a Reader using kin-openapi/openapi3 against the openapi3
+//	scaffolding set up in wfs3/openapi3.go
 func ValidateJSONResponse(request *http.Request, path string, status int, header http.Header, respBodyRC io.ReadCloser) error {
 	var op *openapi3.Operation
 	switch request.Method {
@@ -40,4 +43,22 @@ func ValidateJSONResponse(request *http.Request, path string, status int, header
 		Body:                   respBodyRC,
 	})
 	return err
+}
+
+// Validate a Reader providing the response body against a string json schema
+func ValidateJSONResponseAgainstJSONSchema(jsonResponse []byte, jsonSchema string) error {
+	schemaLoader := gojsonschema.NewStringLoader(jsonSchema)
+	respLoader := gojsonschema.NewStringLoader(string(jsonResponse))
+
+	result, err := gojsonschema.Validate(schemaLoader, respLoader)
+	if err != nil {
+		return err
+	}
+
+	if !result.Valid() {
+		err = fmt.Errorf("document is invalid")
+		return err
+	}
+
+	return nil
 }

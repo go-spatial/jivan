@@ -317,22 +317,21 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 }
 
 // --- Provide paged access to data for all features at /collections/{name}/items/{feature_id}
-func collectionData(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	cdPath := "/collection/{name}/items"
+func collectionData(w http.ResponseWriter, r *http.Request) {
+	ct := contentType(r)
 	overrideContent := r.Context().Value("overrideContent")
 
-	ct := contentType(r)
-
-	cName := params.ByName("name")
-	fIdStr := params.ByName("feature_id")
-	var fId uint64
+	urlParams := httprouter.ParamsFromContext(r.Context())
+	cName := urlParams.ByName("name")
+	fidStr := urlParams.ByName("feature_id")
+	var fid uint64
 	var err error
-	if fIdStr != "" {
-		cid, err := strconv.Atoi(fIdStr)
+	if fidStr != "" {
+		cid, err := strconv.Atoi(fidStr)
 		if err != nil {
-			jsonError(w, "Invalid feature_id: "+fIdStr, 400)
+			jsonError(w, "Invalid feature_id: "+fidStr, 400)
 		}
-		fId = uint64(cid)
+		fid = uint64(cid)
 	}
 
 	q := r.URL.Query()
@@ -365,10 +364,12 @@ func collectionData(w http.ResponseWriter, r *http.Request, params httprouter.Pa
 	log.Printf("Getting page %v (size %v) for '%v'", pageNum, pageSize, cName)
 
 	var data interface{}
+	var jsonSchema string
 	// If a feature_id was provided, get a single feature, otherwise get a feature collection
 	//	containing all of the collection's features
-	if fIdStr != "" {
-		data, err = wfs3.Feature(cName, fId, &Provider)
+	if fidStr != "" {
+		data, err = wfs3.Feature(cName, fid, &Provider)
+		jsonSchema = wfs3.FeatureJSONSchema
 	} else {
 		// First index we're interested in
 		startIdx := pageSize * pageNum
@@ -376,6 +377,7 @@ func collectionData(w http.ResponseWriter, r *http.Request, params httprouter.Pa
 		stopIdx := startIdx + pageSize
 
 		data, err = wfs3.FeatureCollection(cName, startIdx, stopIdx, &Provider)
+		jsonSchema = wfs3.FeatureCollectionJSONSchema
 	}
 
 	if err != nil {
@@ -416,12 +418,18 @@ func collectionData(w http.ResponseWriter, r *http.Request, params httprouter.Pa
 	if overrideContent != nil {
 		encodedContent = overrideContent.([]byte)
 	}
-	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	err = wfs3.ValidateJSONResponse(r, cdPath, 200, w.Header(), respBodyRC)
-	if err != nil {
-		log.Printf(fmt.Sprintf("%v", err))
-		jsonError(w, "response doesn't match schema", 500)
-		return
+
+	if ct == JSONContentType {
+		err = wfs3.ValidateJSONResponseAgainstJSONSchema(encodedContent, jsonSchema)
+		if err != nil {
+			log.Printf(fmt.Sprintf("%v", err))
+			jsonError(w, "response doesn't match schema", 500)
+			return
+		}
+	} else {
+		msg := fmt.Sprintf("unsupported content type: %v", ct)
+		log.Printf(msg)
+		jsonError(w, msg, 400)
 	}
 
 	w.WriteHeader(200)
@@ -474,8 +482,8 @@ func filteredFeatures(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fIds, err := Provider.FilterFeatures(&extent, collectionNames, propParams)
-	newCol, err := Provider.MakeCollection("tempcol", fIds)
+	fids, err := Provider.FilterFeatures(&extent, collectionNames, propParams)
+	newCol, err := Provider.MakeCollection("tempcol", fids)
 
 	if err != nil {
 		jsonError(w, err.Error(), 500)
@@ -485,7 +493,7 @@ func filteredFeatures(w http.ResponseWriter, r *http.Request) {
 	resp, err := json.Marshal(struct {
 		Collection   string
 		FeatureCount int
-	}{Collection: newCol, FeatureCount: len(fIds)})
+	}{Collection: newCol, FeatureCount: len(fids)})
 	if err != nil {
 		jsonError(w, err.Error(), 500)
 	}
