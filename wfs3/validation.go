@@ -16,10 +16,10 @@ func ValidateJSONResponse(request *http.Request, path string, status int, header
 	var op *openapi3.Operation
 	switch request.Method {
 	case "GET":
-		if OpenAPI3Schema.Paths[path] == nil {
+		if OpenAPI3Schema().Paths[path] == nil {
 			return fmt.Errorf("Path not found in schema: '%v'", path)
 		}
-		op = OpenAPI3Schema.Paths[path].Get
+		op = OpenAPI3Schema().Paths[path].Get
 	default:
 		return fmt.Errorf("unsupported request.Method: %v", request.Method)
 	}
@@ -27,7 +27,7 @@ func ValidateJSONResponse(request *http.Request, path string, status int, header
 	rvi := openapi3filter.RequestValidationInput{
 		Request: request,
 		Route: &openapi3filter.Route{
-			Swagger:   &OpenAPI3Schema,
+			Swagger:   OpenAPI3Schema(),
 			Server:    &openapi3.Server{},
 			Path:      path,
 			PathItem:  &openapi3.PathItem{},

@@ -30,20 +30,26 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/data_provider"
 )
 
 var Provider data_provider.Provider
 
-var bindAddress string
-var serveAddress string
-
-func StartServer(setBindAddress, setServeAddress string, p data_provider.Provider) {
-	bindAddress = setBindAddress
-	serveAddress = setServeAddress
+func StartServer(p data_provider.Provider) {
+	sconf := config.Configuration.Server
+	var bindAddress string
+	if sconf.BindPort != 80 && sconf.BindPort != 443 {
+		bindAddress = fmt.Sprintf("%v:%v", sconf.BindHost, sconf.BindPort)
+	} else {
+		bindAddress = sconf.BindHost
+	}
 
 	fmt.Printf("Bound to: %v\n", bindAddress)
-	fmt.Printf("Expecting traffic at %v\n", serveAddress)
+	if sconf.Address != "" {
+		fmt.Printf("Expecting traffic at %v\n", sconf.Address)
+	}
+
 	Provider = p
 	handler := setUpRoutes()
 	err := http.ListenAndServe(bindAddress, handler)
