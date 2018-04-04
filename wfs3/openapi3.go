@@ -38,7 +38,7 @@ import (
 var OpenAPI3Schema openapi3.Swagger
 var OpenAPI3SchemaJSON []byte
 
-func GenerateOpenAPIDocument() []byte {
+func GenerateOpenAPIDocument() {
 	OpenAPI3Schema = openapi3.Swagger{
 		OpenAPI: "3.0.0",
 		Info: openapi3.Info{
@@ -174,5 +174,4 @@ func GenerateOpenAPIDocument() []byte {
 	}
 
 	OpenAPI3SchemaJSON = schemaJSON
-	return schemaJSON
 }

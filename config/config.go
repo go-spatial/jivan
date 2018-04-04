@@ -80,8 +80,8 @@ func init() {
 
 // Config provides an object model for configuration.
 type Server struct {
-	Host        string
-	Port        int
+	BindHost    string
+	BindPort    int
 	Address     string
 	MimeType    string
 	Encoding    string

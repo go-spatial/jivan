@@ -39,6 +39,7 @@ import (
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/go-wfs/server"
+	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/provider/gpkg"
 )
 
@@ -106,8 +107,8 @@ func main() {
 		}
 	}
 
-	config.Configuration.Server.Host = bindIp
-	config.Configuration.Server.Port = bindPort
+	config.Configuration.Server.BindHost = bindIp
+	config.Configuration.Server.BindPort = bindPort
 
 	bindAddress := fmt.Sprintf("%v:%v", bindIp, bindPort)
 
@@ -140,6 +141,7 @@ func main() {
 	}
 
 	p := data_provider.Provider{Tiler: dataProvider}
+	wfs3.GenerateOpenAPIDocument()
 
 	server.StartServer(bindAddress, serveAddress, p)
 }
