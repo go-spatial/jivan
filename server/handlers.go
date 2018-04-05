@@ -133,8 +133,12 @@ func root(w http.ResponseWriter, r *http.Request) {
 
 	rootContent, contentId := wfs3.Root(serveAddress(r), false)
 	w.Header().Set("ETag", contentId)
-	if r.Method == HTTPMethodHEAD && r.Header.Get("ETag") == contentId {
-		w.WriteHeader(HTTPStatusNotModified)
+	if r.Method == HTTPMethodHEAD {
+		if r.Header.Get("ETag") == contentId {
+			w.WriteHeader(HTTPStatusNotModified)
+		} else {
+			w.WriteHeader(HTTPStatusOk)
+		}
 		return
 	}
 
@@ -180,8 +184,12 @@ func conformance(w http.ResponseWriter, r *http.Request) {
 	ct := contentType(r)
 	c, contentId := wfs3.Conformance()
 	w.Header().Set("ETag", contentId)
-	if r.Header.Get("ETag") == contentId && r.Method == HTTPMethodHEAD {
-		w.WriteHeader(HTTPStatusNotModified)
+	if r.Method == HTTPMethodHEAD {
+		if r.Header.Get("ETag") == contentId {
+			w.WriteHeader(HTTPStatusNotModified)
+		} else {
+			w.WriteHeader(HTTPStatusOk)
+		}
 		return
 	}
 
@@ -226,11 +234,19 @@ func openapi(w http.ResponseWriter, r *http.Request) {
 
 	ct := contentType(r)
 
-	var encodedContent []byte
-	if ct == JSONContentType {
-		encodedContent = wfs3.OpenAPI3SchemaJSON()
-	} else {
+	if ct != JSONContentType {
 		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
+		return
+	}
+	encodedContent, contentId := wfs3.OpenAPI3SchemaEncoded(ct)
+	w.Header().Set("ETag", contentId)
+
+	if r.Method == HTTPMethodHEAD {
+		if r.Header.Get("ETag") == contentId {
+			w.WriteHeader(HTTPStatusNotModified)
+		} else {
+			w.WriteHeader(HTTPStatusOk)
+		}
 		return
 	}
 

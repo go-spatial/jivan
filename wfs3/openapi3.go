@@ -30,6 +30,8 @@ package wfs3
 
 import (
 	"encoding/json"
+	"fmt"
+	"hash/fnv"
 	"log"
 
 	"github.com/go-spatial/go-wfs/config"
@@ -37,6 +39,7 @@ import (
 )
 
 var openAPI3Schema *openapi3.Swagger
+var openAPI3SchemaContentId string
 var openAPI3SchemaJSON []byte
 
 func OpenAPI3Schema() *openapi3.Swagger {
@@ -46,11 +49,17 @@ func OpenAPI3Schema() *openapi3.Swagger {
 	return openAPI3Schema
 }
 
-func OpenAPI3SchemaJSON() []byte {
+func OpenAPI3SchemaEncoded(encoding string) (encodedContent []byte, contentId string) {
 	if openAPI3SchemaJSON == nil {
 		GenerateOpenAPIDocument()
 	}
-	return openAPI3SchemaJSON
+
+	if encoding == "application/json" {
+		return openAPI3SchemaJSON, openAPI3SchemaContentId
+	} else {
+		msg := fmt.Sprintf("Encoding not supported: %v", encoding)
+		panic(msg)
+	}
 }
 
 func GenerateOpenAPIDocument() {
@@ -262,4 +271,8 @@ func GenerateOpenAPIDocument() {
 	}
 
 	openAPI3SchemaJSON = schemaJSON
+
+	hasher := fnv.New64()
+	hasher.Write(openAPI3SchemaJSON)
+	openAPI3SchemaContentId = fmt.Sprintf("%x", hasher.Sum64())
 }

@@ -218,6 +218,7 @@ func TestApi(t *testing.T) {
 		goContent          interface{}
 		overrideContent    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 	}
 
@@ -226,6 +227,7 @@ func TestApi(t *testing.T) {
 			goContent:          wfs3.OpenAPI3Schema(),
 			overrideContent:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "3b6ca0c9c15e1720",
 			expectedStatusCode: 200,
 		},
 	}
@@ -255,6 +257,9 @@ func TestApi(t *testing.T) {
 			t.Errorf("[%v] status code %v != %v", i, resp.StatusCode, tc.expectedStatusCode)
 		}
 
+		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
+		}
 		body, _ := ioutil.ReadAll(resp.Body)
 		if string(body) != string(expectedContent) {
 			t.Errorf("[%v] response content doesn't match expected:", i)
