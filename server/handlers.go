@@ -122,7 +122,13 @@ func root(w http.ResponseWriter, r *http.Request) {
 	// This allows tests to set the result to whatever they want.
 	overrideContent := r.Context().Value("overrideContent")
 
-	rootContent := wfs3.Root(serveAddress(r))
+	rootContent, contentId := wfs3.Root(serveAddress(r), false)
+	w.Header().Set("ETag", contentId)
+	if r.Method == "HEAD" && r.Header.Get("ETag") == contentId {
+		w.WriteHeader(304)
+		return
+	}
+
 	ct := contentType(r)
 	rootContent.ContentType(ct)
 

@@ -115,6 +115,7 @@ func TestRoot(t *testing.T) {
 		goContent          interface{}
 		overrideContent    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 	}
 
@@ -142,6 +143,7 @@ func TestRoot(t *testing.T) {
 				},
 			},
 			contentType:        JSONContentType,
+			expectedETag:       "746573742e636f6dcbf29ce484222325",
 			expectedStatusCode: 200,
 		},
 		// Schema error, Links type as []string instead of []wfs3.Link
@@ -192,6 +194,10 @@ func TestRoot(t *testing.T) {
 		// --- check that the results match expected
 		if resp.StatusCode != tc.expectedStatusCode {
 			t.Errorf("[%v]: status code %v != %v", i, resp.StatusCode, tc.expectedStatusCode)
+		}
+
+		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v]: ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
 		}
 
 		body, _ := ioutil.ReadAll(resp.Body)

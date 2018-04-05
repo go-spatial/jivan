@@ -27,15 +27,27 @@
 
 package wfs3
 
-import "fmt"
+import (
+	"encoding/hex"
+	"fmt"
+	"hash/fnv"
+)
 
-func Root(serveAddress string) RootContent {
+// checkOnly indicates that the caller doesn't care about the content, only the contentId
+// contentId is a string that changes as the content changes, useful for ETag & caching.
+func Root(serveAddress string, checkOnly bool) (content *RootContent, contentId string) {
+	hasher := fnv.New64()
+	contentId = hex.EncodeToString(hasher.Sum([]byte(serveAddress)))
+	if checkOnly {
+		return nil, contentId
+	}
+
 	apiUrl := fmt.Sprintf("http://%v/api", serveAddress)
 	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
 	collectionsUrl := fmt.Sprintf("http://%v/collections", serveAddress)
 	selfUrl := fmt.Sprintf("http://%v/", serveAddress)
 
-	r := RootContent{
+	content = &RootContent{
 		Links: []*Link{
 			{
 				Href: selfUrl,
@@ -56,5 +68,5 @@ func Root(serveAddress string) RootContent {
 		},
 	}
 
-	return r
+	return content, contentId
 }
