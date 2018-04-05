@@ -30,16 +30,31 @@ package wfs3
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/jban332/kin-openapi/openapi3"
 )
 
-var OpenAPI3Schema openapi3.Swagger
-var OpenAPI3SchemaJSON []byte
+var openAPI3Schema *openapi3.Swagger
+var openAPI3SchemaJSON []byte
+
+func OpenAPI3Schema() *openapi3.Swagger {
+	if openAPI3Schema == nil {
+		GenerateOpenAPIDocument()
+	}
+	return openAPI3Schema
+}
+
+func OpenAPI3SchemaJSON() []byte {
+	if openAPI3SchemaJSON == nil {
+		GenerateOpenAPIDocument()
+	}
+	return openAPI3SchemaJSON
+}
 
 func GenerateOpenAPIDocument() {
-	OpenAPI3Schema = openapi3.Swagger{
+	openAPI3Schema = &openapi3.Swagger{
 		OpenAPI: "3.0.0",
 		Info: openapi3.Info{
 			Title:       config.Configuration.Metadata.Identification.Title,
@@ -241,11 +256,10 @@ func GenerateOpenAPIDocument() {
 		},
 	}
 
-	schemaJSON, err := json.Marshal(OpenAPI3Schema)
+	schemaJSON, err := json.Marshal(openAPI3Schema)
 	if err != nil {
-		// TODO: log error
-		schemaJSON = []byte("{}")
+		log.Printf("Problem marshalling openapi3 schema: %v", err)
 	}
 
-	OpenAPI3SchemaJSON = schemaJSON
+	openAPI3SchemaJSON = schemaJSON
 }

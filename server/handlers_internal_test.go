@@ -42,6 +42,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/geom"
@@ -66,14 +67,45 @@ func init() {
 	}
 	testingProvider = data_provider.Provider{Tiler: gpkgTiler}
 
-	// @See server.go
-	// This is the host:port the server expects requests at & is used to create links in responses.
-	serveAddress = "server.com"
 	// This is the provider the server will use for data
 	Provider = testingProvider
 }
 
+func TestServeAddress(t *testing.T) {
+	type TestCase struct {
+		requestHost          string
+		serverConfigAddress  string
+		expectedServeAddress string
+	}
+
+	testCases := []TestCase{
+		{
+			requestHost:          "someplace.com",
+			serverConfigAddress:  "",
+			expectedServeAddress: "someplace.com",
+		},
+		{
+			requestHost:          "someplace.com",
+			serverConfigAddress:  "otherplace.com",
+			expectedServeAddress: "otherplace.com",
+		},
+	}
+
+	for i, tc := range testCases {
+		url := fmt.Sprintf("http://%v", tc.requestHost)
+		req := httptest.NewRequest("GET", url, bytes.NewReader([]byte{}))
+		if tc.serverConfigAddress != "" {
+			config.Configuration.Server.Address = tc.serverConfigAddress
+		}
+		sa := serveAddress(req)
+		if sa != tc.expectedServeAddress {
+			t.Errorf("[%v] serve address %v != %v", i, sa, tc.expectedServeAddress)
+		}
+	}
+}
+
 func TestRoot(t *testing.T) {
+	serveAddress := "test.com"
 	rootUrl := fmt.Sprintf("http://%v/", serveAddress)
 
 	type TestCase struct {
@@ -88,6 +120,10 @@ func TestRoot(t *testing.T) {
 		{
 			goContent: &wfs3.RootContent{
 				Links: []*wfs3.Link{
+					{
+						Href: fmt.Sprintf("http://%v/", serveAddress),
+						Rel:  "self",
+					},
 					{
 						Href: fmt.Sprintf("http://%v/api", serveAddress),
 						Rel:  "service",
@@ -165,6 +201,9 @@ func TestRoot(t *testing.T) {
 func TestApi(t *testing.T) {
 	// TODO: This is pretty circular logic, as the /api endpoint simply returns openapiSpecJson.
 	//	Make a better test plan.
+
+	serveAddress := "unittest.net"
+
 	type TestCase struct {
 		goContent          interface{}
 		overrideContent    interface{}
@@ -174,7 +213,7 @@ func TestApi(t *testing.T) {
 
 	testCases := []TestCase{
 		{
-			goContent:          wfs3.OpenAPI3Schema,
+			goContent:          wfs3.OpenAPI3Schema(),
 			overrideContent:    nil,
 			contentType:        JSONContentType,
 			expectedStatusCode: 200,
@@ -215,6 +254,7 @@ func TestApi(t *testing.T) {
 }
 
 func TestConformance(t *testing.T) {
+	serveAddress := "tdd.uk"
 	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
 
 	type TestCase struct {
@@ -275,6 +315,7 @@ func TestConformance(t *testing.T) {
 }
 
 func TestCollectionsMetaData(t *testing.T) {
+	serveAddress := "extratesting.org:77"
 	// Build the expected result
 	collectionsUrl := fmt.Sprintf("http://%v/collections", serveAddress)
 	cNames, err := testingProvider.CollectionNames()
@@ -345,6 +386,8 @@ func TestCollectionsMetaData(t *testing.T) {
 }
 
 func TestSingleCollectionMetaData(t *testing.T) {
+	serveAddress := "testthis.com"
+
 	type TestCase struct {
 		goContent          interface{}
 		contentOverride    interface{}
@@ -420,6 +463,8 @@ func uint64ptr(i uint64) *uint64 {
 }
 
 func TestCollectionFeatures(t *testing.T) {
+	serveAddress := "test.com"
+
 	type TestCase struct {
 		goContent          interface{}
 		contentOverride    interface{}
@@ -693,6 +738,8 @@ func TestCollectionFeatures(t *testing.T) {
 }
 
 func TestSingleCollectionFeature(t *testing.T) {
+	serveAddress := "tdd.net"
+
 	type TestCase struct {
 		goContent          interface{}
 		contentOverride    interface{}
@@ -780,7 +827,7 @@ func TestSingleCollectionFeature(t *testing.T) {
 // For large human-readable returns like JSON, limit the output displayed on error to the
 //	mismatched line and a few surrounding lines
 func reducedOutputError(t *testing.T, body, expectedContent []byte) {
-	// Number of lines preceding & following mismatched line to output
+	// Number of lines to output before and after mismatched line
 	surroundSize := 5
 	// Human readable versions of each
 	bBuf := bytes.NewBufferString("")

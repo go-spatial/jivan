@@ -87,7 +87,7 @@ func main() {
 
 	flag.StringVar(&bindIp, "b", "127.0.0.1", "IP address for the server to listen on")
 	flag.IntVar(&bindPort, "p", 9000, "port for the server to listen on")
-	flag.StringVar(&serveAddress, "s", "", "IP:Port that connections will see the server at (defaults to bind address)")
+	flag.StringVar(&serveAddress, "s", "", "IP:Port that result urls will be constructed with (defaults to the IP:Port used in request)")
 	flag.StringVar(&dataSource, "d", "", "data source (path to .gpkg file)")
 	flag.StringVar(&configFile, "c", "", "config (path to .toml file)")
 
@@ -109,13 +109,6 @@ func main() {
 
 	config.Configuration.Server.BindHost = bindIp
 	config.Configuration.Server.BindPort = bindPort
-
-	bindAddress := fmt.Sprintf("%v:%v", bindIp, bindPort)
-
-	if serveAddress == "" {
-		serveAddress = bindAddress
-	}
-
 	config.Configuration.Server.Address = serveAddress
 
 	if dataSource != "" {
@@ -143,5 +136,5 @@ func main() {
 	p := data_provider.Provider{Tiler: dataProvider}
 	wfs3.GenerateOpenAPIDocument()
 
-	server.StartServer(bindAddress, serveAddress, p)
+	server.StartServer(p)
 }

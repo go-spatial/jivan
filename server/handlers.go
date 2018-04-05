@@ -35,6 +35,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/geom"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
@@ -50,6 +51,15 @@ const (
 
 type HandlerError struct {
 	Details string `json:"detail"`
+}
+
+func serveAddress(r *http.Request) string {
+	psa := config.Configuration.Server.Address
+	if psa == "" {
+		psa = r.URL.Host
+	}
+
+	return psa
 }
 
 // contentType() returns the Content-Type string that will be used for the response to this request.
@@ -112,7 +122,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 	// This allows tests to set the result to whatever they want.
 	overrideContent := r.Context().Value("overrideContent")
 
-	rootContent := wfs3.Root(serveAddress)
+	rootContent := wfs3.Root(serveAddress(r))
 	ct := contentType(r)
 	rootContent.ContentType(ct)
 
@@ -138,7 +148,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
 	err = wfs3.ValidateJSONResponse(r, rPath, 200, w.Header(), respBodyRC)
 	if err != nil {
-		log.Printf(fmt.Sprintf("%v", err))
+		log.Printf("%v", err)
 		jsonError(w, "response doesn't match schema", 500)
 		return
 	}
@@ -198,7 +208,7 @@ func openapi(w http.ResponseWriter, r *http.Request) {
 
 	var encodedContent []byte
 	if ct == JSONContentType {
-		encodedContent = wfs3.OpenAPI3SchemaJSON
+		encodedContent = wfs3.OpenAPI3SchemaJSON()
 	} else {
 		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
 		return
@@ -235,7 +245,7 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md, err := wfs3.CollectionMetaData(cName, &Provider, serveAddress)
+	md, err := wfs3.CollectionMetaData(cName, &Provider, serveAddress(r))
 	if err != nil {
 		jsonError(w, err.Error(), 500)
 		return
@@ -278,7 +288,7 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 	overrideContent := r.Context().Value("overrideContent")
 
 	ct := contentType(r)
-	md, err := wfs3.CollectionsMetaData(&Provider, serveAddress)
+	md, err := wfs3.CollectionsMetaData(&Provider, serveAddress(r))
 	if err != nil {
 		jsonError(w, err.Error(), 500)
 		return
