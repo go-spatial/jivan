@@ -49,6 +49,15 @@ const (
 	HTMLContentType = "text/html" // Not yet supported
 )
 
+const (
+	HTTPStatusOk          = 200
+	HTTPStatusNotModified = 304
+	HTTPStatusServerError = 500
+	HTTPStatusClientError = 400
+
+	HTTPMethodHEAD = "HEAD"
+)
+
 type HandlerError struct {
 	Details string `json:"detail"`
 }
@@ -124,8 +133,8 @@ func root(w http.ResponseWriter, r *http.Request) {
 
 	rootContent, contentId := wfs3.Root(serveAddress(r), false)
 	w.Header().Set("ETag", contentId)
-	if r.Method == "HEAD" && r.Header.Get("ETag") == contentId {
-		w.WriteHeader(304)
+	if r.Method == HTTPMethodHEAD && r.Header.Get("ETag") == contentId {
+		w.WriteHeader(HTTPStatusNotModified)
 		return
 	}
 
@@ -137,12 +146,12 @@ func root(w http.ResponseWriter, r *http.Request) {
 	if ct == JSONContentType {
 		encodedContent, err = json.Marshal(rootContent)
 	} else {
-		jsonError(w, "Content-Type: '"+ct+"' not supported.", 500)
+		jsonError(w, "Content-Type: '"+ct+"' not supported.", HTTPStatusServerError)
 		return
 	}
 
 	if err != nil {
-		jsonError(w, err.Error(), 500)
+		jsonError(w, err.Error(), HTTPStatusServerError)
 		return
 	}
 
@@ -152,14 +161,14 @@ func root(w http.ResponseWriter, r *http.Request) {
 		encodedContent = overrideContent.([]byte)
 	}
 	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	err = wfs3.ValidateJSONResponse(r, rPath, 200, w.Header(), respBodyRC)
+	err = wfs3.ValidateJSONResponse(r, rPath, HTTPStatusOk, w.Header(), respBodyRC)
 	if err != nil {
 		log.Printf("%v", err)
-		jsonError(w, "response doesn't match schema", 500)
+		jsonError(w, "response doesn't match schema", HTTPStatusServerError)
 		return
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(HTTPStatusOk)
 	w.Write(encodedContent)
 }
 
@@ -169,20 +178,25 @@ func conformance(w http.ResponseWriter, r *http.Request) {
 	overrideContent := r.Context().Value("overrideContent")
 
 	ct := contentType(r)
-	c := wfs3.Conformance()
+	c, contentId := wfs3.Conformance()
+	w.Header().Set("ETag", contentId)
+	if r.Header.Get("ETag") == contentId && r.Method == HTTPMethodHEAD {
+		w.WriteHeader(HTTPStatusNotModified)
+		return
+	}
 
 	var encodedContent []byte
 	var err error
 	if ct == JSONContentType {
 		encodedContent, err = json.Marshal(c)
 	} else {
-		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 		return
 	}
 
 	if err != nil {
 		msg := fmt.Sprintf("problem marshaling conformance declaration to %v: %v", ct, err.Error())
-		jsonError(w, msg, 500)
+		jsonError(w, msg, HTTPStatusServerError)
 		return
 	}
 
@@ -192,14 +206,14 @@ func conformance(w http.ResponseWriter, r *http.Request) {
 		encodedContent = overrideContent.([]byte)
 	}
 	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	err = wfs3.ValidateJSONResponse(r, cPath, 200, w.Header(), respBodyRC)
+	err = wfs3.ValidateJSONResponse(r, cPath, HTTPStatusOk, w.Header(), respBodyRC)
 	if err != nil {
 		log.Printf(fmt.Sprintf("%v", err))
-		jsonError(w, "response doesn't match schema", 500)
+		jsonError(w, "response doesn't match schema", HTTPStatusServerError)
 		return
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(HTTPStatusOk)
 	w.Write(encodedContent)
 }
 
@@ -216,7 +230,7 @@ func openapi(w http.ResponseWriter, r *http.Request) {
 	if ct == JSONContentType {
 		encodedContent = wfs3.OpenAPI3SchemaJSON()
 	} else {
-		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 		return
 	}
 
@@ -231,16 +245,16 @@ func openapi(w http.ResponseWriter, r *http.Request) {
 	// 	err := wfs3.ValidateJSONResponseAgainstJSONSchema(encodedContent, jsonSchema)
 	// 	if err != nil {
 	// 		log.Printf(fmt.Sprintf("%v", err))
-	// 		jsonError(w, "response doesn't match schema", 500)
+	// 		jsonError(w, "response doesn't match schema", HTTPStatusServerError)
 	// 		return
 	// 	}
 	// } else {
 	// 	msg := fmt.Sprintf("unsupported content type: %v", ct)
 	// 	log.Printf(msg)
-	// 	jsonError(w, msg, 400)
+	// 	jsonError(w, msg, HTTPStatusClientError)
 	// }
 
-	w.WriteHeader(200)
+	w.WriteHeader(HTTPStatusOk)
 	w.Write(encodedContent)
 }
 
@@ -253,13 +267,13 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 
 	cName := ps.ByName("name")
 	if cName == "" {
-		jsonError(w, "No {name} provided", 400)
+		jsonError(w, "No {name} provided", HTTPStatusClientError)
 		return
 	}
 
 	md, err := wfs3.CollectionMetaData(cName, &Provider, serveAddress(r))
 	if err != nil {
-		jsonError(w, err.Error(), 500)
+		jsonError(w, err.Error(), HTTPStatusServerError)
 		return
 	}
 
@@ -268,12 +282,12 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 		md.ContentType(ct)
 		encodedContent, err = json.Marshal(md)
 	} else {
-		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 		return
 	}
 
 	if err != nil {
-		jsonError(w, err.Error(), 500)
+		jsonError(w, err.Error(), HTTPStatusServerError)
 		return
 	}
 
@@ -284,14 +298,14 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	err = wfs3.ValidateJSONResponse(r, cmdPath, 200, w.Header(), respBodyRC)
+	err = wfs3.ValidateJSONResponse(r, cmdPath, HTTPStatusOk, w.Header(), respBodyRC)
 	if err != nil {
 		log.Printf(fmt.Sprintf("%v", err))
-		jsonError(w, "response doesn't match schema", 500)
+		jsonError(w, "response doesn't match schema", HTTPStatusServerError)
 		return
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(HTTPStatusOk)
 	w.Write(encodedContent)
 }
 
@@ -302,7 +316,7 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 	ct := contentType(r)
 	md, err := wfs3.CollectionsMetaData(&Provider, serveAddress(r))
 	if err != nil {
-		jsonError(w, err.Error(), 500)
+		jsonError(w, err.Error(), HTTPStatusServerError)
 		return
 	}
 
@@ -311,12 +325,12 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 		md.ContentType(JSONContentType)
 		encodedContent, err = json.Marshal(md)
 	} else {
-		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 		return
 	}
 
 	if err != nil {
-		jsonError(w, err.Error(), 500)
+		jsonError(w, err.Error(), HTTPStatusServerError)
 		return
 	}
 
@@ -327,14 +341,14 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	err = wfs3.ValidateJSONResponse(r, cmdPath, 200, w.Header(), respBodyRC)
+	err = wfs3.ValidateJSONResponse(r, cmdPath, HTTPStatusOk, w.Header(), respBodyRC)
 	if err != nil {
 		log.Printf(fmt.Sprintf("%v", err))
-		jsonError(w, "response doesn't match schema", 500)
+		jsonError(w, "response doesn't match schema", HTTPStatusServerError)
 		return
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(HTTPStatusOk)
 	w.Write(encodedContent)
 }
 
@@ -351,7 +365,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	if fidStr != "" {
 		cid, err := strconv.Atoi(fidStr)
 		if err != nil {
-			jsonError(w, "Invalid feature_id: "+fidStr, 400)
+			jsonError(w, "Invalid feature_id: "+fidStr, HTTPStatusClientError)
 		}
 		fid = uint64(cid)
 	}
@@ -365,7 +379,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	} else {
 		ps, err := strconv.ParseUint(qPageSize[0], 10, 64)
 		if err != nil {
-			jsonError(w, err.Error(), 400)
+			jsonError(w, err.Error(), HTTPStatusClientError)
 			return
 		}
 		pageSize = uint(ps)
@@ -377,7 +391,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	} else {
 		pn, err := strconv.ParseUint(qPageNum[0], 10, 64)
 		if err != nil {
-			jsonError(w, err.Error(), 400)
+			jsonError(w, err.Error(), HTTPStatusClientError)
 			return
 		}
 		pageNum = uint(pn)
@@ -404,7 +418,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		msg := fmt.Sprintf("Problem collecting feature data: %v", err)
-		jsonError(w, msg, 500)
+		jsonError(w, msg, HTTPStatusServerError)
 		return
 	}
 
@@ -414,25 +428,25 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		if ct == JSONContentType {
 			encodedContent, err = json.Marshal(d)
 		} else {
-			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 			return
 		}
 	case *geojson.FeatureCollection:
 		if ct == JSONContentType {
 			encodedContent, err = json.Marshal(d)
 		} else {
-			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", 500)
+			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 			return
 		}
 	default:
 		msg := fmt.Sprintf("Unexpected feature data type: %T, %v", data, data)
-		jsonError(w, msg, 500)
+		jsonError(w, msg, HTTPStatusServerError)
 		return
 	}
 
 	if err != nil {
 		msg := fmt.Sprintf("Problem marshalling feature data: %v", err)
-		jsonError(w, msg, 500)
+		jsonError(w, msg, HTTPStatusServerError)
 	}
 
 	w.Header().Set("Content-Type", ct)
@@ -445,16 +459,16 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		err = wfs3.ValidateJSONResponseAgainstJSONSchema(encodedContent, jsonSchema)
 		if err != nil {
 			log.Printf(fmt.Sprintf("%v", err))
-			jsonError(w, "response doesn't match schema", 500)
+			jsonError(w, "response doesn't match schema", HTTPStatusServerError)
 			return
 		}
 	} else {
 		msg := fmt.Sprintf("unsupported content type: %v", ct)
 		log.Printf(msg)
-		jsonError(w, msg, 400)
+		jsonError(w, msg, HTTPStatusClientError)
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(HTTPStatusOk)
 	w.Write(encodedContent)
 }
 
@@ -484,7 +498,7 @@ func filteredFeatures(w http.ResponseWriter, r *http.Request) {
 		var err error
 		collectionNames, err = Provider.CollectionNames()
 		if err != nil {
-			jsonError(w, err.Error(), 500)
+			jsonError(w, err.Error(), HTTPStatusServerError)
 		}
 	}
 
@@ -494,7 +508,7 @@ func filteredFeatures(w http.ResponseWriter, r *http.Request) {
 		var llbbox [4]float64
 		err := json.Unmarshal([]byte(extentParam[0]), &llbbox)
 		if err != nil {
-			jsonError(w, fmt.Sprintf("unable to unmarshal extent (%v) due to error: %v", extentParam[0], err), 400)
+			jsonError(w, fmt.Sprintf("unable to unmarshal extent (%v) due to error: %v", extentParam[0], err), HTTPStatusClientError)
 			return
 		}
 		extent = geom.Extent{llbbox[0], llbbox[1], llbbox[2], llbbox[3]}
@@ -508,7 +522,7 @@ func filteredFeatures(w http.ResponseWriter, r *http.Request) {
 	newCol, err := Provider.MakeCollection("tempcol", fids)
 
 	if err != nil {
-		jsonError(w, err.Error(), 500)
+		jsonError(w, err.Error(), HTTPStatusServerError)
 		return
 	}
 
@@ -517,8 +531,8 @@ func filteredFeatures(w http.ResponseWriter, r *http.Request) {
 		FeatureCount int
 	}{Collection: newCol, FeatureCount: len(fids)})
 	if err != nil {
-		jsonError(w, err.Error(), 500)
+		jsonError(w, err.Error(), HTTPStatusServerError)
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(HTTPStatusOk)
 	w.Write(resp)
 }

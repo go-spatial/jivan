@@ -27,9 +27,17 @@
 
 package wfs3
 
+import (
+	"encoding/json"
+	"fmt"
+	"hash/fnv"
+	"log"
+)
+
 // --- Implements req/core/conformance-op
-func Conformance() *ConformanceClasses {
-	c := ConformanceClasses{
+func Conformance() (content *ConformanceClasses, contentId string) {
+	hasher := fnv.New64()
+	content = &ConformanceClasses{
 		ConformsTo: []string{
 			"http://www.opengis.net/spec/wfs-1/3.0/req/core",
 			"http://www.opengis.net/spec/wfs-1/3.0/req/geojson",
@@ -37,5 +45,14 @@ func Conformance() *ConformanceClasses {
 		},
 	}
 
-	return &c
+	byteContent, err := json.Marshal(content)
+	if err != nil {
+		log.Printf("Problem marshaling content inside Conformance(): %v", err)
+		return nil, ""
+	}
+
+	hasher.Write(byteContent)
+	contentId = fmt.Sprintf("%x", hasher.Sum64())
+
+	return content, contentId
 }

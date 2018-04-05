@@ -271,6 +271,7 @@ func TestConformance(t *testing.T) {
 		goContent          interface{}
 		overrideContent    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 	}
 
@@ -284,6 +285,7 @@ func TestConformance(t *testing.T) {
 			},
 			overrideContent:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "4385e7a21a681d7d",
 			expectedStatusCode: 200,
 		},
 	}
@@ -310,6 +312,10 @@ func TestConformance(t *testing.T) {
 
 		if resp.StatusCode != tc.expectedStatusCode {
 			t.Errorf("status code %v != %v", resp.StatusCode, tc.expectedStatusCode)
+		}
+
+		if resp.Header.Get("ETag") != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)

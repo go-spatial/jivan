@@ -28,7 +28,6 @@
 package wfs3
 
 import (
-	"encoding/hex"
 	"fmt"
 	"hash/fnv"
 )
@@ -37,7 +36,8 @@ import (
 // contentId is a string that changes as the content changes, useful for ETag & caching.
 func Root(serveAddress string, checkOnly bool) (content *RootContent, contentId string) {
 	hasher := fnv.New64()
-	contentId = hex.EncodeToString(hasher.Sum([]byte(serveAddress)))
+	hasher.Write([]byte(serveAddress))
+	contentId = fmt.Sprintf("%x", hasher.Sum64())
 	if checkOnly {
 		return nil, contentId
 	}
