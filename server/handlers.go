@@ -150,7 +150,6 @@ func root(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("%v", err)
 		jsonError(w, "response doesn't match schema", 500)
-		log.Printf("*** DELETEME\n---\n%v\n---\n", string(encodedContent))
 		return
 	}
 
