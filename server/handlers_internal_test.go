@@ -91,11 +91,14 @@ func TestServeAddress(t *testing.T) {
 		},
 	}
 
+	originalServerAddress := config.Configuration.Server.Address
 	for i, tc := range testCases {
 		url := fmt.Sprintf("http://%v", tc.requestHost)
 		req := httptest.NewRequest("GET", url, bytes.NewReader([]byte{}))
 		if tc.serverConfigAddress != "" {
 			config.Configuration.Server.Address = tc.serverConfigAddress
+			// Restore the config change so other tests aren't affected.
+			defer func(osa string) { config.Configuration.Server.Address = osa }(originalServerAddress)
 		}
 		sa := serveAddress(req)
 		if sa != tc.expectedServeAddress {
@@ -193,7 +196,8 @@ func TestRoot(t *testing.T) {
 
 		body, _ := ioutil.ReadAll(resp.Body)
 		if string(body) != string(expectedContent) {
-			t.Errorf("\n%v\n--- != ---\n%v", string(body), string(expectedContent))
+			t.Errorf("[%v] response body doesn't match expected", i)
+			reducedOutputError(t, body, expectedContent)
 		}
 	}
 }
@@ -379,7 +383,7 @@ func TestCollectionsMetaData(t *testing.T) {
 		}
 
 		if string(body) != string(expectedContent) {
-			t.Errorf("[%v] response content doesn't match expected")
+			t.Errorf("[%v] response content doesn't match expected", i)
 			reducedOutputError(t, body, expectedContent)
 		}
 	}

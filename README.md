@@ -8,10 +8,20 @@ server/
   routes.go: maps urls to functions (from handlers.go)
   handlers.go: actual work done here
   server.go: simple interface to start the server.
-  openapi.go: encapsulates generation of json OpenAPI document for WFS service.
 
-provider/
-  provider.go: wraps github.com/go-spatial/tegola/provider.Tiler to provide convenience methods & additional behavior
+wfs3/
+  collection_meta_data.go: generates content for metadata requests
+  conformance.go: generates content for conformance requests
+  FeatureCollectionJSONSchema: provides a string variable populated with the schema for a geojson FeatureCollection
+  features.go: generates content for feature data requests
+  FeatureSchema.go: provides a string variable populated with the schema for a geojson Feature
+  openapi3.go: encapsulates generation of json OpenAPI3 document for WFS service.
+  root.go: generates content for a root path ("/") request
+  validation.go: helper functions for validating encoded responses
+  wfs3_types.go: go structs to mirror the types & their schemas specified in the wfs3 spec.
+
+data_provider/
+  provider.go: wraps `github.com/go-spatial/tegola/provider.Tiler` to provide convenience methods & additional behavior
 
 main.go: Executable entry-point.
 
@@ -31,6 +41,8 @@ git checkout v0.7.0
 # install other supporting packages
 go get github.com/jban332/kin-openapi/openapi3
 go get github.com/julienschmidt/httprouter
+go get github.com/rs/cors
+
 # install go-wfs
 go get github.com/go-spatial/go-wfs
 ```
