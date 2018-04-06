@@ -80,7 +80,7 @@ func main() {
 		}
 	}
 	if dataSource == "" {
-		dataSource = defaultgpkg.DefaultGpkg()
+		dataSource = defaultgpkg.Get()
 	}
 	if dataSource == "" {
 		panic("no datasource")
