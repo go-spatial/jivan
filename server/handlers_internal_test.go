@@ -112,6 +112,7 @@ func TestRoot(t *testing.T) {
 	rootUrl := fmt.Sprintf("http://%v/", serveAddress)
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		overrideContent    interface{}
 		contentType        string
@@ -120,8 +121,9 @@ func TestRoot(t *testing.T) {
 	}
 
 	testCases := []TestCase{
-		// Happy path test case
+		// Happy path GET test case
 		{
+			requestMethod: HTTPMethodGET,
 			goContent: &wfs3.RootContent{
 				Links: []*wfs3.Link{
 					{
@@ -146,8 +148,17 @@ func TestRoot(t *testing.T) {
 			expectedETag:       "34888c0b0c2a4a2c",
 			expectedStatusCode: 200,
 		},
+		// Happy path HEAD test case
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			contentType:        "",
+			expectedETag:       "34888c0b0c2a4a2c",
+			expectedStatusCode: 200,
+		},
 		// Schema error, Links type as []string instead of []wfs3.Link
 		{
+			requestMethod:      HTTPMethodGET,
 			goContent:          &HandlerError{Details: "response doesn't match schema"},
 			overrideContent:    `{ links: ["http://doesntmatter.com"] }`,
 			expectedStatusCode: 500,
@@ -170,6 +181,8 @@ func TestRoot(t *testing.T) {
 			if err != nil {
 				t.Errorf("Problem marshalling expected content: %v", err)
 			}
+		case nil:
+			expectedContent = []byte{}
 		default:
 			t.Errorf("[%v] Unexpected type in tc.goContent: %T", i, tc.goContent)
 		}
@@ -186,7 +199,7 @@ func TestRoot(t *testing.T) {
 
 		// --- perform the request & get the response
 		responseWriter := httptest.NewRecorder()
-		request := httptest.NewRequest("GET", rootUrl, bytes.NewBufferString("")).WithContext(ctx)
+		request := httptest.NewRequest(tc.requestMethod, rootUrl, bytes.NewBufferString("")).WithContext(ctx)
 
 		root(responseWriter, request)
 		resp := responseWriter.Result()
