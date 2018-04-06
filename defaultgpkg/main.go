@@ -8,13 +8,15 @@ import (
 	"sort"
 )
 
-// For use when a data source isn't provided.
-// Scans for files w/ '.gpkg' extension and chooses the first alphabetically.
-// * First scan the working directory
-// * Second, if none found in the working directory and it exists, scan ./data/
-// * Third, if none found in either of the previous and it exists, scan ./test_data/
-// Returns a full path to the file or an empty string if none found.
-func DefaultGpkg() string {
+// Get is used when a data source isn't provided.
+// Scans for files w/ '.gpkg' extension following logic described below, and chooses the first alphabetically.
+// Returns the absolute path as a string.
+//
+// 1) scan the current working directory
+// 2) if none found in the working directory and it exists, scan ./data/
+// 3) if none found in either of the previous and it exists, scan ./test_data/
+// 4) if none found, return an empty string
+func Get() string {
 	// Directories to check in decreasing order of priority
 	dirs := []string{"", "data", "test_data"}
 	gpkgPath := ""
