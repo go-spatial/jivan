@@ -24,14 +24,22 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// go-wfs project main.go
-package main
+package defaultgpkg
 
 import (
 	"log"
 	"os"
+	"path"
+	"runtime"
 	"testing"
 )
+
+var baseTestPath string
+
+func init() {
+	_, thisFilePath, _, _ := runtime.Caller(0)
+	baseTestPath = path.Join(path.Dir(thisFilePath), "../test_data/main.defaultGpkg/")
+}
 
 func TestDefaultGpkg(t *testing.T) {
 	// For use when a data source isn't provided.
@@ -54,22 +62,14 @@ func TestDefaultGpkg(t *testing.T) {
 		},
 	}
 
-	wd, err := os.Getwd()
-
-	if err != nil {
-		log.Fatal("Could not get working directory.")
-	}
-
-	basePath := wd + "/test_data/main.defaultGpkg/"
-
 	for _, c := range cases {
-		casePath := basePath + c.in
+		casePath := path.Join(baseTestPath, c.in)
 
 		if chdirErr := os.Chdir(casePath); chdirErr != nil {
 			log.Fatalf("Could not change working directory to '%s'.", casePath)
 		}
 
-		got := defaultGpkg()
+		got := DefaultGpkg()
 
 		if got != c.want {
 			t.Errorf("Under '%s', defaultGpkg() == '%s', wanted '%s'.", casePath, got, c.want)
