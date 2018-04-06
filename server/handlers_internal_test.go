@@ -300,6 +300,7 @@ func TestConformance(t *testing.T) {
 	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		overrideContent    interface{}
 		contentType        string
@@ -308,7 +309,9 @@ func TestConformance(t *testing.T) {
 	}
 
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod: HTTPMethodGET,
 			goContent: wfs3.ConformanceClasses{
 				ConformsTo: []string{
 					"http://www.opengis.net/spec/wfs-1/3.0/req/core",
@@ -320,25 +323,36 @@ func TestConformance(t *testing.T) {
 			expectedETag:       "4385e7a21a681d7d",
 			expectedStatusCode: 200,
 		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			overrideContent:    nil,
+			expectedETag:       "4385e7a21a681d7d",
+			expectedStatusCode: 200,
+		},
 	}
 
 	for i, tc := range testCases {
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected content to json: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] unexpected content type: %v", i, tc.contentType)
 			return
 		}
 
 		responseWriter := httptest.NewRecorder()
 		rctx := context.WithValue(context.TODO(), "overrideContent", tc.overrideContent)
-		request := httptest.NewRequest("GET", conformanceUrl, bytes.NewBufferString("")).WithContext(rctx)
+		request := httptest.NewRequest(tc.requestMethod, conformanceUrl, bytes.NewBufferString("")).WithContext(rctx)
 		conformance(responseWriter, request)
 		resp := responseWriter.Result()
 
