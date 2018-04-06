@@ -78,14 +78,14 @@ func defaultGpkg() string {
 }
 
 func main() {
-	var bindIp string
+	var bindIP string
 	var bindPort int
 	var serveAddress string
 	var dataSource string
 	var configFile string
 	var err error
 
-	flag.StringVar(&bindIp, "b", "127.0.0.1", "IP address for the server to listen on")
+	flag.StringVar(&bindIP, "b", "127.0.0.1", "IP address for the server to listen on")
 	flag.IntVar(&bindPort, "p", 9000, "port for the server to listen on")
 	flag.StringVar(&serveAddress, "s", "", "IP:Port that result urls will be constructed with (defaults to the IP:Port used in request)")
 	flag.StringVar(&dataSource, "d", "", "data source (path to .gpkg file)")
@@ -107,7 +107,7 @@ func main() {
 		}
 	}
 
-	config.Configuration.Server.BindHost = bindIp
+	config.Configuration.Server.BindHost = bindIP
 	config.Configuration.Server.BindPort = bindPort
 	config.Configuration.Server.Address = serveAddress
 
