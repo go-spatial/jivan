@@ -378,8 +378,9 @@ func TestConformance(t *testing.T) {
 
 func TestCollectionsMetaData(t *testing.T) {
 	serveAddress := "extratesting.org:77"
-	// Build the expected result
 	collectionsUrl := fmt.Sprintf("http://%v/collections", serveAddress)
+
+	// Build the expected result
 	cNames, err := testingProvider.CollectionNames()
 	if err != nil {
 		t.Errorf("Problem getting collection names: %v", err)
@@ -396,6 +397,7 @@ func TestCollectionsMetaData(t *testing.T) {
 	}
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		overrideContent    interface{}
 		contentType        string
@@ -404,10 +406,20 @@ func TestCollectionsMetaData(t *testing.T) {
 	}
 
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod:      HTTPMethodGET,
 			goContent:          csInfo,
 			overrideContent:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "319a7aabe10f9760",
+			expectedStatusCode: 200,
+		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			overrideContent:    nil,
 			expectedETag:       "319a7aabe10f9760",
 			expectedStatusCode: 200,
 		},
@@ -416,20 +428,23 @@ func TestCollectionsMetaData(t *testing.T) {
 	for i, tc := range testCases {
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(csInfo)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected collections info to json: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] unsupported content type: %v", i, tc.contentType)
 			return
 		}
 
 		responseWriter := httptest.NewRecorder()
 		rctx := context.WithValue(context.TODO(), "overrideContent", tc.overrideContent)
-		request := httptest.NewRequest("GET", collectionsUrl, bytes.NewBufferString("")).WithContext(rctx)
+		request := httptest.NewRequest(tc.requestMethod, collectionsUrl, bytes.NewBufferString("")).WithContext(rctx)
 		collectionsMetaData(responseWriter, request)
 
 		resp := responseWriter.Result()
