@@ -26,3 +26,53 @@
 
 // go-wfs project main.go
 package main
+
+import (
+	"log"
+	"os"
+	"testing"
+)
+
+func TestDefaultGpkg(t *testing.T) {
+	// For use when a data source isn't provided.
+	// Scans for files w/ '.gpkg' extension and chooses the first alphabetically.
+	// * First scan the working directory
+	// * Second, if none found in the working directory and it exists, scan ./data/
+	// * Third, if none found in either of the previous and it exists, scan ./test_data/
+	// Returns a full path to the file or an empty string if none found.
+
+	cases := []struct {
+		// The name of the sub-directory, under ./test_data/main.defaultGpkg/
+		in string
+
+		// The full path to the selected file, or an empty string if no file is found
+		want string
+	}{
+		{
+			in:   "1",
+			want: "",
+		},
+	}
+
+	wd, err := os.Getwd()
+
+	if err != nil {
+		log.Fatal("Could not get working directory.")
+	}
+
+	basePath := wd + "/test_data/main.defaultGpkg/"
+
+	for _, c := range cases {
+		casePath := basePath + c.in
+
+		if chdirErr := os.Chdir(casePath); chdirErr != nil {
+			log.Fatalf("Could not change working directory to '%s'.", casePath)
+		}
+
+		got := defaultGpkg()
+
+		if got != c.want {
+			t.Errorf("Under '%s', defaultGpkg() == '%s', wanted '%s'.", casePath, got, c.want)
+		}
+	}
+}
