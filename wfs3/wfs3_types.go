@@ -257,21 +257,21 @@ var ConformanceClassesSchema openapi3.Schema = openapi3.Schema{
 
 var GeoJsonFeatureSchema openapi3.Schema = openapi3.Schema{
 	Properties: map[string]*openapi3.SchemaRef{
-		"bbox": &openapi3.SchemaRef{
+		"bbox": {
 			Value: openapi3.NewArraySchema().WithItems(openapi3.NewFloat64Schema()).WithMinItems(4),
 		},
-		"geometry": &openapi3.SchemaRef{
+		"geometry": {
 			Value: openapi3.NewOneOfSchema(
 				&openapi3.Schema{Type: "null"},
 				&openapi3.Schema{
 					Properties: map[string]*openapi3.SchemaRef{
-						"bbox": &openapi3.SchemaRef{
+						"bbox": {
 							Value: openapi3.NewArraySchema().WithItems(openapi3.NewFloat64Schema()).WithMinItems(4),
 						},
-						"coordinates": &openapi3.SchemaRef{
+						"coordinates": {
 							Value: openapi3.NewArraySchema().WithItems(openapi3.NewFloat64Schema()).WithMinItems(2),
 						},
-						"type": &openapi3.SchemaRef{
+						"type": {
 							Value: &openapi3.Schema{
 								Enum: []interface{}{"Point"},
 								Type: "string",
