@@ -570,6 +570,7 @@ func TestCollectionFeatures(t *testing.T) {
 	serveAddress := "test.com"
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		contentOverride    interface{}
 		contentType        string
@@ -579,7 +580,9 @@ func TestCollectionFeatures(t *testing.T) {
 	}
 
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod: HTTPMethodGET,
 			goContent: geojson.FeatureCollection{
 				Features: []geojson.Feature{
 					{
@@ -795,6 +798,17 @@ func TestCollectionFeatures(t *testing.T) {
 				"name": "aviation_polygons",
 			},
 		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			contentOverride:    nil,
+			expectedETag:       "953ff7048ec325ce",
+			expectedStatusCode: 200,
+			urlParams: map[string]string{
+				"name": "aviation_polygons",
+			},
+		},
 	}
 
 	for i, tc := range testCases {
@@ -802,19 +816,22 @@ func TestCollectionFeatures(t *testing.T) {
 
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected content: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] unsupported content type for expected content: %v", i, tc.contentType)
 			return
 		}
 
 		responseWriter := httptest.NewRecorder()
-		request := httptest.NewRequest("GET", url, bytes.NewBufferString(""))
+		request := httptest.NewRequest(tc.requestMethod, url, bytes.NewBufferString(""))
 		rctx := request.Context()
 		rctx = context.WithValue(rctx, "contentOverride", tc.contentOverride)
 		hrParams := make(httprouter.Params, 0, len(tc.urlParams))
@@ -855,6 +872,7 @@ func TestSingleCollectionFeature(t *testing.T) {
 	serveAddress := "tdd.net"
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		contentOverride    interface{}
 		contentType        string
@@ -865,7 +883,9 @@ func TestSingleCollectionFeature(t *testing.T) {
 
 	var i18 uint64 = 18
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod: HTTPMethodGET,
 			goContent: geojson.Feature{
 				ID: &i18,
 				Geometry: geojson.Geometry{
@@ -891,6 +911,18 @@ func TestSingleCollectionFeature(t *testing.T) {
 				"feature_id": "18",
 			},
 		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			contentOverride:    nil,
+			expectedETag:       "355e6572aaf34629",
+			expectedStatusCode: 200,
+			urlParams: map[string]string{
+				"name":       "roads_lines",
+				"feature_id": "18",
+			},
+		},
 	}
 
 	for i, tc := range testCases {
@@ -899,19 +931,22 @@ func TestSingleCollectionFeature(t *testing.T) {
 
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected content: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] unsupported content type for expected content: %v", i, tc.contentType)
 			return
 		}
 
 		responseWriter := httptest.NewRecorder()
-		request := httptest.NewRequest("GET", url, bytes.NewBufferString(""))
+		request := httptest.NewRequest(tc.requestMethod, url, bytes.NewBufferString(""))
 		rctx := request.Context()
 		rctx = context.WithValue(rctx, "contentOverride", tc.contentOverride)
 		hrParams := make(httprouter.Params, 0, len(tc.urlParams))
@@ -934,7 +969,7 @@ func TestSingleCollectionFeature(t *testing.T) {
 		}
 
 		if resp.StatusCode != tc.expectedStatusCode {
-			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
+			t.Errorf("[%v] Status Code %v != %v", i, resp.StatusCode, tc.expectedStatusCode)
 		}
 
 		if string(body) != string(expectedContent) {
