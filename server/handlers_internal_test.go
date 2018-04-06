@@ -472,6 +472,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 	serveAddress := "testthis.com"
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		contentOverride    interface{}
 		contentType        string
@@ -481,7 +482,9 @@ func TestSingleCollectionMetaData(t *testing.T) {
 	}
 
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod: HTTPMethodGET,
 			goContent: wfs3.CollectionInfo{
 				Name: "roads_lines",
 				Links: []*wfs3.Link{
@@ -498,6 +501,15 @@ func TestSingleCollectionMetaData(t *testing.T) {
 			expectedStatusCode: 200,
 			urlParams:          map[string]string{"name": "roads_lines"},
 		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			contentOverride:    nil,
+			expectedETag:       "cd9d017720aa82fd",
+			expectedStatusCode: 200,
+			urlParams:          map[string]string{"name": "roads_lines"},
+		},
 	}
 
 	for i, tc := range testCases {
@@ -505,13 +517,16 @@ func TestSingleCollectionMetaData(t *testing.T) {
 
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] Problem marshalling expected collection info: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] Unexpected content type: %v", err, tc.contentType)
 			return
 		}
@@ -522,7 +537,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 			hrParams = append(hrParams, httprouter.Param{Key: k, Value: v})
 		}
 
-		request := httptest.NewRequest("GET", url, bytes.NewBufferString(""))
+		request := httptest.NewRequest(tc.requestMethod, url, bytes.NewBufferString(""))
 		rctx := context.WithValue(request.Context(), httprouter.ParamsKey, hrParams)
 		rctx = context.WithValue(rctx, "contentOverride", tc.contentOverride)
 		request = request.WithContext(rctx)
