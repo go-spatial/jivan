@@ -226,8 +226,10 @@ func TestApi(t *testing.T) {
 	//	Make a better test plan.
 
 	serveAddress := "unittest.net"
+	apiUrl := fmt.Sprintf("http://%v/api", serveAddress)
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		overrideContent    interface{}
 		contentType        string
@@ -236,10 +238,20 @@ func TestApi(t *testing.T) {
 	}
 
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod:      HTTPMethodGET,
 			goContent:          wfs3.OpenAPI3Schema(),
 			overrideContent:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "3b6ca0c9c15e1720",
+			expectedStatusCode: 200,
+		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			overrideContent:    nil,
 			expectedETag:       "3b6ca0c9c15e1720",
 			expectedStatusCode: 200,
 		},
@@ -248,21 +260,23 @@ func TestApi(t *testing.T) {
 	for i, tc := range testCases {
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling tc.goContent to JSON: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] unsupported content type: '%v'", i, tc.contentType)
 			return
 		}
 
 		responseWriter := httptest.NewRecorder()
 		rctx := context.WithValue(context.TODO(), "overrideContent", tc.overrideContent)
-		request := httptest.NewRequest(
-			"GET", fmt.Sprintf("http://%v/api", serveAddress), bytes.NewBufferString("")).WithContext(rctx)
+		request := httptest.NewRequest(tc.requestMethod, apiUrl, bytes.NewBufferString("")).WithContext(rctx)
 		openapi(responseWriter, request)
 		resp := responseWriter.Result()
 
