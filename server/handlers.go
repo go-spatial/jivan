@@ -437,10 +437,11 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 
 	var data interface{}
 	var jsonSchema string
+	var contentId string
 	// If a feature_id was provided, get a single feature, otherwise get a feature collection
 	//	containing all of the collection's features
 	if fidStr != "" {
-		data, err = wfs3.Feature(cName, fid, &Provider)
+		data, contentId, err = wfs3.Feature(cName, fid, &Provider, false)
 		jsonSchema = wfs3.FeatureJSONSchema
 	} else {
 		// First index we're interested in
@@ -448,13 +449,23 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		// Last index we're interested in +1
 		stopIdx := startIdx + pageSize
 
-		data, err = wfs3.FeatureCollection(cName, startIdx, stopIdx, &Provider)
+		data, contentId, err = wfs3.FeatureCollection(cName, startIdx, stopIdx, &Provider, false)
 		jsonSchema = wfs3.FeatureCollectionJSONSchema
 	}
 
 	if err != nil {
 		msg := fmt.Sprintf("Problem collecting feature data: %v", err)
 		jsonError(w, msg, HTTPStatusServerError)
+		return
+	}
+
+	w.Header().Set("ETag", contentId)
+	if r.Method == HTTPMethodHEAD {
+		if r.Header.Get("ETag") == contentId {
+			w.WriteHeader(HTTPStatusNotModified)
+		} else {
+			w.WriteHeader(HTTPStatusOk)
+		}
 		return
 	}
 

@@ -502,6 +502,7 @@ func TestCollectionFeatures(t *testing.T) {
 		goContent          interface{}
 		contentOverride    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 		urlParams          map[string]string
 	}
@@ -717,6 +718,7 @@ func TestCollectionFeatures(t *testing.T) {
 			},
 			contentOverride:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "953ff7048ec325ce",
 			expectedStatusCode: 200,
 			urlParams: map[string]string{
 				"name": "aviation_polygons",
@@ -759,6 +761,14 @@ func TestCollectionFeatures(t *testing.T) {
 			t.Errorf("[%v] problem reading response body: %v", i, err)
 		}
 
+		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
+		}
+
+		if resp.StatusCode != tc.expectedStatusCode {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
+		}
+
 		if string(body) != string(expectedContent) {
 			t.Errorf("[%v] result doesn't match expected", i)
 			// bBuf := bytes.NewBufferString("")
@@ -777,6 +787,7 @@ func TestSingleCollectionFeature(t *testing.T) {
 		goContent          interface{}
 		contentOverride    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 		urlParams          map[string]string
 	}
@@ -802,6 +813,7 @@ func TestSingleCollectionFeature(t *testing.T) {
 			},
 			contentOverride:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "355e6572aaf34629",
 			expectedStatusCode: 200,
 			urlParams: map[string]string{
 				"name":       "roads_lines",
@@ -844,6 +856,14 @@ func TestSingleCollectionFeature(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			t.Errorf("[%v] problem reading response body: %v", i, err)
+		}
+
+		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
+		}
+
+		if resp.StatusCode != tc.expectedStatusCode {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
 		}
 
 		if string(body) != string(expectedContent) {
