@@ -287,9 +287,19 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md, err := wfs3.CollectionMetaData(cName, &Provider, serveAddress(r))
+	md, contentId, err := wfs3.CollectionMetaData(cName, &Provider, serveAddress(r), false)
 	if err != nil {
 		jsonError(w, err.Error(), HTTPStatusServerError)
+		return
+	}
+
+	w.Header().Set("ETag", contentId)
+	if r.Method == HTTPMethodHEAD {
+		if r.Header.Get("ETag") == contentId {
+			w.WriteHeader(HTTPStatusNotModified)
+		} else {
+			w.WriteHeader(HTTPStatusOk)
+		}
 		return
 	}
 
@@ -330,9 +340,19 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 	overrideContent := r.Context().Value("overrideContent")
 
 	ct := contentType(r)
-	md, err := wfs3.CollectionsMetaData(&Provider, serveAddress(r))
+	md, contentId, err := wfs3.CollectionsMetaData(&Provider, serveAddress(r), false)
 	if err != nil {
 		jsonError(w, err.Error(), HTTPStatusServerError)
+		return
+	}
+
+	w.Header().Set("ETag", contentId)
+	if r.Method == HTTPMethodHEAD {
+		if r.Header.Get("ETag") == contentId {
+			w.WriteHeader(HTTPStatusNotModified)
+		} else {
+			w.WriteHeader(HTTPStatusOk)
+		}
 		return
 	}
 
