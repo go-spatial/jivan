@@ -42,13 +42,20 @@ func setUpRoutes() http.Handler {
 	})
 
 	r.Handler("GET", "/", c.Handler(http.HandlerFunc(root)))
+	r.Handler("HEAD", "/", c.Handler(http.HandlerFunc(root)))
 	r.Handler("GET", "/conformance", c.Handler(http.HandlerFunc(conformance)))
+	r.Handler("HEAD", "/conformance", c.Handler(http.HandlerFunc(conformance)))
 	r.Handler("GET", "/api", c.Handler(http.HandlerFunc(openapi)))
+	r.Handler("HEAD", "/api", c.Handler(http.HandlerFunc(openapi)))
 
 	r.Handler("GET", "/collections", c.Handler(http.HandlerFunc(collectionsMetaData)))
+	r.Handler("HEAD", "/collections", c.Handler(http.HandlerFunc(collectionsMetaData)))
 	r.Handler("GET", "/collections/:name", c.Handler(http.HandlerFunc(collectionMetaData)))
+	r.Handler("HEAD", "/collections/:name", c.Handler(http.HandlerFunc(collectionMetaData)))
 	r.Handler("GET", "/collections/:name/items", c.Handler(http.HandlerFunc(collectionData)))
+	r.Handler("HEAD", "/collections/:name/items", c.Handler(http.HandlerFunc(collectionData)))
 	r.Handler("GET", "/collections/:name/items/:feature_id", c.Handler(http.HandlerFunc(collectionData)))
+	r.Handler("HEAD", "/collections/:name/items/:feature_id", c.Handler(http.HandlerFunc(collectionData)))
 
 	return r
 }

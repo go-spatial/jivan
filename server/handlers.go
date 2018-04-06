@@ -55,6 +55,7 @@ const (
 	HTTPStatusServerError = 500
 	HTTPStatusClientError = 400
 
+	HTTPMethodGET  = "GET"
 	HTTPMethodHEAD = "HEAD"
 )
 
