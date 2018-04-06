@@ -32,19 +32,23 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/rs/cors"
 )
 
 func setUpRoutes() http.Handler {
 	r := httprouter.New()
+	c := cors.New(cors.Options{
+		AllowedMethods: []string{"GET", "HEAD"},
+	})
 
-	r.HandlerFunc("GET", "/", root)
-	r.HandlerFunc("GET", "/conformance", conformance)
-	r.HandlerFunc("GET", "/api", openapi)
+	r.Handler("GET", "/", c.Handler(http.HandlerFunc(root)))
+	r.Handler("GET", "/conformance", c.Handler(http.HandlerFunc(conformance)))
+	r.Handler("GET", "/api", c.Handler(http.HandlerFunc(openapi)))
 
-	r.HandlerFunc("GET", "/collections", collectionsMetaData)
-	r.HandlerFunc("GET", "/collections/:name", collectionMetaData)
-	r.HandlerFunc("GET", "/collections/:name/items", collectionData)
-	r.HandlerFunc("GET", "/collections/:name/items/:feature_id", collectionData)
+	r.Handler("GET", "/collections", c.Handler(http.HandlerFunc(collectionsMetaData)))
+	r.Handler("GET", "/collections/:name", c.Handler(http.HandlerFunc(collectionMetaData)))
+	r.Handler("GET", "/collections/:name/items", c.Handler(http.HandlerFunc(collectionData)))
+	r.Handler("GET", "/collections/:name/items/:feature_id", c.Handler(http.HandlerFunc(collectionData)))
 
 	return r
 }

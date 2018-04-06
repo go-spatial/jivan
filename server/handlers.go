@@ -219,13 +219,19 @@ func openapi(w http.ResponseWriter, r *http.Request) {
 	if overrideContent != nil {
 		encodedContent = overrideContent.([]byte)
 	}
-	// --- TODO: Disabled due to #34
-	// respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	// err := wfs3.ValidateJSONResponse(r, oapiPath, 200, w.Header(), respBodyRC)
-	// if err != nil {
-	// 	log.Printf(fmt.Sprintf("%v", err))
-	// 	jsonError(w, "response doesn't match schema", 500)
-	// 	return
+
+	// TODO: As of 2018-04-05 I can't find a reliable openapi3 document schema.  When one is published use if for validation here.
+	// if ct == JSONContentType {
+	// 	err := wfs3.ValidateJSONResponseAgainstJSONSchema(encodedContent, jsonSchema)
+	// 	if err != nil {
+	// 		log.Printf(fmt.Sprintf("%v", err))
+	// 		jsonError(w, "response doesn't match schema", 500)
+	// 		return
+	// 	}
+	// } else {
+	// 	msg := fmt.Sprintf("unsupported content type: %v", ct)
+	// 	log.Printf(msg)
+	// 	jsonError(w, msg, 400)
 	// }
 
 	w.WriteHeader(200)
