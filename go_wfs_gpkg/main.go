@@ -24,8 +24,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// Package defaultgpkg provides a function for locating a .gpkg file when one is not specified.
-package defaultgpkg
+// Package go_wfs_gpkg provides a function for locating a .gpkg file when one is not specified.
+package go_wfs_gpkg
 
 import (
 	"log"
