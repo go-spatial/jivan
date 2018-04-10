@@ -38,7 +38,6 @@ import (
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/geom"
-	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -457,17 +456,6 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		jsonSchema = wfs3.FeatureCollectionJSONSchema
 	}
 
-	// Generate self, previous, and next links
-	self := fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum, pageSize)
-	var prev string
-	var next string
-	if pageNum > 0 {
-		prev = fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum-1, pageSize)
-	}
-	if more {
-		next = fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum+1, pageSize)
-	}
-
 	if err != nil {
 		msg := fmt.Sprintf("Problem collecting feature data: %v", err)
 		jsonError(w, msg, HTTPStatusServerError)
@@ -486,14 +474,28 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 
 	var encodedContent []byte
 	switch d := data.(type) {
-	case *geojson.Feature:
+	case *wfs3.Feature:
 		if ct == JSONContentType {
+			// Generate self link
+			d.Self = r.URL.String()
+			fmt.Printf("*** %v\n", d.Self)
 			encodedContent, err = json.Marshal(d)
 		} else {
 			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 			return
 		}
 	case *wfs3.FeatureCollection:
+		// Generate self, previous, and next links
+		self := fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum, pageSize)
+		var prev string
+		var next string
+		if pageNum > 0 {
+			prev = fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum-1, pageSize)
+		}
+		if more {
+			next = fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum+1, pageSize)
+		}
+
 		if ct == JSONContentType {
 			d.Self = self
 			d.Prev = prev

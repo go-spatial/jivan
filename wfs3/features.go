@@ -8,7 +8,7 @@ import (
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 )
 
-func FeatureData(cname string, fid uint64, p *data_provider.Provider, checkOnly bool) (content *geojson.Feature, contentId string, err error) {
+func FeatureData(cname string, fid uint64, p *data_provider.Provider, checkOnly bool) (content *Feature, contentId string, err error) {
 	// TODO: This calculation of contentId assumes an unchanging data set.
 	// 	When a changing data set is needed this will have to be updated, hopefully after data providers can tell us
 	// 	something about updates.
@@ -33,8 +33,10 @@ func FeatureData(cname string, fid uint64, p *data_provider.Provider, checkOnly 
 	}
 
 	pf := pfs[0]
-	content = &geojson.Feature{
-		ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}, Properties: pf.Tags,
+	content = &Feature{
+		Feature: geojson.Feature{
+			ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}, Properties: pf.Tags,
+		},
 	}
 
 	return content, contentId, nil

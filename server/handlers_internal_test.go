@@ -36,7 +36,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"path"
 	"runtime"
 	"strings"
@@ -691,7 +693,6 @@ func TestCollectionFeatures(t *testing.T) {
 
 	for i, tc := range testCases {
 		url := fmt.Sprintf("http://%v/collections/%v/items", serveAddress, tc.urlParams["name"])
-		url = addQueryParams(url, tc.queryParams)
 
 		var expectedContent []byte
 		var err error
@@ -711,6 +712,10 @@ func TestCollectionFeatures(t *testing.T) {
 
 		responseWriter := httptest.NewRecorder()
 		request := httptest.NewRequest(tc.requestMethod, url, bytes.NewBufferString(""))
+		err = addQueryParams(request, tc.queryParams)
+		if err != nil {
+			t.Errorf("[%v] problem with request url query parameters: %v", i, err)
+		}
 		rctx := request.Context()
 		rctx = context.WithValue(rctx, "contentOverride", tc.contentOverride)
 		hrParams := make(httprouter.Params, 0, len(tc.urlParams))
@@ -761,20 +766,24 @@ func TestSingleCollectionFeature(t *testing.T) {
 		// Happy-path GET request
 		{
 			requestMethod: HTTPMethodGET,
-			goContent: geojson.Feature{
-				ID: &i18,
-				Geometry: geojson.Geometry{
-					Geometry: geom.LineString{
-						{23.708656, 37.9137612},
-						{23.7086007, 37.9140051},
-						{23.708592, 37.9140435},
-						{23.7085454, 37.914249},
+			goContent: wfs3.Feature{
+				Self: fmt.Sprintf("http://%v/collections/roads_lines/items/18", serveAddress),
+				// Populate embedded geojson Feature
+				Feature: geojson.Feature{
+					ID: &i18,
+					Geometry: geojson.Geometry{
+						Geometry: geom.LineString{
+							{23.708656, 37.9137612},
+							{23.7086007, 37.9140051},
+							{23.708592, 37.9140435},
+							{23.7085454, 37.914249},
+						},
 					},
-				},
-				Properties: map[string]interface{}{
-					"highway": "secondary_link",
-					"osm_id":  "4380983",
-					"z_index": "6",
+					Properties: map[string]interface{}{
+						"highway": "secondary_link",
+						"osm_id":  "4380983",
+						"z_index": "6",
+					},
 				},
 			},
 			contentOverride:    nil,
@@ -907,18 +916,17 @@ func reducedOutputError(t *testing.T, body, expectedContent []byte) {
 	}
 }
 
-func addQueryParams(url string, queryParams map[string]string) string {
+func addQueryParams(req *http.Request, queryParams map[string]string) error {
 	// Add query parameters to url
 	if queryParams != nil && len(queryParams) > 0 {
-		url += "?"
-		i := 0
-		for k, v := range queryParams {
-			url += fmt.Sprintf("%v=%v", k, v)
-			if i < len(queryParams)-1 {
-				url += "&"
-			}
-			i++
+		q, err := url.ParseQuery(req.URL.RawQuery)
+		if err != nil {
+			return err
 		}
+		for k, v := range queryParams {
+			q[k] = []string{v}
+		}
+		req.URL.RawQuery = q.Encode()
 	}
-	return url
+	return nil
 }
