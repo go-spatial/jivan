@@ -577,215 +577,89 @@ func TestCollectionFeatures(t *testing.T) {
 		expectedETag       string
 		expectedStatusCode int
 		urlParams          map[string]string
+		queryParams        map[string]string
 	}
 
 	testCases := []TestCase{
 		// Happy-path GET request
 		{
 			requestMethod: HTTPMethodGET,
-			goContent: geojson.FeatureCollection{
-				Features: []geojson.Feature{
-					{
-						ID: uint64ptr(1),
-						Geometry: geojson.Geometry{
-							Geometry: geom.Polygon{
-								{
-									{23.7389198, 37.8860416},
-									{23.7391532, 37.8861252},
-									{23.7391844, 37.8860708},
-									{23.7392575, 37.8860969},
-									{23.7392784, 37.8860605},
-									{23.7393112, 37.8860723},
-									{23.7393746, 37.885962},
-									{23.7393413, 37.8859501},
-									{23.7395238, 37.8856327},
-									{23.7396799, 37.8856886},
-									{23.739719, 37.8856206},
-									{23.739576, 37.8855694},
-									{23.739825, 37.8851363},
-									{23.7397731, 37.8851177},
-									{23.7398198, 37.8850365},
-									{23.7395535, 37.8849411},
-									{23.7395002, 37.8850338},
-									{23.739454, 37.8850173},
-									{23.7389237, 37.8859395},
-									{23.7389692, 37.8859558},
-									{23.7389198, 37.8860416},
+			goContent: wfs3.FeatureCollection{
+				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&pageSize=3", serveAddress),
+				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&pageSize=3", serveAddress),
+				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&pageSize=3", serveAddress),
+				// Populate the embedded geojson FeatureCollection
+				FeatureCollection: geojson.FeatureCollection{
+					Features: []geojson.Feature{
+						{
+							ID: uint64ptr(4),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.7393297, 37.8862976},
+										{23.7392296, 37.8862617},
+										{23.7392581, 37.8862122},
+										{23.7385715, 37.8859662},
+										{23.7384902, 37.8861076},
+										{23.7391751, 37.8863529},
+										{23.7391999, 37.8863097},
+										{23.7393018, 37.8863462},
+										{23.7393297, 37.8862976},
+									},
 								},
 							},
-						},
-						Properties: map[string]interface{}{
-							"aeroway":    "terminal",
-							"building":   "yes",
-							"name":       "Ανατολικός Αερολιμένας",
-							"osm_way_id": "191315051",
-						},
-					},
-					{
-						ID: uint64ptr(2),
-						Geometry: geojson.Geometry{
-							Geometry: geom.Polygon{
-								{
-									{23.7398922, 37.886111},
-									{23.7403791, 37.8862854},
-									{23.7407282, 37.8856782},
-									{23.7405694, 37.8856213},
-									{23.7403906, 37.8855572},
-									{23.7402413, 37.8855038},
-									{23.7398922, 37.886111},
-								},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315126",
 							},
 						},
-						Properties: map[string]interface{}{
-							"aeroway":    "terminal",
-							"building":   "yes",
-							"osm_way_id": "191315114",
-						},
-					},
-					{
-						ID: uint64ptr(3),
-						Geometry: geojson.Geometry{
-							Geometry: geom.Polygon{
-								{
-									{23.7407222, 37.8849804},
-									{23.740901, 37.8850445},
-									{23.7410637, 37.8851028},
-									{23.7414177, 37.884487},
-									{23.7404886, 37.8841542},
-									{23.7401345, 37.88477},
-									{23.7407222, 37.8849804},
+						{
+							ID: uint64ptr(5),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.7400581, 37.8850307},
+										{23.7400919, 37.884972},
+										{23.7399529, 37.8849222},
+										{23.739979, 37.8848768},
+										{23.739275, 37.8846247},
+										{23.7391938, 37.884766},
+										{23.73991, 37.8850225},
+										{23.7399314, 37.8849853},
+										{23.7400581, 37.8850307},
+									},
 								},
 							},
-						},
-						Properties: map[string]interface{}{
-							"aeroway":    "terminal",
-							"building":   "yes",
-							"osm_way_id": "191315119",
-						},
-					},
-					{
-						ID: uint64ptr(4),
-						Geometry: geojson.Geometry{
-							Geometry: geom.Polygon{
-								{
-									{23.7393297, 37.8862976},
-									{23.7392296, 37.8862617},
-									{23.7392581, 37.8862122},
-									{23.7385715, 37.8859662},
-									{23.7384902, 37.8861076},
-									{23.7391751, 37.8863529},
-									{23.7391999, 37.8863097},
-									{23.7393018, 37.8863462},
-									{23.7393297, 37.8862976},
-								},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315130",
 							},
 						},
-						Properties: map[string]interface{}{
-							"aeroway":    "terminal",
-							"building":   "yes",
-							"osm_way_id": "191315126",
-						},
-					},
-					{
-						ID: uint64ptr(5),
-						Geometry: geojson.Geometry{
-							Geometry: geom.Polygon{
-								{
-									{23.7400581, 37.8850307},
-									{23.7400919, 37.884972},
-									{23.7399529, 37.8849222},
-									{23.739979, 37.8848768},
-									{23.739275, 37.8846247},
-									{23.7391938, 37.884766},
-									{23.73991, 37.8850225},
-									{23.7399314, 37.8849853},
-									{23.7400581, 37.8850307},
+						{
+							ID: uint64ptr(6),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.739719, 37.8856206},
+										{23.7396799, 37.8856886},
+										{23.739478, 37.8860396},
+										{23.7398555, 37.8861748},
+										{23.7398922, 37.886111},
+										{23.7402413, 37.8855038},
+										{23.7402659, 37.8854609},
+										{23.7402042, 37.8854388},
+										{23.7398885, 37.8853257},
+										{23.739719, 37.8856206},
+									},
 								},
 							},
-						},
-						Properties: map[string]interface{}{
-							"aeroway":    "terminal",
-							"building":   "yes",
-							"osm_way_id": "191315130",
-						},
-					},
-					{
-						ID: uint64ptr(6),
-						Geometry: geojson.Geometry{
-							Geometry: geom.Polygon{
-								{
-									{23.739719, 37.8856206},
-									{23.7396799, 37.8856886},
-									{23.739478, 37.8860396},
-									{23.7398555, 37.8861748},
-									{23.7398922, 37.886111},
-									{23.7402413, 37.8855038},
-									{23.7402659, 37.8854609},
-									{23.7402042, 37.8854388},
-									{23.7398885, 37.8853257},
-									{23.739719, 37.8856206},
-								},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315133",
 							},
-						},
-						Properties: map[string]interface{}{
-							"aeroway":    "terminal",
-							"building":   "yes",
-							"osm_way_id": "191315133",
-						},
-					},
-					{
-						ID: uint64ptr(7),
-						Geometry: geojson.Geometry{
-							Geometry: geom.Polygon{
-								{
-									{23.7340727, 37.8954438},
-									{23.735682, 37.892599},
-									{23.735682, 37.8924297},
-									{23.7355962, 37.8922857},
-									{23.7354245, 37.8921503},
-									{23.7335577, 37.8915322},
-									{23.7318947, 37.8946225},
-									{23.7340727, 37.8954438},
-								},
-							},
-						},
-						Properties: map[string]interface{}{
-							"aeroway":    "apron",
-							"osm_way_id": "232164874",
-						},
-					},
-					{
-						ID: uint64ptr(8),
-						Geometry: geojson.Geometry{
-							Geometry: geom.Polygon{
-								{
-									{23.6698795, 37.9390531},
-									{23.6698992, 37.9390386},
-									{23.6699119, 37.9390199},
-									{23.6699162, 37.9389989},
-									{23.6699117, 37.938978},
-									{23.6698987, 37.9389593},
-									{23.6698788, 37.938945},
-									{23.6698541, 37.9389366},
-									{23.6698272, 37.9389349},
-									{23.6698011, 37.9389403},
-									{23.6697787, 37.938952},
-									{23.6697622, 37.9389688},
-									{23.6697536, 37.9389889},
-									{23.6697537, 37.9390102},
-									{23.6697626, 37.9390302},
-									{23.6697793, 37.9390469},
-									{23.6698019, 37.9390585},
-									{23.669828, 37.9390636},
-									{23.6698549, 37.9390617},
-									{23.6698795, 37.9390531},
-								},
-							},
-						},
-						Properties: map[string]interface{}{
-							"aeroway":    "helipad",
-							"osm_way_id": "265713911",
-							"source":     "bing",
 						},
 					},
 				},
@@ -796,6 +670,10 @@ func TestCollectionFeatures(t *testing.T) {
 			expectedStatusCode: 200,
 			urlParams: map[string]string{
 				"name": "aviation_polygons",
+			},
+			queryParams: map[string]string{
+				"page":     "1",
+				"pageSize": "3",
 			},
 		},
 		// Happy-path HEAD request
@@ -813,6 +691,7 @@ func TestCollectionFeatures(t *testing.T) {
 
 	for i, tc := range testCases {
 		url := fmt.Sprintf("http://%v/collections/%v/items", serveAddress, tc.urlParams["name"])
+		url = addQueryParams(url, tc.queryParams)
 
 		var expectedContent []byte
 		var err error
@@ -859,10 +738,6 @@ func TestCollectionFeatures(t *testing.T) {
 
 		if string(body) != string(expectedContent) {
 			t.Errorf("[%v] result doesn't match expected", i)
-			// bBuf := bytes.NewBufferString("")
-			// json.Indent(bBuf, body, "", "  ")
-			// fmt.Println(bBuf)
-			t.Logf("result:\n%v\n", string(body))
 			reducedOutputError(t, body, expectedContent)
 		}
 	}
@@ -1030,4 +905,20 @@ func reducedOutputError(t *testing.T, body, expectedContent []byte) {
 			break
 		}
 	}
+}
+
+func addQueryParams(url string, queryParams map[string]string) string {
+	// Add query parameters to url
+	if queryParams != nil && len(queryParams) > 0 {
+		url += "?"
+		i := 0
+		for k, v := range queryParams {
+			url += fmt.Sprintf("%v=%v", k, v)
+			if i < len(queryParams)-1 {
+				url += "&"
+			}
+			i++
+		}
+	}
+	return url
 }
