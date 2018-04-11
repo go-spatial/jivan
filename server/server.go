@@ -30,8 +30,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jlucktay/go-wfs/config"
-	"github.com/jlucktay/go-wfs/data_provider"
+	"github.com/go-spatial/go-wfs/config"
+	"github.com/go-spatial/go-wfs/data_provider"
 )
 
 var Provider data_provider.Provider
