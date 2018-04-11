@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"hash/fnv"
 
-	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
+	"github.com/jlucktay/go-wfs/data_provider"
 )
 
 func FeatureData(cname string, fid uint64, p *data_provider.Provider, checkOnly bool) (content *Feature, contentId string, err error) {

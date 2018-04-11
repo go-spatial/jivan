@@ -32,7 +32,7 @@ import (
 	"hash/fnv"
 	"log"
 
-	"github.com/go-spatial/go-wfs/data_provider"
+	"github.com/jlucktay/go-wfs/data_provider"
 )
 
 func CollectionsMetaData(p *data_provider.Provider, serveAddress string, checkOnly bool) (content *CollectionsInfo, contentId string, err error) {
