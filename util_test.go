@@ -36,12 +36,12 @@ var baseTestPath string
 
 func init() {
 	_, thisFilePath, _, _ := runtime.Caller(0)
-	baseTestPath = path.Join(path.Dir(thisFilePath), "testdata/getDefaultGpkg")
+	baseTestPath = path.Join(path.Dir(thisFilePath), "testdata/defaultGpkg")
 }
 
 func TestDefaultGpkg(t *testing.T) {
 	cases := []struct {
-		// The name of the sub-directory, under ./testdata/getDefaultGpkg/
+		// The name of the sub-directory, under ./testdata/defaultGpkg/
 		testSubPath string
 
 		// The full path to the selected file, or an empty string if no file is found
@@ -72,7 +72,7 @@ func TestDefaultGpkg(t *testing.T) {
 			t.Errorf("Could not change working directory to '%s'.", casePath)
 		}
 
-		got := getDefaultGpkg()
+		got := defaultGpkg()
 
 		if got != c.dummyFileName {
 			t.Errorf("Under '%s', defaultGpkg() == '%s', wanted '%s'.", casePath, got, c.dummyFileName)
