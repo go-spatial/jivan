@@ -34,8 +34,8 @@ import (
 	"hash/fnv"
 	"log"
 
-	"github.com/jban332/kin-openapi/openapi3"
 	"github.com/go-spatial/go-wfs/config"
+	"github.com/jban332/kin-openapi/openapi3"
 )
 
 var openAPI3Schema *openapi3.Swagger
