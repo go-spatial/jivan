@@ -44,12 +44,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jlucktay/go-wfs/config"
-	"github.com/jlucktay/go-wfs/data_provider"
-	"github.com/jlucktay/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/geom"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	"github.com/go-spatial/tegola/provider/gpkg"
+	"github.com/jlucktay/go-wfs/config"
+	"github.com/jlucktay/go-wfs/data_provider"
+	"github.com/jlucktay/go-wfs/wfs3"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -372,7 +372,7 @@ func TestConformance(t *testing.T) {
 		}
 
 		if string(body) != string(expectedContent) {
-			t.Errorf("[%v] response content doesn't match expected:")
+			t.Errorf("response content doesn't match expected:")
 			reducedOutputError(t, body, expectedContent)
 		}
 	}
@@ -548,14 +548,14 @@ func TestSingleCollectionMetaData(t *testing.T) {
 		resp := responseWriter.Result()
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			t.Errorf("[%v] Problem reading response body: %v", err)
+			t.Errorf("Problem reading response body: %v", err)
 		}
 
 		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
 			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
 		}
 		if resp.StatusCode != tc.expectedStatusCode {
-			t.Errorf("[%v] Status code %v != %v", resp.StatusCode, tc.expectedStatusCode)
+			t.Errorf("Status code %v != %v", resp.StatusCode, tc.expectedStatusCode)
 		}
 		if string(body) != string(expectedContent) {
 			t.Errorf("[%v] result content doesn't match expected", i)
