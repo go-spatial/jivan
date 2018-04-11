@@ -112,15 +112,18 @@ func TestRoot(t *testing.T) {
 	rootUrl := fmt.Sprintf("http://%v/", serveAddress)
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		overrideContent    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 	}
 
 	testCases := []TestCase{
-		// Happy path test case
+		// Happy path GET test case
 		{
+			requestMethod: HTTPMethodGET,
 			goContent: &wfs3.RootContent{
 				Links: []*wfs3.Link{
 					{
@@ -142,10 +145,20 @@ func TestRoot(t *testing.T) {
 				},
 			},
 			contentType:        JSONContentType,
+			expectedETag:       "34888c0b0c2a4a2c",
+			expectedStatusCode: 200,
+		},
+		// Happy path HEAD test case
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			contentType:        "",
+			expectedETag:       "34888c0b0c2a4a2c",
 			expectedStatusCode: 200,
 		},
 		// Schema error, Links type as []string instead of []wfs3.Link
 		{
+			requestMethod:      HTTPMethodGET,
 			goContent:          &HandlerError{Details: "response doesn't match schema"},
 			overrideContent:    `{ links: ["http://doesntmatter.com"] }`,
 			expectedStatusCode: 500,
@@ -168,6 +181,8 @@ func TestRoot(t *testing.T) {
 			if err != nil {
 				t.Errorf("Problem marshalling expected content: %v", err)
 			}
+		case nil:
+			expectedContent = []byte{}
 		default:
 			t.Errorf("[%v] Unexpected type in tc.goContent: %T", i, tc.goContent)
 		}
@@ -184,7 +199,7 @@ func TestRoot(t *testing.T) {
 
 		// --- perform the request & get the response
 		responseWriter := httptest.NewRecorder()
-		request := httptest.NewRequest("GET", rootUrl, bytes.NewBufferString("")).WithContext(ctx)
+		request := httptest.NewRequest(tc.requestMethod, rootUrl, bytes.NewBufferString("")).WithContext(ctx)
 
 		root(responseWriter, request)
 		resp := responseWriter.Result()
@@ -192,6 +207,10 @@ func TestRoot(t *testing.T) {
 		// --- check that the results match expected
 		if resp.StatusCode != tc.expectedStatusCode {
 			t.Errorf("[%v]: status code %v != %v", i, resp.StatusCode, tc.expectedStatusCode)
+		}
+
+		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v]: ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
 		}
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -207,19 +226,33 @@ func TestApi(t *testing.T) {
 	//	Make a better test plan.
 
 	serveAddress := "unittest.net"
+	apiUrl := fmt.Sprintf("http://%v/api", serveAddress)
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		overrideContent    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 	}
 
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod:      HTTPMethodGET,
 			goContent:          wfs3.OpenAPI3Schema(),
 			overrideContent:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "3b6ca0c9c15e1720",
+			expectedStatusCode: 200,
+		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			overrideContent:    nil,
+			expectedETag:       "3b6ca0c9c15e1720",
 			expectedStatusCode: 200,
 		},
 	}
@@ -227,21 +260,23 @@ func TestApi(t *testing.T) {
 	for i, tc := range testCases {
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling tc.goContent to JSON: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] unsupported content type: '%v'", i, tc.contentType)
 			return
 		}
 
 		responseWriter := httptest.NewRecorder()
 		rctx := context.WithValue(context.TODO(), "overrideContent", tc.overrideContent)
-		request := httptest.NewRequest(
-			"GET", fmt.Sprintf("http://%v/api", serveAddress), bytes.NewBufferString("")).WithContext(rctx)
+		request := httptest.NewRequest(tc.requestMethod, apiUrl, bytes.NewBufferString("")).WithContext(rctx)
 		openapi(responseWriter, request)
 		resp := responseWriter.Result()
 
@@ -249,6 +284,9 @@ func TestApi(t *testing.T) {
 			t.Errorf("[%v] status code %v != %v", i, resp.StatusCode, tc.expectedStatusCode)
 		}
 
+		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
+		}
 		body, _ := ioutil.ReadAll(resp.Body)
 		if string(body) != string(expectedContent) {
 			t.Errorf("[%v] response content doesn't match expected:", i)
@@ -262,14 +300,18 @@ func TestConformance(t *testing.T) {
 	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		overrideContent    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 	}
 
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod: HTTPMethodGET,
 			goContent: wfs3.ConformanceClasses{
 				ConformsTo: []string{
 					"http://www.opengis.net/spec/wfs-1/3.0/req/core",
@@ -278,6 +320,15 @@ func TestConformance(t *testing.T) {
 			},
 			overrideContent:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "4385e7a21a681d7d",
+			expectedStatusCode: 200,
+		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			overrideContent:    nil,
+			expectedETag:       "4385e7a21a681d7d",
 			expectedStatusCode: 200,
 		},
 	}
@@ -285,25 +336,32 @@ func TestConformance(t *testing.T) {
 	for i, tc := range testCases {
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected content to json: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] unexpected content type: %v", i, tc.contentType)
 			return
 		}
 
 		responseWriter := httptest.NewRecorder()
 		rctx := context.WithValue(context.TODO(), "overrideContent", tc.overrideContent)
-		request := httptest.NewRequest("GET", conformanceUrl, bytes.NewBufferString("")).WithContext(rctx)
+		request := httptest.NewRequest(tc.requestMethod, conformanceUrl, bytes.NewBufferString("")).WithContext(rctx)
 		conformance(responseWriter, request)
 		resp := responseWriter.Result()
 
 		if resp.StatusCode != tc.expectedStatusCode {
 			t.Errorf("status code %v != %v", resp.StatusCode, tc.expectedStatusCode)
+		}
+
+		if resp.Header.Get("ETag") != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)
@@ -320,8 +378,9 @@ func TestConformance(t *testing.T) {
 
 func TestCollectionsMetaData(t *testing.T) {
 	serveAddress := "extratesting.org:77"
-	// Build the expected result
 	collectionsUrl := fmt.Sprintf("http://%v/collections", serveAddress)
+
+	// Build the expected result
 	cNames, err := testingProvider.CollectionNames()
 	if err != nil {
 		t.Errorf("Problem getting collection names: %v", err)
@@ -338,17 +397,30 @@ func TestCollectionsMetaData(t *testing.T) {
 	}
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		overrideContent    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 	}
 
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod:      HTTPMethodGET,
 			goContent:          csInfo,
 			overrideContent:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "319a7aabe10f9760",
+			expectedStatusCode: 200,
+		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			overrideContent:    nil,
+			expectedETag:       "319a7aabe10f9760",
 			expectedStatusCode: 200,
 		},
 	}
@@ -356,26 +428,33 @@ func TestCollectionsMetaData(t *testing.T) {
 	for i, tc := range testCases {
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(csInfo)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected collections info to json: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] unsupported content type: %v", i, tc.contentType)
 			return
 		}
 
 		responseWriter := httptest.NewRecorder()
 		rctx := context.WithValue(context.TODO(), "overrideContent", tc.overrideContent)
-		request := httptest.NewRequest("GET", collectionsUrl, bytes.NewBufferString("")).WithContext(rctx)
+		request := httptest.NewRequest(tc.requestMethod, collectionsUrl, bytes.NewBufferString("")).WithContext(rctx)
 		collectionsMetaData(responseWriter, request)
 
 		resp := responseWriter.Result()
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			t.Errorf("[%v] Problem reading response body: %v", i, err)
+		}
+
+		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
 		}
 
 		if resp.StatusCode != tc.expectedStatusCode {
@@ -393,15 +472,19 @@ func TestSingleCollectionMetaData(t *testing.T) {
 	serveAddress := "testthis.com"
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		contentOverride    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 		urlParams          map[string]string
 	}
 
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod: HTTPMethodGET,
 			goContent: wfs3.CollectionInfo{
 				Name: "roads_lines",
 				Links: []*wfs3.Link{
@@ -414,6 +497,16 @@ func TestSingleCollectionMetaData(t *testing.T) {
 			},
 			contentOverride:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "cd9d017720aa82fd",
+			expectedStatusCode: 200,
+			urlParams:          map[string]string{"name": "roads_lines"},
+		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			contentOverride:    nil,
+			expectedETag:       "cd9d017720aa82fd",
 			expectedStatusCode: 200,
 			urlParams:          map[string]string{"name": "roads_lines"},
 		},
@@ -424,13 +517,16 @@ func TestSingleCollectionMetaData(t *testing.T) {
 
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] Problem marshalling expected collection info: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] Unexpected content type: %v", err, tc.contentType)
 			return
 		}
@@ -441,7 +537,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 			hrParams = append(hrParams, httprouter.Param{Key: k, Value: v})
 		}
 
-		request := httptest.NewRequest("GET", url, bytes.NewBufferString(""))
+		request := httptest.NewRequest(tc.requestMethod, url, bytes.NewBufferString(""))
 		rctx := context.WithValue(request.Context(), httprouter.ParamsKey, hrParams)
 		rctx = context.WithValue(rctx, "contentOverride", tc.contentOverride)
 		request = request.WithContext(rctx)
@@ -451,6 +547,10 @@ func TestSingleCollectionMetaData(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			t.Errorf("[%v] Problem reading response body: %v", err)
+		}
+
+		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
 		}
 		if resp.StatusCode != tc.expectedStatusCode {
 			t.Errorf("[%v] Status code %v != %v", resp.StatusCode, tc.expectedStatusCode)
@@ -470,15 +570,19 @@ func TestCollectionFeatures(t *testing.T) {
 	serveAddress := "test.com"
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		contentOverride    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 		urlParams          map[string]string
 	}
 
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod: HTTPMethodGET,
 			goContent: geojson.FeatureCollection{
 				Features: []geojson.Feature{
 					{
@@ -688,6 +792,18 @@ func TestCollectionFeatures(t *testing.T) {
 			},
 			contentOverride:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "953ff7048ec325ce",
+			expectedStatusCode: 200,
+			urlParams: map[string]string{
+				"name": "aviation_polygons",
+			},
+		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			contentOverride:    nil,
+			expectedETag:       "953ff7048ec325ce",
 			expectedStatusCode: 200,
 			urlParams: map[string]string{
 				"name": "aviation_polygons",
@@ -700,19 +816,22 @@ func TestCollectionFeatures(t *testing.T) {
 
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected content: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] unsupported content type for expected content: %v", i, tc.contentType)
 			return
 		}
 
 		responseWriter := httptest.NewRecorder()
-		request := httptest.NewRequest("GET", url, bytes.NewBufferString(""))
+		request := httptest.NewRequest(tc.requestMethod, url, bytes.NewBufferString(""))
 		rctx := request.Context()
 		rctx = context.WithValue(rctx, "contentOverride", tc.contentOverride)
 		hrParams := make(httprouter.Params, 0, len(tc.urlParams))
@@ -730,6 +849,14 @@ func TestCollectionFeatures(t *testing.T) {
 			t.Errorf("[%v] problem reading response body: %v", i, err)
 		}
 
+		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
+		}
+
+		if resp.StatusCode != tc.expectedStatusCode {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
+		}
+
 		if string(body) != string(expectedContent) {
 			t.Errorf("[%v] result doesn't match expected", i)
 			// bBuf := bytes.NewBufferString("")
@@ -745,16 +872,20 @@ func TestSingleCollectionFeature(t *testing.T) {
 	serveAddress := "tdd.net"
 
 	type TestCase struct {
+		requestMethod      string
 		goContent          interface{}
 		contentOverride    interface{}
 		contentType        string
+		expectedETag       string
 		expectedStatusCode int
 		urlParams          map[string]string
 	}
 
 	var i18 uint64 = 18
 	testCases := []TestCase{
+		// Happy-path GET request
 		{
+			requestMethod: HTTPMethodGET,
 			goContent: geojson.Feature{
 				ID: &i18,
 				Geometry: geojson.Geometry{
@@ -773,6 +904,19 @@ func TestSingleCollectionFeature(t *testing.T) {
 			},
 			contentOverride:    nil,
 			contentType:        JSONContentType,
+			expectedETag:       "355e6572aaf34629",
+			expectedStatusCode: 200,
+			urlParams: map[string]string{
+				"name":       "roads_lines",
+				"feature_id": "18",
+			},
+		},
+		// Happy-path HEAD request
+		{
+			requestMethod:      HTTPMethodHEAD,
+			goContent:          nil,
+			contentOverride:    nil,
+			expectedETag:       "355e6572aaf34629",
 			expectedStatusCode: 200,
 			urlParams: map[string]string{
 				"name":       "roads_lines",
@@ -787,19 +931,22 @@ func TestSingleCollectionFeature(t *testing.T) {
 
 		var expectedContent []byte
 		var err error
-		if tc.contentType == JSONContentType {
+		switch tc.contentType {
+		case JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected content: %v", i, err)
 				return
 			}
-		} else {
+		case "":
+			expectedContent = []byte{}
+		default:
 			t.Errorf("[%v] unsupported content type for expected content: %v", i, tc.contentType)
 			return
 		}
 
 		responseWriter := httptest.NewRecorder()
-		request := httptest.NewRequest("GET", url, bytes.NewBufferString(""))
+		request := httptest.NewRequest(tc.requestMethod, url, bytes.NewBufferString(""))
 		rctx := request.Context()
 		rctx = context.WithValue(rctx, "contentOverride", tc.contentOverride)
 		hrParams := make(httprouter.Params, 0, len(tc.urlParams))
@@ -815,6 +962,14 @@ func TestSingleCollectionFeature(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			t.Errorf("[%v] problem reading response body: %v", i, err)
+		}
+
+		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
+			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
+		}
+
+		if resp.StatusCode != tc.expectedStatusCode {
+			t.Errorf("[%v] Status Code %v != %v", i, resp.StatusCode, tc.expectedStatusCode)
 		}
 
 		if string(body) != string(expectedContent) {

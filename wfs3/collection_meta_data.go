@@ -29,15 +29,27 @@ package wfs3
 
 import (
 	"fmt"
+	"hash/fnv"
+	"log"
 
 	"github.com/go-spatial/go-wfs/data_provider"
 )
 
-func CollectionsMetaData(p *data_provider.Provider, serveAddress string) (*CollectionsInfo, error) {
+func CollectionsMetaData(p *data_provider.Provider, serveAddress string, checkOnly bool) (content *CollectionsInfo, contentId string, err error) {
+	// TODO: This calculation of contentId assumes an unchanging data set.
+	// 	When a changing data set is needed this will have to be updated, hopefully after data providers can tell us
+	// 	something about updates.
+	hasher := fnv.New64()
+	hasher.Write([]byte(fmt.Sprintf("%v%v", serveAddress)))
+	contentId = fmt.Sprintf("%x", hasher.Sum64())
+	if checkOnly {
+		return nil, contentId, nil
+	}
+
 	cNames, err := p.CollectionNames()
 	if err != nil {
 		// TODO: Log error
-		return nil, err
+		return nil, "", err
 	}
 
 	csInfo := CollectionsInfo{Links: []*Link{}, Collections: []*CollectionInfo{}}
@@ -50,14 +62,24 @@ func CollectionsMetaData(p *data_provider.Provider, serveAddress string) (*Colle
 		csInfo.Collections = append(csInfo.Collections, &cInfo)
 	}
 
-	return &csInfo, nil
+	return &csInfo, contentId, nil
 }
 
-func CollectionMetaData(name string, p *data_provider.Provider, serveAddress string) (*CollectionInfo, error) {
+func CollectionMetaData(name string, p *data_provider.Provider, serveAddress string, checkOnly bool) (content *CollectionInfo, contentId string, err error) {
+	// TODO: This calculation of contentId assumes an unchanging data set.
+	// 	When a changing data set is needed this will have to be updated, hopefully after data providers can tell us
+	// 	something about updates.
+	hasher := fnv.New64()
+	hasher.Write([]byte(fmt.Sprintf("%v%v", serveAddress, name)))
+	contentId = fmt.Sprintf("%x", hasher.Sum64())
+	if checkOnly {
+		return nil, contentId, nil
+	}
+
 	cNames, err := p.CollectionNames()
 	if err != nil {
-		// TODO: log error
-		return nil, err
+		log.Printf("problem getting collection names: %v", err)
+		return nil, "", err
 	}
 
 	validName := false
@@ -68,11 +90,11 @@ func CollectionMetaData(name string, p *data_provider.Provider, serveAddress str
 		}
 	}
 	if !validName {
-		return nil, fmt.Errorf("Invalid collection name: %v", name)
+		return nil, "", fmt.Errorf("Invalid collection name: %v", name)
 	}
 
 	collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, name)
 	cInfo := CollectionInfo{Name: name, Links: []*Link{{Rel: "self", Href: collectionUrl}}}
 
-	return &cInfo, nil
+	return &cInfo, contentId, nil
 }
