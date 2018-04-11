@@ -30,11 +30,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
-	"path"
-	"path/filepath"
-	"sort"
 
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/data_provider"
@@ -43,49 +39,15 @@ import (
 	"github.com/go-spatial/tegola/provider/gpkg"
 )
 
-// For use when a data source isn't provided.
-// Scans for files w/ '.gpkg' extension and chooses the first alphabetically.
-// * First scan the working directory
-// * Second, if none found in the working directory and it exists, scan ./data/
-// * Third, if none found in either of the previous and it exists, scan ./test_data/
-// Returns a full path to the file or an empty string if none found.
-func defaultGpkg() string {
-	// Directories to check in decreasing order of priority
-	dirs := []string{"", "data", "test_data"}
-	gpkgPath := ""
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Printf("Unable to get working directory: %v", err)
-		return ""
-	}
-
-	for _, dir := range dirs {
-		searchGlob := path.Join(dir, "*.gpkg")
-		gpkgFiles, err := filepath.Glob(searchGlob)
-		if err != nil {
-			panic("Invalid glob pattern hardcoded")
-		}
-		if len(gpkgFiles) == 0 {
-			continue
-		}
-		sort.Strings(gpkgFiles)
-		gpkgFilename := gpkgFiles[0]
-		gpkgPath = path.Clean(path.Join(wd, gpkgFilename))
-		break
-	}
-
-	return gpkgPath
-}
-
 func main() {
-	var bindIp string
+	var bindIP string
 	var bindPort int
 	var serveAddress string
 	var dataSource string
 	var configFile string
 	var err error
 
-	flag.StringVar(&bindIp, "b", "127.0.0.1", "IP address for the server to listen on")
+	flag.StringVar(&bindIP, "b", "127.0.0.1", "IP address for the server to listen on")
 	flag.IntVar(&bindPort, "p", 9000, "port for the server to listen on")
 	flag.StringVar(&serveAddress, "s", "", "IP:Port that result urls will be constructed with (defaults to the IP:Port used in request)")
 	flag.StringVar(&dataSource, "d", "", "data source (path to .gpkg file)")
@@ -107,7 +69,7 @@ func main() {
 		}
 	}
 
-	config.Configuration.Server.BindHost = bindIp
+	config.Configuration.Server.BindHost = bindIP
 	config.Configuration.Server.BindPort = bindPort
 	config.Configuration.Server.Address = serveAddress
 
@@ -117,7 +79,7 @@ func main() {
 		}
 	}
 	if dataSource == "" {
-		dataSource = defaultGpkg()
+		dataSource = getDefaultGpkg()
 	}
 	if dataSource == "" {
 		panic("no datasource")
