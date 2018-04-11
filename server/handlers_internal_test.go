@@ -47,9 +47,9 @@ import (
 	"github.com/go-spatial/tegola/geom"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	"github.com/go-spatial/tegola/provider/gpkg"
-	"github.com/jlucktay/go-wfs/config"
-	"github.com/jlucktay/go-wfs/data_provider"
-	"github.com/jlucktay/go-wfs/wfs3"
+	"github.com/go-spatial/go-wfs/config"
+	"github.com/go-spatial/go-wfs/data_provider"
+	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/julienschmidt/httprouter"
 )
 
