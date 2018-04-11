@@ -35,7 +35,6 @@ import (
 	"github.com/go-spatial/tegola/provider/gpkg"
 	"github.com/jlucktay/go-wfs/config"
 	"github.com/jlucktay/go-wfs/data_provider"
-	"github.com/jlucktay/go-wfs/go_wfs_gpkg"
 	"github.com/jlucktay/go-wfs/server"
 	"github.com/jlucktay/go-wfs/wfs3"
 )
@@ -80,7 +79,7 @@ func main() {
 		}
 	}
 	if dataSource == "" {
-		dataSource = go_wfs_gpkg.Get()
+		dataSource = getDefaultGpkg()
 	}
 	if dataSource == "" {
 		panic("no datasource")

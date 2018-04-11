@@ -23,8 +23,7 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 ///////////////////////////////////////////////////////////////////////////////
-
-package go_wfs_gpkg
+package main
 
 import (
 	"os"
@@ -73,7 +72,7 @@ func TestDefaultGpkg(t *testing.T) {
 			t.Errorf("Could not change working directory to '%s'.", casePath)
 		}
 
-		got := Get()
+		got := getDefaultGpkg()
 
 		if got != c.dummyFileName {
 			t.Errorf("Under '%s', defaultGpkg() == '%s', wanted '%s'.", casePath, got, c.dummyFileName)

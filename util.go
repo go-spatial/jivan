@@ -24,8 +24,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// Package go_wfs_gpkg provides a function for locating a .gpkg file when one is not specified.
-package go_wfs_gpkg
+package main
 
 import (
 	"log"
@@ -35,7 +34,7 @@ import (
 	"sort"
 )
 
-// Get is used when a data source isn't provided.
+// getDefaultGpkg is used when a data source isn't provided.
 // Scans for files w/ '.gpkg' extension following logic described below, and chooses the first alphabetically.
 // Returns the absolute path as a string.
 //
@@ -43,7 +42,7 @@ import (
 // 2) if none found in the working directory and it exists, scan ./data/
 // 3) if none found in either of the previous and it exists, scan ./test_data/
 // 4) if none found, return an empty string
-func Get() string {
+func getDefaultGpkg() string {
 	// Directories to check in decreasing order of priority
 	dirs := []string{"", "data", "test_data"}
 	gpkgPath := ""
