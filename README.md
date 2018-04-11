@@ -42,6 +42,7 @@ git checkout v0.7.0
 go get github.com/jban332/kin-openapi/openapi3
 go get github.com/julienschmidt/httprouter
 go get github.com/rs/cors
+go get github.com/xeipuuv/gojsonschema
 
 # install go-wfs
 go get github.com/go-spatial/go-wfs
