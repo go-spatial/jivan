@@ -8,7 +8,7 @@ import (
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 )
 
-func Feature(cname string, fid uint64, p *data_provider.Provider, checkOnly bool) (content *geojson.Feature, contentId string, err error) {
+func FeatureData(cname string, fid uint64, p *data_provider.Provider, checkOnly bool) (content *Feature, contentId string, err error) {
 	// TODO: This calculation of contentId assumes an unchanging data set.
 	// 	When a changing data set is needed this will have to be updated, hopefully after data providers can tell us
 	// 	something about updates.
@@ -33,14 +33,16 @@ func Feature(cname string, fid uint64, p *data_provider.Provider, checkOnly bool
 	}
 
 	pf := pfs[0]
-	content = &geojson.Feature{
-		ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}, Properties: pf.Tags,
+	content = &Feature{
+		Feature: geojson.Feature{
+			ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}, Properties: pf.Tags,
+		},
 	}
 
 	return content, contentId, nil
 }
 
-func FeatureCollection(cName string, startIdx, stopIdx uint, p *data_provider.Provider, checkOnly bool) (content *geojson.FeatureCollection, contentId string, err error) {
+func FeatureCollectionData(cName string, startIdx, stopIdx uint, p *data_provider.Provider, checkOnly bool) (content *FeatureCollection, more bool, contentId string, err error) {
 	// TODO: This calculation of contentId assumes an unchanging data set.
 	// 	When a changing data set is needed this will have to be updated, hopefully after data providers can tell us
 	// 	something about updates.
@@ -49,23 +51,25 @@ func FeatureCollection(cName string, startIdx, stopIdx uint, p *data_provider.Pr
 	contentId = fmt.Sprintf("%x", hasher.Sum64())
 
 	if checkOnly {
-		return nil, contentId, nil
+		return nil, more, contentId, nil
 	}
 
 	// all collection features
 	cfs, err := p.CollectionFeatures(cName, nil)
 	if err != nil {
-		return nil, "", err
+		return nil, more, "", err
 	}
 
 	uLenCfs := uint(len(cfs))
 	originalStopIdx := stopIdx
 	if stopIdx > uLenCfs {
 		stopIdx = uLenCfs
+	} else if stopIdx <= uLenCfs {
+		more = true
 	}
 
 	if startIdx >= uLenCfs || stopIdx < startIdx {
-		return nil, "", fmt.Errorf(
+		return nil, more, "", fmt.Errorf(
 			"Invalid start/stop indices [%v, %v] for collection of length %v", startIdx, originalStopIdx, uLenCfs)
 	}
 
@@ -78,7 +82,9 @@ func FeatureCollection(cName string, startIdx, stopIdx uint, p *data_provider.Pr
 	}
 
 	// Wrap the features up in a FeatureCollection
-	content = &geojson.FeatureCollection{Features: gfs}
+	content = &FeatureCollection{
+		FeatureCollection: geojson.FeatureCollection{Features: gfs},
+	}
 
-	return content, contentId, nil
+	return content, more, contentId, nil
 }

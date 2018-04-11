@@ -38,7 +38,6 @@ import (
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/geom"
-	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -438,11 +437,14 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 
 	var data interface{}
 	var jsonSchema string
+	// Hex string hash of content
 	var contentId string
+	// Indicates if there is more data available from stopIdx onward
+	var more bool
 	// If a feature_id was provided, get a single feature, otherwise get a feature collection
 	//	containing all of the collection's features
 	if fidStr != "" {
-		data, contentId, err = wfs3.Feature(cName, fid, &Provider, false)
+		data, contentId, err = wfs3.FeatureData(cName, fid, &Provider, false)
 		jsonSchema = wfs3.FeatureJSONSchema
 	} else {
 		// First index we're interested in
@@ -450,7 +452,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		// Last index we're interested in +1
 		stopIdx := startIdx + pageSize
 
-		data, contentId, err = wfs3.FeatureCollection(cName, startIdx, stopIdx, &Provider, false)
+		data, more, contentId, err = wfs3.FeatureCollectionData(cName, startIdx, stopIdx, &Provider, false)
 		jsonSchema = wfs3.FeatureCollectionJSONSchema
 	}
 
@@ -472,15 +474,32 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 
 	var encodedContent []byte
 	switch d := data.(type) {
-	case *geojson.Feature:
+	case *wfs3.Feature:
 		if ct == JSONContentType {
+			// Generate self link
+			d.Self = r.URL.String()
+			fmt.Printf("*** %v\n", d.Self)
 			encodedContent, err = json.Marshal(d)
 		} else {
 			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 			return
 		}
-	case *geojson.FeatureCollection:
+	case *wfs3.FeatureCollection:
+		// Generate self, previous, and next links
+		self := fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum, pageSize)
+		var prev string
+		var next string
+		if pageNum > 0 {
+			prev = fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum-1, pageSize)
+		}
+		if more {
+			next = fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum+1, pageSize)
+		}
+
 		if ct == JSONContentType {
+			d.Self = self
+			d.Prev = prev
+			d.Next = next
 			encodedContent, err = json.Marshal(d)
 		} else {
 			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
