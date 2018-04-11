@@ -3,7 +3,7 @@
   port = 9000
   scheme = "http"
   address = "geo.kralidis.ca"
-  baseurl = "/go-wfs/"
+  #baseurl = "/go-wfs/"
   mimetype = "application/json; charset=UTF-8"
   encoding = "utf-8"
   language = "en-US"

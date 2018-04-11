@@ -73,6 +73,8 @@ func serveAddress(r *http.Request) string {
 
 	if config.Configuration.Server.BaseURL != "" {
 		psa = fmt.Sprintf("%v://%v%v", config.Configuration.Server.Scheme, psa, strings.TrimRight(config.Configuration.Server.BaseURL, "/"))
+	} else {
+		psa = fmt.Sprintf("%v://%v", config.Configuration.Server.Scheme, psa)
 	}
 
 	return psa
