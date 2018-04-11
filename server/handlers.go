@@ -36,8 +36,8 @@ import (
 	"strconv"
 
 	"github.com/go-spatial/tegola/geom"
-	"github.com/jlucktay/go-wfs/config"
-	"github.com/jlucktay/go-wfs/wfs3"
+	"github.com/go-spatial/go-wfs/config"
+	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/julienschmidt/httprouter"
 )
 

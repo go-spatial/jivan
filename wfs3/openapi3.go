@@ -35,7 +35,7 @@ import (
 	"log"
 
 	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jlucktay/go-wfs/config"
+	"github.com/go-spatial/go-wfs/config"
 )
 
 var openAPI3Schema *openapi3.Swagger

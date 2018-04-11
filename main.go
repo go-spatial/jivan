@@ -32,11 +32,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-spatial/go-wfs/config"
+	"github.com/go-spatial/go-wfs/data_provider"
+	"github.com/go-spatial/go-wfs/server"
+	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/provider/gpkg"
-	"github.com/jlucktay/go-wfs/config"
-	"github.com/jlucktay/go-wfs/data_provider"
-	"github.com/jlucktay/go-wfs/server"
-	"github.com/jlucktay/go-wfs/wfs3"
 )
 
 func main() {
