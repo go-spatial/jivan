@@ -109,7 +109,10 @@ func main() {
 
 	config.Configuration.Server.BindHost = bindIp
 	config.Configuration.Server.BindPort = bindPort
-	config.Configuration.Server.Address = serveAddress
+
+	if serveAddress != "" {
+		config.Configuration.Server.Address = serveAddress
+	}
 
 	if dataSource != "" {
 		if _, err := os.Stat(config.Configuration.Providers.Data); os.IsNotExist(err) {

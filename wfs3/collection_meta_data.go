@@ -40,7 +40,7 @@ func CollectionsMetaData(p *data_provider.Provider, serveAddress string, checkOn
 	// 	When a changing data set is needed this will have to be updated, hopefully after data providers can tell us
 	// 	something about updates.
 	hasher := fnv.New64()
-	hasher.Write([]byte(fmt.Sprintf("%v%v", serveAddress)))
+	hasher.Write([]byte(fmt.Sprintf("%v", serveAddress)))
 	contentId = fmt.Sprintf("%x", hasher.Sum64())
 	if checkOnly {
 		return nil, contentId, nil
@@ -54,7 +54,7 @@ func CollectionsMetaData(p *data_provider.Provider, serveAddress string, checkOn
 
 	csInfo := CollectionsInfo{Links: []*Link{}, Collections: []*CollectionInfo{}}
 	for _, cn := range cNames {
-		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
+		collectionUrl := fmt.Sprintf("%v/collections/%v", serveAddress, cn)
 		cInfo := CollectionInfo{Name: cn, Links: []*Link{{Rel: "self", Href: collectionUrl}}}
 		cLink := Link{Href: collectionUrl, Rel: "item"}
 
@@ -93,8 +93,8 @@ func CollectionMetaData(name string, p *data_provider.Provider, serveAddress str
 		return nil, "", fmt.Errorf("Invalid collection name: %v", name)
 	}
 
-	collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, name)
-	cInfo := CollectionInfo{Name: name, Links: []*Link{{Rel: "self", Href: collectionUrl}}}
+	collectionUrl := fmt.Sprintf("%v/collections/%v", serveAddress, name)
+	cInfo := CollectionInfo{Name: name, Title: name, Links: []*Link{{Rel: "self", Href: collectionUrl}}}
 
 	return &cInfo, contentId, nil
 }

@@ -34,6 +34,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/wfs3"
@@ -66,6 +67,11 @@ func serveAddress(r *http.Request) string {
 	psa := config.Configuration.Server.Address
 	if psa == "" {
 		psa = r.URL.Host
+	}
+
+	endsWith := strings.HasSuffix(psa, "/")
+	if endsWith {
+		psa = strings.TrimRight(psa, "/")
 	}
 
 	return psa

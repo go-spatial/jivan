@@ -42,10 +42,10 @@ func Root(serveAddress string, checkOnly bool) (content *RootContent, contentId 
 		return nil, contentId
 	}
 
-	apiUrl := fmt.Sprintf("http://%v/api", serveAddress)
-	conformanceUrl := fmt.Sprintf("http://%v/conformance", serveAddress)
-	collectionsUrl := fmt.Sprintf("http://%v/collections", serveAddress)
-	selfUrl := fmt.Sprintf("http://%v/", serveAddress)
+	apiUrl := fmt.Sprintf("%v/api", serveAddress)
+	conformanceUrl := fmt.Sprintf("%v/conformance", serveAddress)
+	collectionsUrl := fmt.Sprintf("%v/collections", serveAddress)
+	selfUrl := fmt.Sprintf("%v/", serveAddress)
 
 	content = &RootContent{
 		Links: []*Link{
