@@ -36,6 +36,7 @@ func init() {
 		Server: Server{
 			MimeType:    "application/json",
 			Encoding:    "utf8",
+			Scheme:      "http",
 			Language:    "en-US",
 			PrettyPrint: false,
 			Limit:       10,
@@ -82,7 +83,9 @@ func init() {
 type Server struct {
 	BindHost    string
 	BindPort    int
+	Scheme      string
 	Address     string
+	BaseURL     string
 	MimeType    string
 	Encoding    string
 	Language    string

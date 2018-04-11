@@ -69,9 +69,10 @@ func serveAddress(r *http.Request) string {
 		psa = r.URL.Host
 	}
 
-	endsWith := strings.HasSuffix(psa, "/")
-	if endsWith {
-		psa = strings.TrimRight(psa, "/")
+	psa = strings.TrimRight(psa, "/")
+
+	if config.Configuration.Server.BaseURL != "" {
+		psa = fmt.Sprintf("%v://%v%v", config.Configuration.Server.Scheme, psa, strings.TrimRight(config.Configuration.Server.BaseURL, "/"))
 	}
 
 	return psa
