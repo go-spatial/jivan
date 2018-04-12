@@ -37,6 +37,7 @@ import (
 	"strings"
 
 	"github.com/go-spatial/go-wfs/config"
+	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/geom"
 	"github.com/julienschmidt/httprouter"
@@ -482,8 +483,17 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		msg := fmt.Sprintf("Problem collecting feature data: %v", err)
-		jsonError(w, msg, HTTPStatusServerError)
+		var sc int
+		var msg string
+		switch e := err.(type) {
+		case *data_provider.BadTimeString:
+			msg = e.Error()
+			sc = HTTPStatusClientError
+		default:
+			msg = fmt.Sprintf("Problem collecting feature data: %v", e)
+			sc = HTTPStatusServerError
+		}
+		jsonError(w, msg, sc)
 		return
 	}
 

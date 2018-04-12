@@ -41,6 +41,14 @@ import (
 	prv "github.com/go-spatial/tegola/provider"
 )
 
+type BadTimeString struct {
+	msg string
+}
+
+func (bts *BadTimeString) Error() string {
+	return bts.msg
+}
+
 type EmptyTile struct {
 	extent *geom.Extent
 	srid   uint64
@@ -98,13 +106,13 @@ func parse_time_string(ts string) (t time.Time, err error) {
 		"2006-01-02",
 	}
 
-	for i, fmts := range fmtstrings {
+	for _, fmts := range fmtstrings {
 		t, err = time.Parse(fmts, ts)
-		if err != nil {
-			return t, fmt.Errorf("problem formatting %v w/ format string [%v] '%v'", ts, i, fmts)
+		if err == nil {
+			return t, nil
 		}
 	}
-	return time.Time{}, fmt.Errorf("unable to parse time string: '%v'", ts)
+	return time.Time{}, &BadTimeString{msg: fmt.Sprintf("unable to parse time string: '%v'", ts)}
 }
 
 // Checks for any intersection of start_time - stop_time period or timestamp value
@@ -143,6 +151,11 @@ func feature_time_intersects_time_filter(f *prv.Feature, start_time_str, stop_ti
 		if err != nil {
 			return false, err
 		}
+	}
+
+	// if the feature doesn't have any time data, treat as a match
+	if fstart_str == "" && fstop_str == "" && fts_str == "" {
+		return true, nil
 	}
 
 	// if there's no start_time, but there's a stop_time and feature timestamp before the stop_time
