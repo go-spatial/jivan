@@ -1,8 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // The MIT License (MIT)
-// Copyright (c) 2018 Jivan Amara
-// Copyright (c) 2018 Tom Kralidis
+// Copyright (c) 2018 James Lucktaylor
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -65,17 +64,17 @@ func TestDefaultGpkg(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
+	for i, c := range cases {
 		casePath := path.Join(baseTestPath, c.testSubPath)
 
 		if chdirErr := os.Chdir(casePath); chdirErr != nil {
-			t.Errorf("Could not change working directory to '%s'.", casePath)
+			t.Errorf("[%d] Could not change working directory to '%s'.", i, casePath)
 		}
 
 		got := defaultGpkg()
 
 		if got != c.dummyFileName {
-			t.Errorf("Under '%s', defaultGpkg() == '%s', wanted '%s'.", casePath, got, c.dummyFileName)
+			t.Errorf("[%d] Under '%s', defaultGpkg() == '%s', wanted '%s'.", i, casePath, got, c.dummyFileName)
 		}
 	}
 }
