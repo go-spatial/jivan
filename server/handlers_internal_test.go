@@ -488,7 +488,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.CollectionInfo{
-				Name: "roads_lines",
+				Name:  "roads_lines",
 				Title: "roads_lines",
 				Links: []*wfs3.Link{
 					{
