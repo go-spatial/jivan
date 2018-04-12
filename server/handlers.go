@@ -34,6 +34,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/wfs3"
@@ -63,12 +64,16 @@ type HandlerError struct {
 }
 
 func serveAddress(r *http.Request) string {
-	psa := config.Configuration.Server.Address
-	if psa == "" {
-		psa = r.URL.Host
+	psh := config.Configuration.Server.URLHostPort
+	if psh == "" {
+		psh = r.URL.Host
 	}
 
-	return psa
+	psh = strings.TrimRight(psh, "/")
+
+	psh = fmt.Sprintf("%v://%v%v", config.Configuration.Server.URLScheme, psh, strings.TrimRight(config.Configuration.Server.URLBasePath, "/"))
+
+	return psh
 }
 
 // contentType() returns the Content-Type string that will be used for the response to this request.

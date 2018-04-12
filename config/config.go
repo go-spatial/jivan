@@ -36,6 +36,8 @@ func init() {
 		Server: Server{
 			MimeType:    "application/json",
 			Encoding:    "utf8",
+			URLScheme:   "http",
+			URLBasePath: "/",
 			Language:    "en-US",
 			PrettyPrint: false,
 			Limit:       10,
@@ -80,9 +82,11 @@ func init() {
 
 // Config provides an object model for configuration.
 type Server struct {
-	BindHost    string
-	BindPort    int
-	Address     string
+	BindHost    string `toml:"bind_host"`
+	BindPort    int    `toml:"bind_port"`
+	URLScheme   string `toml:"url_scheme"`
+	URLHostPort string `toml:"url_hostport"`
+	URLBasePath string `toml:"url_basepath"`
 	MimeType    string
 	Encoding    string
 	Language    string

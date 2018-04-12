@@ -46,8 +46,8 @@ func StartServer(p data_provider.Provider) {
 	}
 
 	fmt.Printf("Bound to: %v\n", bindAddress)
-	if sconf.Address != "" {
-		fmt.Printf("Expecting traffic at %v\n", sconf.Address)
+	if sconf.URLHostPort != "" {
+		fmt.Printf("Expecting traffic at %v\n", sconf.URLHostPort)
 	}
 
 	Provider = p
