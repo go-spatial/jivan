@@ -64,20 +64,16 @@ type HandlerError struct {
 }
 
 func serveAddress(r *http.Request) string {
-	psa := config.Configuration.Server.Address
-	if psa == "" {
-		psa = r.URL.Host
+	psh := config.Configuration.Server.URLHostPort
+	if psh == "" {
+		psh = r.URL.Host
 	}
 
-	psa = strings.TrimRight(psa, "/")
+	psh = strings.TrimRight(psh, "/")
 
-	if config.Configuration.Server.BaseURL != "" {
-		psa = fmt.Sprintf("%v://%v%v", config.Configuration.Server.Scheme, psa, strings.TrimRight(config.Configuration.Server.BaseURL, "/"))
-	} else {
-		psa = fmt.Sprintf("%v://%v", config.Configuration.Server.Scheme, psa)
-	}
+	psh = fmt.Sprintf("%v://%v%v", config.Configuration.Server.URLScheme, psh, strings.TrimRight(config.Configuration.Server.URLBasePath, "/"))
 
-	return psa
+	return psh
 }
 
 // contentType() returns the Content-Type string that will be used for the response to this request.

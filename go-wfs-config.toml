@@ -1,9 +1,9 @@
 [server]
-  host = "localhost"
-  port = 9000
-  scheme = "http"
-  address = "geo.kralidis.ca"
-  #baseurl = "/go-wfs/"
+  bind_host = "localhost"
+  bind_port = 9000
+  url_scheme = "http"
+  url_hostport = "geo.kralidis.ca"
+  url_basepath = "/go-wfs/"
   mimetype = "application/json; charset=UTF-8"
   encoding = "utf-8"
   language = "en-US"

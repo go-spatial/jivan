@@ -111,7 +111,7 @@ func main() {
 	config.Configuration.Server.BindPort = bindPort
 
 	if serveAddress != "" {
-		config.Configuration.Server.Address = serveAddress
+		config.Configuration.Server.URLHostPort = serveAddress
 	}
 
 	if dataSource != "" {
