@@ -84,12 +84,12 @@ func TestServeAddress(t *testing.T) {
 		{
 			requestHost:          "someplace.com",
 			serverConfigAddress:  "",
-			expectedServeAddress: "someplace.com",
+			expectedServeAddress: "http://someplace.com",
 		},
 		{
 			requestHost:          "someplace.com",
 			serverConfigAddress:  "otherplace.com",
-			expectedServeAddress: "otherplace.com",
+			expectedServeAddress: "http://otherplace.com",
 		},
 	}
 
@@ -147,7 +147,7 @@ func TestRoot(t *testing.T) {
 				},
 			},
 			contentType:        JSONContentType,
-			expectedETag:       "34888c0b0c2a4a2c",
+			expectedETag:       "fed4927c1d9b340e",
 			expectedStatusCode: 200,
 		},
 		// Happy path HEAD test case
@@ -155,7 +155,7 @@ func TestRoot(t *testing.T) {
 			requestMethod:      HTTPMethodHEAD,
 			goContent:          nil,
 			contentType:        "",
-			expectedETag:       "34888c0b0c2a4a2c",
+			expectedETag:       "fed4927c1d9b340e",
 			expectedStatusCode: 200,
 		},
 		// Schema error, Links type as []string instead of []wfs3.Link
@@ -414,7 +414,7 @@ func TestCollectionsMetaData(t *testing.T) {
 			goContent:          csInfo,
 			overrideContent:    nil,
 			contentType:        JSONContentType,
-			expectedETag:       "319a7aabe10f9760",
+			expectedETag:       "86c51f1263aa1e87",
 			expectedStatusCode: 200,
 		},
 		// Happy-path HEAD request
@@ -422,7 +422,7 @@ func TestCollectionsMetaData(t *testing.T) {
 			requestMethod:      HTTPMethodHEAD,
 			goContent:          nil,
 			overrideContent:    nil,
-			expectedETag:       "319a7aabe10f9760",
+			expectedETag:       "86c51f1263aa1e87",
 			expectedStatusCode: 200,
 		},
 	}
@@ -489,6 +489,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.CollectionInfo{
 				Name: "roads_lines",
+				Title: "roads_lines",
 				Links: []*wfs3.Link{
 					{
 						Rel:  "self",
@@ -499,7 +500,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 			},
 			contentOverride:    nil,
 			contentType:        JSONContentType,
-			expectedETag:       "cd9d017720aa82fd",
+			expectedETag:       "a3020c6917d284ef",
 			expectedStatusCode: 200,
 			urlParams:          map[string]string{"name": "roads_lines"},
 		},
@@ -508,7 +509,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 			requestMethod:      HTTPMethodHEAD,
 			goContent:          nil,
 			contentOverride:    nil,
-			expectedETag:       "cd9d017720aa82fd",
+			expectedETag:       "a3020c6917d284ef",
 			expectedStatusCode: 200,
 			urlParams:          map[string]string{"name": "roads_lines"},
 		},
