@@ -93,14 +93,14 @@ func TestServeAddress(t *testing.T) {
 		},
 	}
 
-	originalServerAddress := config.Configuration.Server.Address
+	originalServerAddress := config.Configuration.Server.URLHostPort
 	for i, tc := range testCases {
 		url := fmt.Sprintf("http://%v", tc.requestHost)
 		req := httptest.NewRequest("GET", url, bytes.NewReader([]byte{}))
 		if tc.serverConfigAddress != "" {
-			config.Configuration.Server.Address = tc.serverConfigAddress
+			config.Configuration.Server.URLHostPort = tc.serverConfigAddress
 			// Restore the config change so other tests aren't affected.
-			defer func(osa string) { config.Configuration.Server.Address = osa }(originalServerAddress)
+			defer func(osa string) { config.Configuration.Server.URLHostPort = osa }(originalServerAddress)
 		}
 		sa := serveAddress(req)
 		if sa != tc.expectedServeAddress {
