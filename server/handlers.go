@@ -413,6 +413,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 
 	q := r.URL.Query()
 	var pageSize, pageNum uint
+	var timeprops map[string]string
 
 	qPageSize := q["pageSize"]
 	if len(qPageSize) != 1 {
@@ -438,6 +439,25 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		pageNum = uint(pn)
 	}
 
+	qTime := q["time"]
+	if len(qTime) > 0 {
+		if len(qTime) > 1 {
+			jsonError(w, "'time' parameter used more than once'", 400)
+			return
+		}
+		ts := strings.Split(qTime[0], "/")
+		timeprops = make(map[string]string)
+		if len(ts) == 1 {
+			timeprops["timestamp"] = ts[0]
+		} else if len(ts) == 2 {
+			timeprops["start_time"] = ts[0]
+			timeprops["stop_time"] = ts[1]
+		} else {
+			jsonError(w, "'time' parameter contains more than two time values ('/' separator)", HTTPStatusClientError)
+			return
+		}
+	}
+
 	log.Printf("Getting page %v (size %v) for '%v'", pageNum, pageSize, cName)
 
 	var data interface{}
@@ -457,7 +477,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		// Last index we're interested in +1
 		stopIdx := startIdx + pageSize
 
-		data, more, contentId, err = wfs3.FeatureCollectionData(cName, startIdx, stopIdx, &Provider, false)
+		data, more, contentId, err = wfs3.FeatureCollectionData(cName, startIdx, stopIdx, timeprops, &Provider, false)
 		jsonSchema = wfs3.FeatureCollectionJSONSchema
 	}
 
