@@ -42,7 +42,7 @@ func FeatureData(cname string, fid uint64, p *data_provider.Provider, checkOnly 
 	return content, contentId, nil
 }
 
-func FeatureCollectionData(cName string, startIdx, stopIdx uint, p *data_provider.Provider, checkOnly bool) (content *FeatureCollection, more bool, contentId string, err error) {
+func FeatureCollectionData(cName string, startIdx, stopIdx uint, properties map[string]string, p *data_provider.Provider, checkOnly bool) (content *FeatureCollection, more bool, contentId string, err error) {
 	// TODO: This calculation of contentId assumes an unchanging data set.
 	// 	When a changing data set is needed this will have to be updated, hopefully after data providers can tell us
 	// 	something about updates.
@@ -54,8 +54,8 @@ func FeatureCollectionData(cName string, startIdx, stopIdx uint, p *data_provide
 		return nil, more, contentId, nil
 	}
 
-	// all collection features
-	cfs, err := p.CollectionFeatures(cName, nil)
+	// collection features filtered for matches in properties if it is non-nil, otherwise all
+	cfs, err := p.CollectionFeatures(cName, properties, nil)
 	if err != nil {
 		return nil, more, "", err
 	}
