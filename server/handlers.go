@@ -37,6 +37,7 @@ import (
 	"strings"
 
 	"github.com/go-spatial/go-wfs/config"
+	"github.com/go-spatial/go-wfs/html"
 	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/geom"
 	"github.com/julienschmidt/httprouter"
@@ -110,6 +111,17 @@ func contentType(r *http.Request) string {
 		useType = defaultContentType
 	}
 
+	// if query string 'f' parameter is passed
+	// override HTTP Accept header
+	q := r.URL.Query()
+	qFormat := q["f"]
+
+	if len(qFormat) > 0 {
+		if qFormat[0] != useType {
+			useType = qFormat[0]
+		}
+	}
+
 	return useType
 }
 
@@ -154,6 +166,8 @@ func root(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if ct == JSONContentType {
 		encodedContent, err = json.Marshal(rootContent)
+	} else if ct == HTMLContentType {
+		encodedContent, err = html.RenderRootHTML(config.Configuration, rootContent)
 	} else {
 		jsonError(w, "Content-Type: '"+ct+"' not supported.", HTTPStatusServerError)
 		return
@@ -169,12 +183,14 @@ func root(w http.ResponseWriter, r *http.Request) {
 	if overrideContent != nil {
 		encodedContent = overrideContent.([]byte)
 	}
-	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	err = wfs3.ValidateJSONResponse(r, rPath, HTTPStatusOk, w.Header(), respBodyRC)
-	if err != nil {
-		log.Printf("%v", err)
-		jsonError(w, "response doesn't match schema", HTTPStatusServerError)
-		return
+	if ct == JSONContentType {
+		respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
+		err = wfs3.ValidateJSONResponse(r, rPath, HTTPStatusOk, w.Header(), respBodyRC)
+		if err != nil {
+			log.Printf("%v", err)
+			jsonError(w, "response doesn't match schema", HTTPStatusServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(HTTPStatusOk)
