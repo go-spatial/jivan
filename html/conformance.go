@@ -8,33 +8,30 @@ import (
 	"github.com/go-spatial/go-wfs/wfs3"
 )
 
-var tmpl_root = `<!doctype html>
+var tmpl_conformance = `<!doctype html>
 <html lang="en">
 	<head>
 	<meta charset="utf-8">
 	<title>{{ .Config.Metadata.Identification.Title }}</title>
-	{{ range .Data.Links }}
-	<link rel="{{ .Rel }}" type="application/json" href="{{ .Href }}"/>
-	{{ end }}
 </head>
 <body>
 	<h1>{{ .Config.Metadata.Identification.Title }}</h1>
-	<h2>Links</h2>
+	<h2>Conformance</h2>
 	<ul>
-	{{ range .Data.Links }}
-	<li><a href="{{ .Href }}?f=text/html">{{ .Href }}?f=text/html</a></li>
+	{{ range .Data.ConformsTo }}
+	<li><a href="{{ . }}">{{ . }}</a></li>
 	{{ end }}
 	</ul>
 </body>
 </html>`
 
-func RenderRootHTML(c config.Config, r *wfs3.RootContent) ([]byte, error) {
+func RenderConformanceHTML(c config.Config, r *wfs3.ConformanceClasses) ([]byte, error) {
 	var tpl bytes.Buffer
 
-	t := template.New("root")
-	t, _ = t.Parse(tmpl_root)
+	t := template.New("conformance")
+	t, _ = t.Parse(tmpl_conformance)
 
-	data := HTMLTemplateDataRoot{c, r}
+	data := HTMLTemplateDataConformance{c, r}
 
 	if err := t.Execute(&tpl, data); err != nil {
 		return tpl.Bytes(), err
