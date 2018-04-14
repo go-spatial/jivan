@@ -27,6 +27,7 @@ package main
 import (
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"testing"
 )
@@ -48,15 +49,15 @@ func TestDefaultGpkg(t *testing.T) {
 	}{
 		{
 			testSubPath:   "1",
-			dummyFileName: path.Join(baseTestPath, "1/dummyA.gpkg"),
+			dummyFileName: filepath.Join(baseTestPath, "1/dummyA.gpkg"),
 		},
 		{
 			testSubPath:   "2",
-			dummyFileName: path.Join(baseTestPath, "2/data/dataDummy.gpkg"),
+			dummyFileName: filepath.Join(baseTestPath, "2/data/dataDummy.gpkg"),
 		},
 		{
 			testSubPath:   "3",
-			dummyFileName: path.Join(baseTestPath, "3/test_data/testDataDummy.gpkg"),
+			dummyFileName: filepath.Join(baseTestPath, "3/test_data/testDataDummy.gpkg"),
 		},
 		{
 			testSubPath:   "4",

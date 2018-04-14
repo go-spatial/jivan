@@ -68,5 +68,9 @@ func defaultGpkg() string {
 		break
 	}
 
-	return gpkgPath
+	if len(gpkgPath) == 0 {
+		return ""
+	} else {
+		return filepath.Clean(gpkgPath)
+	}
 }
