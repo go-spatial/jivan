@@ -588,9 +588,9 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&pageSize=3", serveAddress),
-				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&pageSize=3", serveAddress),
-				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&pageSize=3", serveAddress),
+				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
 				// Populate the embedded geojson FeatureCollection
 				FeatureCollection: geojson.FeatureCollection{
 					Features: []geojson.Feature{
@@ -675,8 +675,8 @@ func TestCollectionFeatures(t *testing.T) {
 				"name": "aviation_polygons",
 			},
 			queryParams: map[string]string{
-				"page":     "1",
-				"pageSize": "3",
+				"page":  "1",
+				"limit": "3",
 			},
 		},
 		// Happy-path GET request w/ full timestamp filter (date/time/timezone)
@@ -685,9 +685,9 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&pageSize=3", serveAddress),
-				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&pageSize=3", serveAddress),
-				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&pageSize=3", serveAddress),
+				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
 				// Populate the embedded geojson FeatureCollection
 				FeatureCollection: geojson.FeatureCollection{
 					Features: []geojson.Feature{
@@ -772,9 +772,9 @@ func TestCollectionFeatures(t *testing.T) {
 				"name": "aviation_polygons",
 			},
 			queryParams: map[string]string{
-				"page":     "1",
-				"pageSize": "3",
-				"time":     "2018-04-12T16:29:00Z-0600",
+				"page":  "1",
+				"limit": "3",
+				"time":  "2018-04-12T16:29:00Z-0600",
 			},
 		},
 		// Happy-path GET request w/ zoneless timestamp filter (date/time)
@@ -783,9 +783,9 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&pageSize=3", serveAddress),
-				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&pageSize=3", serveAddress),
-				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&pageSize=3", serveAddress),
+				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
 				// Populate the embedded geojson FeatureCollection
 				FeatureCollection: geojson.FeatureCollection{
 					Features: []geojson.Feature{
@@ -870,9 +870,9 @@ func TestCollectionFeatures(t *testing.T) {
 				"name": "aviation_polygons",
 			},
 			queryParams: map[string]string{
-				"page":     "1",
-				"pageSize": "3",
-				"time":     "2018-04-12T16:29:00",
+				"page":  "1",
+				"limit": "3",
+				"time":  "2018-04-12T16:29:00",
 			},
 		},
 		// Happy-path GET request w/ date only timestamp filter
@@ -881,9 +881,9 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&pageSize=3", serveAddress),
-				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&pageSize=3", serveAddress),
-				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&pageSize=3", serveAddress),
+				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
 				// Populate the embedded geojson FeatureCollection
 				FeatureCollection: geojson.FeatureCollection{
 					Features: []geojson.Feature{
@@ -968,9 +968,9 @@ func TestCollectionFeatures(t *testing.T) {
 				"name": "aviation_polygons",
 			},
 			queryParams: map[string]string{
-				"page":     "1",
-				"pageSize": "3",
-				"time":     "2018-04-12",
+				"page":  "1",
+				"limit": "3",
+				"time":  "2018-04-12",
 			},
 		},
 		// Bad GET request due to invalid timestamp filter
@@ -989,9 +989,9 @@ func TestCollectionFeatures(t *testing.T) {
 				"name": "aviation_polygons",
 			},
 			queryParams: map[string]string{
-				"page":     "1",
-				"pageSize": "3",
-				"time":     "2018-04-12_broken",
+				"page":  "1",
+				"limit": "3",
+				"time":  "2018-04-12_broken",
 			},
 		},
 		// Happy-path HEAD request
