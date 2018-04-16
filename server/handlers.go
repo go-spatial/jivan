@@ -43,7 +43,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-const DEFAULT_PAGE_SIZE = 10
+// This is the default max number of features to return for feature collection reqeusts
+const DEFAULT_RESULT_LIMIT = 10
 
 const (
 	JSONContentType = "application/json"
@@ -413,19 +414,19 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := r.URL.Query()
-	var pageSize, pageNum uint
+	var limit, pageNum uint
 	var timeprops map[string]string
 
-	qPageSize := q["pageSize"]
+	qPageSize := q["limit"]
 	if len(qPageSize) != 1 {
-		pageSize = DEFAULT_PAGE_SIZE
+		limit = DEFAULT_RESULT_LIMIT
 	} else {
 		ps, err := strconv.ParseUint(qPageSize[0], 10, 64)
 		if err != nil {
 			jsonError(w, err.Error(), HTTPStatusClientError)
 			return
 		}
-		pageSize = uint(ps)
+		limit = uint(ps)
 	}
 
 	qPageNum := q["page"]
@@ -459,8 +460,6 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Printf("Getting page %v (size %v) for '%v'", pageNum, pageSize, cName)
-
 	var data interface{}
 	var jsonSchema string
 	// Hex string hash of content
@@ -474,9 +473,9 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		jsonSchema = wfs3.FeatureJSONSchema
 	} else {
 		// First index we're interested in
-		startIdx := pageSize * pageNum
+		startIdx := limit * pageNum
 		// Last index we're interested in +1
-		stopIdx := startIdx + pageSize
+		stopIdx := startIdx + limit
 
 		data, more, contentId, err = wfs3.FeatureCollectionData(cName, startIdx, stopIdx, timeprops, &Provider, false)
 		jsonSchema = wfs3.FeatureCollectionJSONSchema
@@ -521,14 +520,14 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		}
 	case *wfs3.FeatureCollection:
 		// Generate self, previous, and next links
-		self := fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum, pageSize)
+		self := fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum, limit)
 		var prev string
 		var next string
 		if pageNum > 0 {
-			prev = fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum-1, pageSize)
+			prev = fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum-1, limit)
 		}
 		if more {
-			next = fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum+1, pageSize)
+			next = fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum+1, limit)
 		}
 
 		if ct == JSONContentType {
