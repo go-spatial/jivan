@@ -1,4 +1,4 @@
-# go-wfs
+# go-wfs [![Build Status](https://travis-ci.org/go-spatial/go-wfs.png)](https://travis-ci.org/go-spatial/go-wfs)
 
 go-wfs is a [Go](https://golang.org) server implementation of [OGC WFS 3.0](https://github.com/opengeospatial/WFS_FES).
 
@@ -50,8 +50,10 @@ go run main.go  # or go build main.go
 
 ## Developers
 `dep ensure` will install dependencies at the current HEAD when you run it (equivalent to `go get ...`)
+
 Run `dep ensure -update` periodically to stay current with these depenencies. (equivalent to subsequent `go get ...`)
-Please don't add Gopkg.lock to the repo.
+
+Please don't add `Gopkg.lock` to the repo.
 
 ## Requests Overview
 
