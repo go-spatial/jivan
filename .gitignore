@@ -1,4 +1,4 @@
-vendor/
 sandbox
 go-wfs
 .vscode/
+vendor/

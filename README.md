@@ -1,4 +1,4 @@
-# go-wfs
+# go-wfs [![Build Status](https://travis-ci.org/go-spatial/go-wfs.png)](https://travis-ci.org/go-spatial/go-wfs)
 
 go-wfs is a [Go](https://golang.org) server implementation of [OGC WFS 3.0](https://github.com/opengeospatial/WFS_FES).
 
@@ -34,18 +34,11 @@ service.  Take a look at `server/routes.go` for a concise list of supported URLs
 # create directory for local env
 mkdir /path/to/golang-env
 export GOPATH=/path/to/golang-env
-# install tegola
-go get github.com/go-spatial/tegola
-cd $GOPATH/src/github.com/go-spatial/tegola
-git checkout v0.7.0
-# install other supporting packages
-go get github.com/jban332/kin-openapi/openapi3
-go get github.com/julienschmidt/httprouter
-go get github.com/rs/cors
-go get github.com/xeipuuv/gojsonschema
-
 # install go-wfs
 go get github.com/go-spatial/go-wfs
+# install dependencies
+go get github.com/golang/dep
+dep ensure
 ```
 
 ## Running
@@ -55,6 +48,12 @@ go get github.com/go-spatial/go-wfs
 go run main.go  # or go build main.go
 ```
 
+## Developers
+`dep ensure` will install dependencies at the current HEAD when you run it (equivalent to `go get ...`)
+
+Run `dep ensure -update` periodically to stay current with these depenencies. (equivalent to subsequent `go get ...`)
+
+Please don't add `Gopkg.lock` to the repo.
 
 ## Requests Overview
 
