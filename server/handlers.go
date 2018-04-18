@@ -465,7 +465,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	// Hex string hash of content
 	var contentId string
 	// Indicates if there is more data available from stopIdx onward
-	var more bool
+	var featureTotal uint
 	// If a feature_id was provided, get a single feature, otherwise get a feature collection
 	//	containing all of the collection's features
 	if fidStr != "" {
@@ -477,7 +477,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		// Last index we're interested in +1
 		stopIdx := startIdx + limit
 
-		data, more, contentId, err = wfs3.FeatureCollectionData(cName, startIdx, stopIdx, timeprops, &Provider, false)
+		data, featureTotal, contentId, err = wfs3.FeatureCollectionData(cName, startIdx, stopIdx, timeprops, &Provider, false)
 		jsonSchema = wfs3.FeatureCollectionJSONSchema
 	}
 
@@ -526,7 +526,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		if pageNum > 0 {
 			prev = fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum-1, limit)
 		}
-		if more {
+		if featureTotal > (limit * (pageNum + 1)) {
 			next = fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum+1, limit)
 		}
 
@@ -534,6 +534,8 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 			d.Self = self
 			d.Prev = prev
 			d.Next = next
+			d.NumberMatched = featureTotal
+			d.NumberReturned = uint(len(d.Features))
 			encodedContent, err = json.Marshal(d)
 		} else {
 			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
