@@ -588,9 +588,11 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
-				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
-				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				NumberMatched:  8,
+				NumberReturned: 3,
 				// Populate the embedded geojson FeatureCollection
 				FeatureCollection: geojson.FeatureCollection{
 					Features: []geojson.Feature{
@@ -685,9 +687,11 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
-				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
-				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				NumberMatched:  8,
+				NumberReturned: 3,
 				// Populate the embedded geojson FeatureCollection
 				FeatureCollection: geojson.FeatureCollection{
 					Features: []geojson.Feature{
@@ -783,9 +787,11 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
-				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
-				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				NumberMatched:  8,
+				NumberReturned: 3,
 				// Populate the embedded geojson FeatureCollection
 				FeatureCollection: geojson.FeatureCollection{
 					Features: []geojson.Feature{
@@ -881,9 +887,11 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
-				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
-				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				NumberMatched:  8,
+				NumberReturned: 3,
 				// Populate the embedded geojson FeatureCollection
 				FeatureCollection: geojson.FeatureCollection{
 					Features: []geojson.Feature{

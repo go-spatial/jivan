@@ -260,9 +260,11 @@ var ConformanceClassesSchema openapi3.Schema = openapi3.Schema{
 
 type FeatureCollection struct {
 	geojson.FeatureCollection
-	Self string `json:"self,omitempty"`
-	Prev string `json:"prev",omitempty`
-	Next string `json:"next",omitempty`
+	Self           string `json:"self,omitempty"`
+	Prev           string `json:"prev",omitempty`
+	Next           string `json:"next",omitempty`
+	NumberMatched  uint   `json:"numberMatched,omitempty"`
+	NumberReturned uint   `json:"numberReturned,omitempty"`
 }
 
 type Feature struct {
