@@ -267,5 +267,6 @@ type FeatureCollection struct {
 
 type Feature struct {
 	geojson.Feature
-	Self string `json:"self,omitempty"`
+	Self       string `json:"self,omitempty"`
+	Collection string `json:"collection,omitempty"`
 }

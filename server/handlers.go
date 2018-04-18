@@ -512,7 +512,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		if ct == JSONContentType {
 			// Generate self link
 			d.Self = r.URL.String()
-			fmt.Printf("*** %v\n", d.Self)
+			d.Collection = fmt.Sprintf("http://%v/collections/%v", r.URL.Host, cName)
 			encodedContent, err = json.Marshal(d)
 		} else {
 			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)

@@ -1083,7 +1083,8 @@ func TestSingleCollectionFeature(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.Feature{
-				Self: fmt.Sprintf("http://%v/collections/roads_lines/items/18", serveAddress),
+				Self:       fmt.Sprintf("http://%v/collections/roads_lines/items/18", serveAddress),
+				Collection: fmt.Sprintf("http://%v/collections/roads_lines", serveAddress),
 				// Populate embedded geojson Feature
 				Feature: geojson.Feature{
 					ID: &i18,
