@@ -10,7 +10,12 @@ var tmpl_base = `<!doctype html>
 	{{ end }}
 </head>
 <body>
+	<header>
+		<h1>{{ .config.Metadata.Identification.Title }}</h1>
+		<span itemprop="description">{{ .config.Metadata.Identification.Description }}</span>
+	</header>
 	{{ .body }}
+	<footer>Powered by <a title="go-wfs" href="https://github.com/go-spatial/go-wfs">go-wfs</a></footer>
 </body>
 </html>`
 

@@ -51,7 +51,7 @@ func (rc RootContent) ContentType(contentType string) RootContent {
 
 func (rc RootContent) MarshalHTML(c config.Config) ([]byte, error) {
 	var tpl bytes.Buffer
-	//var tpl2 bytes.Buffer
+	var tpl2 bytes.Buffer
 
 	t := template.New("root")
 	t, _ = t.Parse(tmpl_root)
@@ -67,12 +67,12 @@ func (rc RootContent) MarshalHTML(c config.Config) ([]byte, error) {
 
 	data := map[string]interface{}{"config": c, "body": template.HTML(tpl.Bytes()), "links": rc.Links}
 
-	if err := b.Execute(&tpl, data); err != nil {
-		return tpl.Bytes(), err
+	if err := b.Execute(&tpl2, data); err != nil {
+		return tpl2.Bytes(), err
 	}
 
 	// FIXME: should be a better way
-	return tpl.Bytes(), nil
+	return tpl2.Bytes(), nil
 }
 
 var RootContentSchema openapi3.Schema = openapi3.Schema{
