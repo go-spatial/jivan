@@ -2,4 +2,3 @@ sandbox
 go-wfs
 .vscode/
 vendor/
-Gopkg.lock

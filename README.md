@@ -34,10 +34,10 @@ service.  Take a look at `server/routes.go` for a concise list of supported URLs
 # create directory for local env
 mkdir /path/to/golang-env
 export GOPATH=/path/to/golang-env
-# install dependencies
-go get github.com/golang/dep/...
 # install go-wfs
 go get github.com/go-spatial/go-wfs
+# install dependencies
+go get github.com/golang/dep/...
 dep ensure
 ```
 
