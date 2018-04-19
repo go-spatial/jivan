@@ -73,38 +73,82 @@ func init() {
 	Provider = testingProvider
 }
 
-func TestServeAddress(t *testing.T) {
+func TestServeSchemeHostPortBase(t *testing.T) {
 	type TestCase struct {
-		requestHost          string
-		serverConfigAddress  string
-		expectedServeAddress string
+		requestScheme               string
+		requestHostPort             string
+		configURLHostPort           string
+		configURLScheme             string
+		configURLBasePath           string
+		expectedServeSchemeHostPort string
 	}
 
 	testCases := []TestCase{
+		// Check that w/ no config settings, everything is pulled from the request
 		{
-			requestHost:          "someplace.com",
-			serverConfigAddress:  "",
-			expectedServeAddress: "http://someplace.com",
+			requestScheme:               "http",
+			requestHostPort:             "someplace.com",
+			expectedServeSchemeHostPort: "http://someplace.com",
 		},
+		// Check that things work w/ an alternate port
 		{
-			requestHost:          "someplace.com",
-			serverConfigAddress:  "otherplace.com",
-			expectedServeAddress: "http://otherplace.com",
+			requestScheme:               "http",
+			requestHostPort:             "someplace.com:7777",
+			expectedServeSchemeHostPort: "http://someplace.com:7777",
+		},
+		// Check that scheme setting works
+		{
+			requestScheme:               "https",
+			requestHostPort:             "someplace.com",
+			configURLHostPort:           "otherplace.com",
+			configURLScheme:             "https",
+			expectedServeSchemeHostPort: "https://otherplace.com",
+		},
+		// Check base path setting works
+		{
+			requestScheme:               "http",
+			requestHostPort:             "someplace.com",
+			configURLBasePath:           "/testdir",
+			configURLHostPort:           "otherplace.com",
+			expectedServeSchemeHostPort: "https://otherplace.com/testdir",
+		},
+		// Check base path w/ trailing slash
+		{
+			requestScheme:               "http",
+			requestHostPort:             "someplace.com",
+			configURLBasePath:           "/testdir/",
+			configURLHostPort:           "otherplace.com",
+			expectedServeSchemeHostPort: "https://otherplace.com/testdir",
 		},
 	}
 
-	originalServerAddress := config.Configuration.Server.URLHostPort
+	originalURLScheme := config.Configuration.Server.URLScheme
+	originalURLHostPort := config.Configuration.Server.URLHostPort
+	originalURLBasePath := config.Configuration.Server.URLBasePath
+
+	defer func(ous, ohp, obp string) {
+		config.Configuration.Server.URLScheme = ous
+		config.Configuration.Server.URLHostPort = ohp
+		config.Configuration.Server.URLBasePath = obp
+	}(originalURLScheme, originalURLHostPort, originalURLBasePath)
+
 	for i, tc := range testCases {
-		url := fmt.Sprintf("http://%v", tc.requestHost)
+		url := fmt.Sprintf("%v://%v", tc.requestScheme, tc.requestHostPort)
 		req := httptest.NewRequest("GET", url, bytes.NewReader([]byte{}))
-		if tc.serverConfigAddress != "" {
-			config.Configuration.Server.URLHostPort = tc.serverConfigAddress
-			// Restore the config change so other tests aren't affected.
-			defer func(osa string) { config.Configuration.Server.URLHostPort = osa }(originalServerAddress)
+
+		if tc.configURLScheme != "" {
+			config.Configuration.Server.URLScheme = tc.configURLScheme
 		}
-		sa := serveAddress(req)
-		if sa != tc.expectedServeAddress {
-			t.Errorf("[%v] serve address %v != %v", i, sa, tc.expectedServeAddress)
+		if tc.configURLHostPort != "" {
+			config.Configuration.Server.URLHostPort = tc.configURLHostPort
+		}
+		if tc.configURLBasePath != "" {
+			config.Configuration.Server.URLBasePath = tc.configURLBasePath
+		}
+
+		sa := serveSchemeHostPortBase(req)
+		if sa != tc.expectedServeSchemeHostPort {
+			t.Errorf("[%v] serve address %v != %v", i, sa, tc.expectedServeSchemeHostPort)
 		}
 	}
 }

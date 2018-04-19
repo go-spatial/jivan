@@ -65,17 +65,24 @@ type HandlerError struct {
 	Details string `json:"detail"`
 }
 
-func serveAddress(r *http.Request) string {
-	psh := config.Configuration.Server.URLHostPort
-	if psh == "" {
-		psh = r.URL.Host
+func serveSchemeHostPortBase(r *http.Request) string {
+	// Preferred host:port
+	php := config.Configuration.Server.URLHostPort
+	if php == "" {
+		php = r.Host
 	}
+	php = strings.TrimRight(php, "/")
 
-	psh = strings.TrimRight(psh, "/")
+	// Preferred scheme
+	ps := config.Configuration.Server.URLScheme
 
-	psh = fmt.Sprintf("%v://%v%v", config.Configuration.Server.URLScheme, psh, strings.TrimRight(config.Configuration.Server.URLBasePath, "/"))
+	// Preferred base path
+	pbp := strings.TrimRight(config.Configuration.Server.URLBasePath, "/")
 
-	return psh
+	// Preferred scheme / host / port / base
+	pshpb := fmt.Sprintf("%v://%v%v", ps, php, pbp)
+
+	return pshpb
 }
 
 // contentType() returns the Content-Type string that will be used for the response to this request.
@@ -138,7 +145,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 	// This allows tests to set the result to whatever they want.
 	overrideContent := r.Context().Value("overrideContent")
 
-	rootContent, contentId := wfs3.Root(serveAddress(r), false)
+	rootContent, contentId := wfs3.Root(serveSchemeHostPortBase(r), false)
 	w.Header().Set("ETag", contentId)
 	if r.Method == HTTPMethodHEAD {
 		if r.Header.Get("ETag") == contentId {
@@ -294,7 +301,7 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md, contentId, err := wfs3.CollectionMetaData(cName, &Provider, serveAddress(r), false)
+	md, contentId, err := wfs3.CollectionMetaData(cName, &Provider, serveSchemeHostPortBase(r), false)
 	if err != nil {
 		jsonError(w, err.Error(), HTTPStatusServerError)
 		return
@@ -347,7 +354,7 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 	overrideContent := r.Context().Value("overrideContent")
 
 	ct := contentType(r)
-	md, contentId, err := wfs3.CollectionsMetaData(&Provider, serveAddress(r), false)
+	md, contentId, err := wfs3.CollectionsMetaData(&Provider, serveSchemeHostPortBase(r), false)
 	if err != nil {
 		jsonError(w, err.Error(), HTTPStatusServerError)
 		return
