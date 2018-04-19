@@ -44,11 +44,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-spatial/geom"
+	"github.com/go-spatial/geom/encoding/geojson"
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/go-wfs/wfs3"
-	"github.com/go-spatial/tegola/geom"
-	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	"github.com/go-spatial/tegola/provider/gpkg"
 	"github.com/julienschmidt/httprouter"
 )

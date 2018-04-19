@@ -37,7 +37,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/go-spatial/tegola/geom"
+	"github.com/go-spatial/geom"
 	prv "github.com/go-spatial/tegola/provider"
 )
 
