@@ -86,6 +86,5 @@ func RenderTemplate(templateString string, data map[string]interface{}) ([]byte,
 		return tpl.Bytes(), err
 	}
 
-	// FIXME: should be a better way
 	return tpl.Bytes(), nil
 }
