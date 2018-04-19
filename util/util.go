@@ -28,6 +28,8 @@
 package util
 
 import (
+	"bytes"
+	"html/template"
 	"log"
 	"os"
 	"path"
@@ -73,4 +75,17 @@ func DefaultGpkg() string {
 	} else {
 		return filepath.Clean(gpkgPath)
 	}
+}
+
+func RenderTemplate(templateString string, data map[string]interface{}) ([]byte, error) {
+	var tpl bytes.Buffer
+	t := template.New("template")
+	t, _ = t.Parse(templateString)
+
+	if err := t.Execute(&tpl, data); err != nil {
+		return tpl.Bytes(), err
+	}
+
+	// FIXME: should be a better way
+	return tpl.Bytes(), nil
 }

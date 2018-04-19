@@ -28,8 +28,8 @@
 package wfs3
 
 import (
-	"bytes"
 	"github.com/go-spatial/go-wfs/config"
+	"github.com/go-spatial/go-wfs/util"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	"github.com/jban332/kin-openapi/openapi3"
 	"html/template"
@@ -50,29 +50,17 @@ func (rc RootContent) ContentType(contentType string) RootContent {
 }
 
 func (rc RootContent) MarshalHTML(c config.Config) ([]byte, error) {
-	var tpl bytes.Buffer
-	var tpl2 bytes.Buffer
-
-	t := template.New("root")
-	t, _ = t.Parse(tmpl_root)
-
 	body := map[string]interface{}{"config": c, "data": rc}
 
-	if err := t.Execute(&tpl, body); err != nil {
-		return tpl.Bytes(), err
+	content, err := util.RenderTemplate(tmpl_root, body)
+
+	if err != nil {
+		return content, err
 	}
 
-	b := template.New("base")
-	b, _ = b.Parse(tmpl_base)
+	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": rc.Links}
 
-	data := map[string]interface{}{"config": c, "body": template.HTML(tpl.Bytes()), "links": rc.Links}
-
-	if err := b.Execute(&tpl2, data); err != nil {
-		return tpl2.Bytes(), err
-	}
-
-	// FIXME: should be a better way
-	return tpl2.Bytes(), nil
+	return util.RenderTemplate(tmpl_base, data)
 }
 
 var RootContentSchema openapi3.Schema = openapi3.Schema{
@@ -271,29 +259,17 @@ type ConformanceClasses struct {
 }
 
 func (ccs ConformanceClasses) MarshalHTML(c config.Config) ([]byte, error) {
-	var tpl bytes.Buffer
-	var tpl2 bytes.Buffer
-
-	t := template.New("root")
-	t, _ = t.Parse(tmpl_conformance)
-
 	body := map[string]interface{}{"config": c, "data": ccs}
 
-	if err := t.Execute(&tpl, body); err != nil {
-		return tpl.Bytes(), err
+	content, err := util.RenderTemplate(tmpl_conformance, body)
+
+	if err != nil {
+		return content, err
 	}
 
-	b := template.New("base")
-	b, _ = b.Parse(tmpl_base)
+	data := map[string]interface{}{"config": c, "body": template.HTML(content)}
 
-	data := map[string]interface{}{"config": c, "body": template.HTML(tpl.Bytes())}
-
-	if err := b.Execute(&tpl2, data); err != nil {
-		return tpl2.Bytes(), err
-	}
-
-	// FIXME: should be a better way
-	return tpl2.Bytes(), nil
+	return util.RenderTemplate(tmpl_base, data)
 }
 
 var ConformanceClassesSchema openapi3.Schema = openapi3.Schema{
