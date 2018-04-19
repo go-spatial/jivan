@@ -296,7 +296,6 @@ func (ccs ConformanceClasses) MarshalHTML(c config.Config) ([]byte, error) {
 	return tpl2.Bytes(), nil
 }
 
-
 var ConformanceClassesSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
 	Required: []string{"conformsTo"},
