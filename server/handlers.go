@@ -37,7 +37,6 @@ import (
 	"strings"
 
 	"github.com/go-spatial/go-wfs/config"
-	"github.com/go-spatial/go-wfs/html"
 	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/geom"
 	"github.com/julienschmidt/httprouter"
@@ -167,7 +166,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 	if ct == JSONContentType {
 		encodedContent, err = json.Marshal(rootContent)
 	} else if ct == HTMLContentType {
-		encodedContent, err = html.RenderRootHTML(config.Configuration, rootContent)
+		encodedContent, err = rootContent.MarshalHTML(config.Configuration)
 	} else {
 		jsonError(w, "Content-Type: '"+ct+"' not supported.", HTTPStatusServerError)
 		return
@@ -219,7 +218,7 @@ func conformance(w http.ResponseWriter, r *http.Request) {
 	if ct == JSONContentType {
 		encodedContent, err = json.Marshal(c)
 	} else if ct == HTMLContentType {
-		encodedContent, err = html.RenderConformanceHTML(config.Configuration, c)
+		encodedContent, err = c.MarshalHTML(config.Configuration)
 	} else {
 		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 		return

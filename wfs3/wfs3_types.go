@@ -28,8 +28,11 @@
 package wfs3
 
 import (
+	"bytes"
+	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/tegola/geom/encoding/geojson"
 	"github.com/jban332/kin-openapi/openapi3"
+	"html/template"
 )
 
 // --- @See http://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/root.yaml
@@ -44,6 +47,32 @@ func (rc RootContent) ContentType(contentType string) RootContent {
 		l.ContentType(contentType)
 	}
 	return rc
+}
+
+func (rc RootContent) MarshalHTML(c config.Config) ([]byte, error) {
+	var tpl bytes.Buffer
+	//var tpl2 bytes.Buffer
+
+	t := template.New("root")
+	t, _ = t.Parse(tmpl_root)
+
+	body := map[string]interface{}{"config": c, "data": rc}
+
+	if err := t.Execute(&tpl, body); err != nil {
+		return tpl.Bytes(), err
+	}
+
+	b := template.New("base")
+	b, _ = b.Parse(tmpl_base)
+
+	data := map[string]interface{}{"config": c, "body": template.HTML(tpl.Bytes()), "links": rc.Links}
+
+	if err := b.Execute(&tpl, data); err != nil {
+		return tpl.Bytes(), err
+	}
+
+	// FIXME: should be a better way
+	return tpl.Bytes(), nil
 }
 
 var RootContentSchema openapi3.Schema = openapi3.Schema{
@@ -240,6 +269,33 @@ var CollectionsInfoSchema openapi3.Schema = openapi3.Schema{
 type ConformanceClasses struct {
 	ConformsTo []string `json:"conformsTo"`
 }
+
+func (ccs ConformanceClasses) MarshalHTML(c config.Config) ([]byte, error) {
+	var tpl bytes.Buffer
+	var tpl2 bytes.Buffer
+
+	t := template.New("root")
+	t, _ = t.Parse(tmpl_conformance)
+
+	body := map[string]interface{}{"config": c, "data": ccs}
+
+	if err := t.Execute(&tpl, body); err != nil {
+		return tpl.Bytes(), err
+	}
+
+	b := template.New("base")
+	b, _ = b.Parse(tmpl_base)
+
+	data := map[string]interface{}{"config": c, "body": template.HTML(tpl.Bytes())}
+
+	if err := b.Execute(&tpl2, data); err != nil {
+		return tpl2.Bytes(), err
+	}
+
+	// FIXME: should be a better way
+	return tpl2.Bytes(), nil
+}
+
 
 var ConformanceClassesSchema openapi3.Schema = openapi3.Schema{
 	Type:     "object",
