@@ -372,7 +372,7 @@ func TestConformance(t *testing.T) {
 		}
 
 		if string(body) != string(expectedContent) {
-			t.Errorf("[%v] response content doesn't match expected:")
+			t.Errorf("[%v] response content doesn't match expected:", i)
 			reducedOutputError(t, body, expectedContent)
 		}
 	}
@@ -549,14 +549,14 @@ func TestSingleCollectionMetaData(t *testing.T) {
 		resp := responseWriter.Result()
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			t.Errorf("[%v] Problem reading response body: %v", err)
+			t.Errorf("[%v] Problem reading response body: %v", i, err)
 		}
 
 		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
 			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
 		}
 		if resp.StatusCode != tc.expectedStatusCode {
-			t.Errorf("[%v] Status code %v != %v", resp.StatusCode, tc.expectedStatusCode)
+			t.Errorf("[%v] Status code %v != %v", i, resp.StatusCode, tc.expectedStatusCode)
 		}
 		if string(body) != string(expectedContent) {
 			t.Errorf("[%v] result content doesn't match expected", i)
@@ -588,9 +588,11 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&pageSize=3", serveAddress),
-				Prev: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&pageSize=3", serveAddress),
-				Next: fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&pageSize=3", serveAddress),
+				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				NumberMatched:  8,
+				NumberReturned: 3,
 				// Populate the embedded geojson FeatureCollection
 				FeatureCollection: geojson.FeatureCollection{
 					Features: []geojson.Feature{
@@ -675,8 +677,329 @@ func TestCollectionFeatures(t *testing.T) {
 				"name": "aviation_polygons",
 			},
 			queryParams: map[string]string{
-				"page":     "1",
-				"pageSize": "3",
+				"page":  "1",
+				"limit": "3",
+			},
+		},
+		// Happy-path GET request w/ full timestamp filter (date/time/timezone)
+		// TODO: The athens test gpkg doesn't have any time data so this only checks if the collection
+		//	and interpretation of time values is working, no features will be filtered out.
+		{
+			requestMethod: HTTPMethodGET,
+			goContent: wfs3.FeatureCollection{
+				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				NumberMatched:  8,
+				NumberReturned: 3,
+				// Populate the embedded geojson FeatureCollection
+				FeatureCollection: geojson.FeatureCollection{
+					Features: []geojson.Feature{
+						{
+							ID: uint64ptr(4),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.7393297, 37.8862976},
+										{23.7392296, 37.8862617},
+										{23.7392581, 37.8862122},
+										{23.7385715, 37.8859662},
+										{23.7384902, 37.8861076},
+										{23.7391751, 37.8863529},
+										{23.7391999, 37.8863097},
+										{23.7393018, 37.8863462},
+										{23.7393297, 37.8862976},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315126",
+							},
+						},
+						{
+							ID: uint64ptr(5),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.7400581, 37.8850307},
+										{23.7400919, 37.884972},
+										{23.7399529, 37.8849222},
+										{23.739979, 37.8848768},
+										{23.739275, 37.8846247},
+										{23.7391938, 37.884766},
+										{23.73991, 37.8850225},
+										{23.7399314, 37.8849853},
+										{23.7400581, 37.8850307},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315130",
+							},
+						},
+						{
+							ID: uint64ptr(6),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.739719, 37.8856206},
+										{23.7396799, 37.8856886},
+										{23.739478, 37.8860396},
+										{23.7398555, 37.8861748},
+										{23.7398922, 37.886111},
+										{23.7402413, 37.8855038},
+										{23.7402659, 37.8854609},
+										{23.7402042, 37.8854388},
+										{23.7398885, 37.8853257},
+										{23.739719, 37.8856206},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315133",
+							},
+						},
+					},
+				},
+			},
+			contentOverride:    nil,
+			contentType:        JSONContentType,
+			expectedETag:       "953ff7048ec325ce",
+			expectedStatusCode: 200,
+			urlParams: map[string]string{
+				"name": "aviation_polygons",
+			},
+			queryParams: map[string]string{
+				"page":  "1",
+				"limit": "3",
+				"time":  "2018-04-12T16:29:00Z-0600",
+			},
+		},
+		// Happy-path GET request w/ zoneless timestamp filter (date/time)
+		// TODO: The athens test gpkg doesn't have any time data so this only checks if the collection
+		//	and interpretation of time values is working, no features will be filtered out.
+		{
+			requestMethod: HTTPMethodGET,
+			goContent: wfs3.FeatureCollection{
+				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				NumberMatched:  8,
+				NumberReturned: 3,
+				// Populate the embedded geojson FeatureCollection
+				FeatureCollection: geojson.FeatureCollection{
+					Features: []geojson.Feature{
+						{
+							ID: uint64ptr(4),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.7393297, 37.8862976},
+										{23.7392296, 37.8862617},
+										{23.7392581, 37.8862122},
+										{23.7385715, 37.8859662},
+										{23.7384902, 37.8861076},
+										{23.7391751, 37.8863529},
+										{23.7391999, 37.8863097},
+										{23.7393018, 37.8863462},
+										{23.7393297, 37.8862976},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315126",
+							},
+						},
+						{
+							ID: uint64ptr(5),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.7400581, 37.8850307},
+										{23.7400919, 37.884972},
+										{23.7399529, 37.8849222},
+										{23.739979, 37.8848768},
+										{23.739275, 37.8846247},
+										{23.7391938, 37.884766},
+										{23.73991, 37.8850225},
+										{23.7399314, 37.8849853},
+										{23.7400581, 37.8850307},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315130",
+							},
+						},
+						{
+							ID: uint64ptr(6),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.739719, 37.8856206},
+										{23.7396799, 37.8856886},
+										{23.739478, 37.8860396},
+										{23.7398555, 37.8861748},
+										{23.7398922, 37.886111},
+										{23.7402413, 37.8855038},
+										{23.7402659, 37.8854609},
+										{23.7402042, 37.8854388},
+										{23.7398885, 37.8853257},
+										{23.739719, 37.8856206},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315133",
+							},
+						},
+					},
+				},
+			},
+			contentOverride:    nil,
+			contentType:        JSONContentType,
+			expectedETag:       "953ff7048ec325ce",
+			expectedStatusCode: 200,
+			urlParams: map[string]string{
+				"name": "aviation_polygons",
+			},
+			queryParams: map[string]string{
+				"page":  "1",
+				"limit": "3",
+				"time":  "2018-04-12T16:29:00",
+			},
+		},
+		// Happy-path GET request w/ date only timestamp filter
+		// TODO: The athens test gpkg doesn't have any time data so this only checks if the collection
+		//	and interpretation of time values is working, no features will be filtered out.
+		{
+			requestMethod: HTTPMethodGET,
+			goContent: wfs3.FeatureCollection{
+				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				NumberMatched:  8,
+				NumberReturned: 3,
+				// Populate the embedded geojson FeatureCollection
+				FeatureCollection: geojson.FeatureCollection{
+					Features: []geojson.Feature{
+						{
+							ID: uint64ptr(4),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.7393297, 37.8862976},
+										{23.7392296, 37.8862617},
+										{23.7392581, 37.8862122},
+										{23.7385715, 37.8859662},
+										{23.7384902, 37.8861076},
+										{23.7391751, 37.8863529},
+										{23.7391999, 37.8863097},
+										{23.7393018, 37.8863462},
+										{23.7393297, 37.8862976},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315126",
+							},
+						},
+						{
+							ID: uint64ptr(5),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.7400581, 37.8850307},
+										{23.7400919, 37.884972},
+										{23.7399529, 37.8849222},
+										{23.739979, 37.8848768},
+										{23.739275, 37.8846247},
+										{23.7391938, 37.884766},
+										{23.73991, 37.8850225},
+										{23.7399314, 37.8849853},
+										{23.7400581, 37.8850307},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315130",
+							},
+						},
+						{
+							ID: uint64ptr(6),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.739719, 37.8856206},
+										{23.7396799, 37.8856886},
+										{23.739478, 37.8860396},
+										{23.7398555, 37.8861748},
+										{23.7398922, 37.886111},
+										{23.7402413, 37.8855038},
+										{23.7402659, 37.8854609},
+										{23.7402042, 37.8854388},
+										{23.7398885, 37.8853257},
+										{23.739719, 37.8856206},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315133",
+							},
+						},
+					},
+				},
+			},
+			contentOverride:    nil,
+			contentType:        JSONContentType,
+			expectedETag:       "953ff7048ec325ce",
+			expectedStatusCode: 200,
+			urlParams: map[string]string{
+				"name": "aviation_polygons",
+			},
+			queryParams: map[string]string{
+				"page":  "1",
+				"limit": "3",
+				"time":  "2018-04-12",
+			},
+		},
+		// Bad GET request due to invalid timestamp filter
+		// TODO: The athens test gpkg doesn't have any time data so this only checks if the collection
+		//	and interpretation of time values is working, no features will be filtered out.
+		{
+			requestMethod: HTTPMethodGET,
+			goContent: map[string]string{
+				"detail": "unable to parse time string: '2018-04-12_broken'",
+			},
+			contentOverride:    nil,
+			contentType:        JSONContentType,
+			expectedETag:       "",
+			expectedStatusCode: HTTPStatusClientError,
+			urlParams: map[string]string{
+				"name": "aviation_polygons",
+			},
+			queryParams: map[string]string{
+				"page":  "1",
+				"limit": "3",
+				"time":  "2018-04-12_broken",
 			},
 		},
 		// Happy-path HEAD request
@@ -685,7 +1008,7 @@ func TestCollectionFeatures(t *testing.T) {
 			goContent:          nil,
 			contentOverride:    nil,
 			expectedETag:       "953ff7048ec325ce",
-			expectedStatusCode: 200,
+			expectedStatusCode: HTTPStatusOk,
 			urlParams: map[string]string{
 				"name": "aviation_polygons",
 			},
@@ -734,11 +1057,11 @@ func TestCollectionFeatures(t *testing.T) {
 			t.Errorf("[%v] problem reading response body: %v", i, err)
 		}
 
-		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
-			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
+		if resp.StatusCode != tc.expectedStatusCode {
+			t.Errorf("[%v] Status Code %v != %v", i, resp.StatusCode, tc.expectedStatusCode)
 		}
 
-		if resp.StatusCode != tc.expectedStatusCode {
+		if tc.expectedETag != "" && (resp.Header.Get("ETag") != tc.expectedETag) {
 			t.Errorf("[%v] ETag %v != %v", i, resp.Header.Get("ETag"), tc.expectedETag)
 		}
 
@@ -768,7 +1091,8 @@ func TestSingleCollectionFeature(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.Feature{
-				Self: fmt.Sprintf("http://%v/collections/roads_lines/items/18", serveAddress),
+				Self:       fmt.Sprintf("http://%v/collections/roads_lines/items/18", serveAddress),
+				Collection: fmt.Sprintf("http://%v/collections/roads_lines", serveAddress),
 				// Populate embedded geojson Feature
 				Feature: geojson.Feature{
 					ID: &i18,

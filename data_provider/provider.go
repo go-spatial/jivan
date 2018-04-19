@@ -41,6 +41,14 @@ import (
 	prv "github.com/go-spatial/tegola/provider"
 )
 
+type BadTimeString struct {
+	msg string
+}
+
+func (bts *BadTimeString) Error() string {
+	return bts.msg
+}
+
 type EmptyTile struct {
 	extent *geom.Extent
 	srid   uint64
@@ -91,7 +99,125 @@ type FeatureId struct {
 	FeaturePk  uint64
 }
 
+func parse_time_string(ts string) (t time.Time, err error) {
+	fmtstrings := []string{
+		"2006-01-02T15:04:05Z-0700",
+		"2006-01-02T15:04:05",
+		"2006-01-02",
+	}
+
+	for _, fmts := range fmtstrings {
+		t, err = time.Parse(fmts, ts)
+		if err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, &BadTimeString{msg: fmt.Sprintf("unable to parse time string: '%v'", ts)}
+}
+
+// Checks for any intersection of start_time - stop_time period or timestamp value
+// If the feature has none of these tags, we'll consider it non-intersecting.
+// If only one of start_time or stop_time is provided, the other will be considered
+//	infitity or negative infinity respectively.
+func feature_time_intersects_time_filter(f *prv.Feature, start_time_str, stop_time_str, timestamp_str string) (bool, error) {
+	// --- Collect any time parameters from feature's tags
+	// Feature start, feature stop, feature timestamp
+	var fstart_str, fstop_str, fts_str string
+
+	for k, v := range f.Tags {
+		switch k {
+		case "start_time":
+			fstart_str = v.(string)
+		case "stop_time":
+			fstop_str = v.(string)
+		case "timestamp":
+			fts_str = v.(string)
+		}
+	}
+
+	// --- Convert all time strings to time.Time instances
+	var start_time, stop_time, timestamp, fstart, fstop, fts time.Time
+	times := []time.Time{start_time, stop_time, timestamp, fstart, fstop, fts}
+	timestrings := []string{start_time_str, stop_time_str, timestamp_str, fstart_str, fstop_str, fts_str}
+	if len(times) != len(timestrings) {
+		panic("array length mismatch")
+	}
+	var err error
+	for i := 0; i < len(times); i++ {
+		if timestrings[i] == "" {
+			continue
+		}
+		times[i], err = parse_time_string(timestrings[i])
+		if err != nil {
+			return false, err
+		}
+	}
+
+	// if the feature doesn't have any time data, treat as a match
+	if fstart_str == "" && fstop_str == "" && fts_str == "" {
+		return true, nil
+	}
+
+	// if there's no start_time, but there's a stop_time and feature timestamp before the stop_time
+	if start_time_str == "" && stop_time_str != "" && fts_str != "" && fts.Sub(stop_time) <= 0 {
+		return true, nil
+	}
+	// if there's no start time, but there's a stop time and a feature start and/or stop time
+	if start_time_str == "" && stop_time_str != "" && (fstart_str != "" || fstop_str != "") {
+		if fstart_str != "" && fstart.Sub(stop_time) <= 0 {
+			return true, nil
+		}
+		if fstop_str != "" && fstop.Sub(stop_time) <= 0 {
+			return true, nil
+		}
+	}
+	// If there's no stop_time, but there's a start_time and feature timestamp after the start_time
+	if start_time_str != "" && stop_time_str == "" && fts_str != "" && fts.Sub(start_time) >= 0 {
+		return true, nil
+	}
+	// If there's no stop time, but there's a start time and a feature start and/or stop time
+	if start_time_str != "" && stop_time_str == "" && (fstart_str != "" || fstop_str != "") {
+		if fstart_str != "" && fstart.Sub(start_time) >= 0 {
+			return true, nil
+		}
+		if fstop_str != "" && fstop.Sub(start_time) >= 0 {
+			return true, nil
+		}
+	}
+	// If there's a start_time and stop_time {
+	if start_time_str != "" && stop_time_str != "" {
+		if fts_str != "" && fts.Sub(start_time) >= 0 && fts.Sub(stop_time) <= 0 {
+			return true, nil
+		}
+		if fstart_str != "" && fstart.Sub(start_time) >= 0 && fstart.Sub(stop_time) <= 0 {
+			return true, nil
+		}
+		if fstop_str != "" && fstop.Sub(start_time) >= 0 && fstop.Sub(stop_time) <= 0 {
+			return true, nil
+		}
+	}
+	// If there's a timestamp
+	if timestamp_str != "" {
+		if fts_str != "" && fts == timestamp {
+			return true, nil
+		}
+		if fstart_str != "" && timestamp.Sub(fstart) >= 0 {
+			if fstop_str == "" || timestamp.Sub(fstop) <= 0 {
+				return true, nil
+			}
+		}
+		if fstop_str != "" && timestamp.Sub(fstop) <= 0 {
+			if fstart_str == "" || timestamp.Sub(fstart) >= 0 {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
 // Filter out features based on params passed
+// start_time, stop_time, timestamp parameters are specifically used for timestamp filtering
+// 	@see check_time_filter().
 func (p *Provider) FilterFeatures(extent *geom.Extent, collections []string, properties map[string]string) ([]FeatureId, error) {
 	if len(collections) < 1 {
 		var err error
@@ -105,21 +231,13 @@ func (p *Provider) FilterFeatures(extent *geom.Extent, collections []string, pro
 
 	fids := make([]FeatureId, 0, 100)
 	for _, col := range collections {
-		fs, err := p.CollectionFeatures(col, extent)
+		fs, err := p.CollectionFeatures(col, properties, extent)
 		if err != nil {
 			return nil, err
 		}
-
-	NEXT_FEATURE:
 		for _, f := range fs {
-			for k, v := range properties {
-				if v != f.Tags[k] {
-					continue NEXT_FEATURE
-				}
-			}
 			fids = append(fids, FeatureId{Collection: col, FeaturePk: f.ID})
 		}
-
 	}
 
 	return fids, nil
@@ -146,8 +264,43 @@ func (p *Provider) MakeCollection(name string, featureIds []FeatureId) (string, 
 	return name, nil
 }
 
+// Returns f if items from properties match the properties of f.  Otherwise returns nil.
+func property_filter(f *prv.Feature, properties map[string]string) (*prv.Feature, error) {
+	starttime := ""
+	stoptime := ""
+	timestamp := ""
+	for k, v := range properties {
+		// --- grab any time-related properties for intersection processing instead of equality testing.
+		switch k {
+		case "start_time":
+			starttime = v
+			continue
+		case "stop_time":
+			stoptime = v
+			continue
+		case "timestamp":
+			timestamp = v
+			continue
+		}
+
+		if v != f.Tags[k] {
+			return nil, nil
+		}
+	}
+	in_time_filter, err := feature_time_intersects_time_filter(f, starttime, stoptime, timestamp)
+	if err != nil {
+		return nil, err
+	}
+	if in_time_filter {
+		return f, nil
+	} else {
+		return nil, nil
+	}
+
+}
+
 // Get all features for a particular collection
-func (p *Provider) CollectionFeatures(collectionName string, extent *geom.Extent) ([]*prv.Feature, error) {
+func (p *Provider) CollectionFeatures(collectionName string, properties map[string]string, extent *geom.Extent) ([]*prv.Feature, error) {
 	// return a temp collection with this name if there is one
 	for tcn := range p.tempCollections {
 		if collectionName == tcn {
@@ -159,13 +312,23 @@ func (p *Provider) CollectionFeatures(collectionName string, extent *geom.Extent
 	// otherwise hit the Tiler provider to get features for this collectionName
 	pFs := make([]*prv.Feature, 0, 100)
 
+	var err error
 	getFeatures := func(f *prv.Feature) error {
+		if properties != nil {
+			f, err = property_filter(f, properties)
+			if err != nil {
+				return err
+			}
+			if f == nil {
+				return nil
+			}
+		}
 		pFs = append(pFs, f)
 		return nil
 	}
 
 	t := EmptyTile{extent: extent, srid: 4326}
-	err := p.Tiler.TileFeatures(context.TODO(), collectionName, t, getFeatures)
+	err = p.Tiler.TileFeatures(context.TODO(), collectionName, t, getFeatures)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +352,7 @@ func (p *Provider) GetFeatures(featureIds []FeatureId) ([]*prv.Feature, error) {
 	// Desired features
 	fs := make([]*prv.Feature, 0, fcount)
 	for col, fpks := range cf {
-		colFs, err := p.CollectionFeatures(col, nil)
+		colFs, err := p.CollectionFeatures(col, nil, nil)
 		if err != nil {
 			return nil, err
 		}

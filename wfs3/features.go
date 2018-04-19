@@ -42,7 +42,8 @@ func FeatureData(cname string, fid uint64, p *data_provider.Provider, checkOnly 
 	return content, contentId, nil
 }
 
-func FeatureCollectionData(cName string, startIdx, stopIdx uint, p *data_provider.Provider, checkOnly bool) (content *FeatureCollection, more bool, contentId string, err error) {
+//
+func FeatureCollectionData(cName string, startIdx, stopIdx uint, properties map[string]string, p *data_provider.Provider, checkOnly bool) (content *FeatureCollection, featureTotal uint, contentId string, err error) {
 	// TODO: This calculation of contentId assumes an unchanging data set.
 	// 	When a changing data set is needed this will have to be updated, hopefully after data providers can tell us
 	// 	something about updates.
@@ -51,26 +52,24 @@ func FeatureCollectionData(cName string, startIdx, stopIdx uint, p *data_provide
 	contentId = fmt.Sprintf("%x", hasher.Sum64())
 
 	if checkOnly {
-		return nil, more, contentId, nil
+		return nil, featureTotal, contentId, nil
 	}
 
-	// all collection features
-	cfs, err := p.CollectionFeatures(cName, nil)
+	// collection features filtered for matches in properties if it is non-nil, otherwise all
+	cfs, err := p.CollectionFeatures(cName, properties, nil)
 	if err != nil {
-		return nil, more, "", err
+		return nil, featureTotal, "", err
 	}
 
-	uLenCfs := uint(len(cfs))
+	featureTotal = uint(len(cfs))
 	originalStopIdx := stopIdx
-	if stopIdx > uLenCfs {
-		stopIdx = uLenCfs
-	} else if stopIdx <= uLenCfs {
-		more = true
+	if stopIdx > featureTotal {
+		stopIdx = featureTotal
 	}
 
-	if startIdx >= uLenCfs || stopIdx < startIdx {
-		return nil, more, "", fmt.Errorf(
-			"Invalid start/stop indices [%v, %v] for collection of length %v", startIdx, originalStopIdx, uLenCfs)
+	if startIdx >= featureTotal || stopIdx < startIdx {
+		return nil, featureTotal, "", fmt.Errorf(
+			"Invalid start/stop indices [%v, %v] for collection of length %v", startIdx, originalStopIdx, featureTotal)
 	}
 
 	// Convert the provider features to geojson features.
@@ -86,5 +85,5 @@ func FeatureCollectionData(cName string, startIdx, stopIdx uint, p *data_provide
 		FeatureCollection: geojson.FeatureCollection{Features: gfs},
 	}
 
-	return content, more, contentId, nil
+	return content, featureTotal, contentId, nil
 }

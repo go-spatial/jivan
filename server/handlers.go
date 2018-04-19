@@ -37,12 +37,14 @@ import (
 	"strings"
 
 	"github.com/go-spatial/go-wfs/config"
+	"github.com/go-spatial/go-wfs/data_provider"
 	"github.com/go-spatial/go-wfs/wfs3"
 	"github.com/go-spatial/tegola/geom"
 	"github.com/julienschmidt/httprouter"
 )
 
-const DEFAULT_PAGE_SIZE = 10
+// This is the default max number of features to return for feature collection reqeusts
+const DEFAULT_RESULT_LIMIT = 10
 
 const (
 	JSONContentType = "application/json"
@@ -431,18 +433,19 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := r.URL.Query()
-	var pageSize, pageNum uint
+	var limit, pageNum uint
+	var timeprops map[string]string
 
-	qPageSize := q["pageSize"]
+	qPageSize := q["limit"]
 	if len(qPageSize) != 1 {
-		pageSize = DEFAULT_PAGE_SIZE
+		limit = DEFAULT_RESULT_LIMIT
 	} else {
 		ps, err := strconv.ParseUint(qPageSize[0], 10, 64)
 		if err != nil {
 			jsonError(w, err.Error(), HTTPStatusClientError)
 			return
 		}
-		pageSize = uint(ps)
+		limit = uint(ps)
 	}
 
 	qPageNum := q["page"]
@@ -457,14 +460,31 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		pageNum = uint(pn)
 	}
 
-	log.Printf("Getting page %v (size %v) for '%v'", pageNum, pageSize, cName)
+	qTime := q["time"]
+	if len(qTime) > 0 {
+		if len(qTime) > 1 {
+			jsonError(w, "'time' parameter used more than once'", 400)
+			return
+		}
+		ts := strings.Split(qTime[0], "/")
+		timeprops = make(map[string]string)
+		if len(ts) == 1 {
+			timeprops["timestamp"] = ts[0]
+		} else if len(ts) == 2 {
+			timeprops["start_time"] = ts[0]
+			timeprops["stop_time"] = ts[1]
+		} else {
+			jsonError(w, "'time' parameter contains more than two time values ('/' separator)", HTTPStatusClientError)
+			return
+		}
+	}
 
 	var data interface{}
 	var jsonSchema string
 	// Hex string hash of content
 	var contentId string
 	// Indicates if there is more data available from stopIdx onward
-	var more bool
+	var featureTotal uint
 	// If a feature_id was provided, get a single feature, otherwise get a feature collection
 	//	containing all of the collection's features
 	if fidStr != "" {
@@ -472,17 +492,26 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		jsonSchema = wfs3.FeatureJSONSchema
 	} else {
 		// First index we're interested in
-		startIdx := pageSize * pageNum
+		startIdx := limit * pageNum
 		// Last index we're interested in +1
-		stopIdx := startIdx + pageSize
+		stopIdx := startIdx + limit
 
-		data, more, contentId, err = wfs3.FeatureCollectionData(cName, startIdx, stopIdx, &Provider, false)
+		data, featureTotal, contentId, err = wfs3.FeatureCollectionData(cName, startIdx, stopIdx, timeprops, &Provider, false)
 		jsonSchema = wfs3.FeatureCollectionJSONSchema
 	}
 
 	if err != nil {
-		msg := fmt.Sprintf("Problem collecting feature data: %v", err)
-		jsonError(w, msg, HTTPStatusServerError)
+		var sc int
+		var msg string
+		switch e := err.(type) {
+		case *data_provider.BadTimeString:
+			msg = e.Error()
+			sc = HTTPStatusClientError
+		default:
+			msg = fmt.Sprintf("Problem collecting feature data: %v", e)
+			sc = HTTPStatusServerError
+		}
+		jsonError(w, msg, sc)
 		return
 	}
 
@@ -502,7 +531,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		if ct == JSONContentType {
 			// Generate self link
 			d.Self = r.URL.String()
-			fmt.Printf("*** %v\n", d.Self)
+			d.Collection = fmt.Sprintf("http://%v/collections/%v", r.URL.Host, cName)
 			encodedContent, err = json.Marshal(d)
 		} else {
 			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
@@ -510,20 +539,22 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		}
 	case *wfs3.FeatureCollection:
 		// Generate self, previous, and next links
-		self := fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum, pageSize)
+		self := fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum, limit)
 		var prev string
 		var next string
 		if pageNum > 0 {
-			prev = fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum-1, pageSize)
+			prev = fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum-1, limit)
 		}
-		if more {
-			next = fmt.Sprintf("http://%v%v?page=%v&pageSize=%v", r.URL.Host, r.URL.Path, pageNum+1, pageSize)
+		if featureTotal > (limit * (pageNum + 1)) {
+			next = fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum+1, limit)
 		}
 
 		if ct == JSONContentType {
 			d.Self = self
 			d.Prev = prev
 			d.Next = next
+			d.NumberMatched = featureTotal
+			d.NumberReturned = uint(len(d.Features))
 			encodedContent, err = json.Marshal(d)
 		} else {
 			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
