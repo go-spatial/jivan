@@ -30,7 +30,7 @@ package wfs3
 import (
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/util"
-	"github.com/go-spatial/tegola/geom/encoding/geojson"
+	"github.com/go-spatial/geom/encoding/geojson"
 	"github.com/jban332/kin-openapi/openapi3"
 	"html/template"
 )
