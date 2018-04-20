@@ -25,6 +25,7 @@
 package util
 
 import (
+	"bytes"
 	"os"
 	"path"
 	"path/filepath"
@@ -77,5 +78,17 @@ func TestDefaultGpkg(t *testing.T) {
 		if got != c.dummyFileName {
 			t.Errorf("[%d] Under '%s', DefaultGpkg() == '%s', wanted '%s'.", i, casePath, got, c.dummyFileName)
 		}
+	}
+}
+
+func TestRenderTemplate(t *testing.T) {
+	var tmpl = `<foo>{{ .value }}</foo>`
+	data := map[string]interface{}{"value": "bar"}
+	expected := []byte("<foo>bar</foo>")
+
+	value, _ := RenderTemplate(tmpl, data)
+
+	if bytes.Equal(value, expected) == false {
+		t.Errorf("got %s, wanted %s", value, expected)
 	}
 }
