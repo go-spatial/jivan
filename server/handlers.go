@@ -370,6 +370,10 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add self link to beginning of Link
+	selfLink := &wfs3.Link{Rel: "self", Href: r.URL.String()}
+	md.Links = append([]*wfs3.Link{selfLink}, md.Links...)
+
 	var encodedContent []byte
 	if ct == JSONContentType {
 		md.ContentType(JSONContentType)

@@ -433,6 +433,8 @@ func TestCollectionsMetaData(t *testing.T) {
 	}
 
 	csInfo := wfs3.CollectionsInfo{Links: []*wfs3.Link{}, Collections: []*wfs3.CollectionInfo{}}
+	csInfoSelf := wfs3.Link{Rel: "self", Href: collectionsUrl, Type: "application/json"}
+	csInfo.Links = append(csInfo.Links, &csInfoSelf)
 	for _, cn := range cNames {
 		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
 		cInfo := wfs3.CollectionInfo{Name: cn, Links: []*wfs3.Link{{Rel: "self", Href: collectionUrl, Type: "application/json"}}}
