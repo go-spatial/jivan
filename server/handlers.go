@@ -48,7 +48,7 @@ const DEFAULT_RESULT_LIMIT = 10
 
 const (
 	JSONContentType = "application/json"
-	HTMLContentType = "text/html" // Not yet supported
+	HTMLContentType = "text/html"
 )
 
 const (
@@ -119,6 +119,17 @@ func contentType(r *http.Request) string {
 		useType = defaultContentType
 	}
 
+	// if query string 'f' parameter is passed
+	// override HTTP Accept header
+	q := r.URL.Query()
+	qFormat := q["f"]
+
+	if len(qFormat) > 0 {
+		if qFormat[0] != useType {
+			useType = qFormat[0]
+		}
+	}
+
 	return useType
 }
 
@@ -163,6 +174,8 @@ func root(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if ct == JSONContentType {
 		encodedContent, err = json.Marshal(rootContent)
+	} else if ct == HTMLContentType {
+		encodedContent, err = rootContent.MarshalHTML(config.Configuration)
 	} else {
 		jsonError(w, "Content-Type: '"+ct+"' not supported.", HTTPStatusServerError)
 		return
@@ -178,12 +191,14 @@ func root(w http.ResponseWriter, r *http.Request) {
 	if overrideContent != nil {
 		encodedContent = overrideContent.([]byte)
 	}
-	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	err = wfs3.ValidateJSONResponse(r, rPath, HTTPStatusOk, w.Header(), respBodyRC)
-	if err != nil {
-		log.Printf("%v", err)
-		jsonError(w, "response doesn't match schema", HTTPStatusServerError)
-		return
+	if ct == JSONContentType {
+		respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
+		err = wfs3.ValidateJSONResponse(r, rPath, HTTPStatusOk, w.Header(), respBodyRC)
+		if err != nil {
+			log.Printf("%v", err)
+			jsonError(w, "response doesn't match schema", HTTPStatusServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(HTTPStatusOk)
@@ -211,6 +226,8 @@ func conformance(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if ct == JSONContentType {
 		encodedContent, err = json.Marshal(c)
+	} else if ct == HTMLContentType {
+		encodedContent, err = c.MarshalHTML(config.Configuration)
 	} else {
 		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 		return
@@ -222,17 +239,19 @@ func conformance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", ct)
 
 	if overrideContent != nil {
 		encodedContent = overrideContent.([]byte)
 	}
-	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	err = wfs3.ValidateJSONResponse(r, cPath, HTTPStatusOk, w.Header(), respBodyRC)
-	if err != nil {
-		log.Printf(fmt.Sprintf("%v", err))
-		jsonError(w, "response doesn't match schema", HTTPStatusServerError)
-		return
+	if ct == JSONContentType {
+		respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
+		err = wfs3.ValidateJSONResponse(r, cPath, HTTPStatusOk, w.Header(), respBodyRC)
+		if err != nil {
+			log.Printf(fmt.Sprintf("%v", err))
+			jsonError(w, "response doesn't match schema", HTTPStatusServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(HTTPStatusOk)
@@ -321,8 +340,10 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 	if ct == JSONContentType {
 		md.ContentType(ct)
 		encodedContent, err = json.Marshal(md)
+	} else if ct == HTMLContentType {
+		encodedContent, err = md.MarshalHTML(config.Configuration)
 	} else {
-		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
+		jsonError(w, "Contenti-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 		return
 	}
 
@@ -337,12 +358,14 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 		encodedContent = overrideContent.([]byte)
 	}
 
-	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	err = wfs3.ValidateJSONResponse(r, cmdPath, HTTPStatusOk, w.Header(), respBodyRC)
-	if err != nil {
-		log.Printf(fmt.Sprintf("%v", err))
-		jsonError(w, "response doesn't match schema", HTTPStatusServerError)
-		return
+	if ct == JSONContentType {
+		respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
+		err = wfs3.ValidateJSONResponse(r, cmdPath, HTTPStatusOk, w.Header(), respBodyRC)
+		if err != nil {
+			log.Printf(fmt.Sprintf("%v", err))
+			jsonError(w, "response doesn't match schema", HTTPStatusServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(HTTPStatusOk)
@@ -374,6 +397,8 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 	if ct == JSONContentType {
 		md.ContentType(JSONContentType)
 		encodedContent, err = json.Marshal(md)
+	} else if ct == HTMLContentType {
+		encodedContent, err = md.MarshalHTML(config.Configuration)
 	} else {
 		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 		return
@@ -390,12 +415,14 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 		encodedContent = overrideContent.([]byte)
 	}
 
-	respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
-	err = wfs3.ValidateJSONResponse(r, cmdPath, HTTPStatusOk, w.Header(), respBodyRC)
-	if err != nil {
-		log.Printf(fmt.Sprintf("%v", err))
-		jsonError(w, "response doesn't match schema", HTTPStatusServerError)
-		return
+	if ct == JSONContentType {
+		respBodyRC := ioutil.NopCloser(bytes.NewReader(encodedContent))
+		err = wfs3.ValidateJSONResponse(r, cmdPath, HTTPStatusOk, w.Header(), respBodyRC)
+		if err != nil {
+			log.Printf(fmt.Sprintf("%v", err))
+			jsonError(w, "response doesn't match schema", HTTPStatusServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(HTTPStatusOk)

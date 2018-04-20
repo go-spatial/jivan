@@ -28,8 +28,11 @@
 package wfs3
 
 import (
+	"github.com/go-spatial/go-wfs/config"
+	"github.com/go-spatial/go-wfs/util"
 	"github.com/go-spatial/geom/encoding/geojson"
 	"github.com/jban332/kin-openapi/openapi3"
+	"html/template"
 )
 
 // --- @See http://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/root.yaml
@@ -44,6 +47,20 @@ func (rc RootContent) ContentType(contentType string) RootContent {
 		l.ContentType(contentType)
 	}
 	return rc
+}
+
+func (rc RootContent) MarshalHTML(c config.Config) ([]byte, error) {
+	body := map[string]interface{}{"config": c, "data": rc}
+
+	content, err := util.RenderTemplate(tmpl_root, body)
+
+	if err != nil {
+		return content, err
+	}
+
+	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": rc.Links}
+
+	return util.RenderTemplate(tmpl_base, data)
 }
 
 var RootContentSchema openapi3.Schema = openapi3.Schema{
@@ -147,6 +164,20 @@ type CollectionInfo struct {
 	Crs         []string `json:"crs,omitempty"`
 }
 
+func (ci CollectionInfo) MarshalHTML(c config.Config) ([]byte, error) {
+	body := map[string]interface{}{"config": c, "data": ci}
+
+	content, err := util.RenderTemplate(tmpl_collection, body)
+
+	if err != nil {
+		return content, err
+	}
+
+	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": ci.Links}
+
+	return util.RenderTemplate(tmpl_base, data)
+}
+
 func (ci *CollectionInfo) ContentType(contentType string) {
 	for _, l := range ci.Links {
 		l.ContentType(contentType)
@@ -203,6 +234,20 @@ type CollectionsInfo struct {
 	Collections []*CollectionInfo `json:"collections"`
 }
 
+func (csi CollectionsInfo) MarshalHTML(c config.Config) ([]byte, error) {
+	body := map[string]interface{}{"config": c, "data": csi}
+
+	content, err := util.RenderTemplate(tmpl_collections, body)
+
+	if err != nil {
+		return content, err
+	}
+
+	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": csi.Links}
+
+	return util.RenderTemplate(tmpl_base, data)
+}
+
 func (csi *CollectionsInfo) ContentType(contentType string) {
 	for _, l := range csi.Links {
 		l.ContentType(contentType)
@@ -239,6 +284,20 @@ var CollectionsInfoSchema openapi3.Schema = openapi3.Schema{
 //  for ConformanceClasses schema
 type ConformanceClasses struct {
 	ConformsTo []string `json:"conformsTo"`
+}
+
+func (ccs ConformanceClasses) MarshalHTML(c config.Config) ([]byte, error) {
+	body := map[string]interface{}{"config": c, "data": ccs}
+
+	content, err := util.RenderTemplate(tmpl_conformance, body)
+
+	if err != nil {
+		return content, err
+	}
+
+	data := map[string]interface{}{"config": c, "body": template.HTML(content)}
+
+	return util.RenderTemplate(tmpl_base, data)
 }
 
 var ConformanceClassesSchema openapi3.Schema = openapi3.Schema{
