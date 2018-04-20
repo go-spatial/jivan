@@ -164,6 +164,20 @@ type CollectionInfo struct {
 	Crs         []string `json:"crs,omitempty"`
 }
 
+func (ci CollectionInfo) MarshalHTML(c config.Config) ([]byte, error) {
+	body := map[string]interface{}{"config": c, "data": ci}
+
+	content, err := util.RenderTemplate(tmpl_collection, body)
+
+	if err != nil {
+		return content, err
+	}
+
+	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": ci.Links}
+
+	return util.RenderTemplate(tmpl_base, data)
+}
+
 func (ci *CollectionInfo) ContentType(contentType string) {
 	for _, l := range ci.Links {
 		l.ContentType(contentType)
@@ -218,6 +232,20 @@ var CollectionInfoSchema openapi3.Schema = openapi3.Schema{
 type CollectionsInfo struct {
 	Links       []*Link           `json:"links"`
 	Collections []*CollectionInfo `json:"collections"`
+}
+
+func (csi CollectionsInfo) MarshalHTML(c config.Config) ([]byte, error) {
+	body := map[string]interface{}{"config": c, "data": csi}
+
+	content, err := util.RenderTemplate(tmpl_collections, body)
+
+	if err != nil {
+		return content, err
+	}
+
+	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": csi.Links}
+
+	return util.RenderTemplate(tmpl_base, data)
 }
 
 func (csi *CollectionsInfo) ContentType(contentType string) {

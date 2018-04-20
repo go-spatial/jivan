@@ -34,3 +34,23 @@ var tmpl_conformance = `
 	        <li><a href="{{ . }}">{{ . }}</a></li>
         {{ end }}
         </ul>`
+
+var tmpl_collections = `
+<h2>Collections</h2>
+	<ul>
+	{{ range .data.Collections }}
+		<li><a href="./collections/{{ .Name }}?f=text/html">{{ .Name }}</a></li>
+	{{ end }}
+	</ul>`
+
+var tmpl_collection = `
+<h2>{{ .data.Name }} </h2>
+	<span>{{ .data.Description }}</span>
+	<div><a href="./{{ .data.Name }}/items">Browse Features</a></div>
+	<h2>Links</h2>
+	<ul>
+		{{ range .data.Links }}
+		<li><a href="{{ .Href }}?f=text/html">{{ .Href }}?f=text/html</a></li>
+		{{ end }}
+	</ul>`
+
