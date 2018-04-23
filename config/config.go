@@ -32,6 +32,9 @@ import (
 const (
 	JSONContentType = "application/json"
 	HTMLContentType = "text/html"
+
+	DefaultFeatureLimit = 10
+	MaxFeatureLimit     = 1000
 )
 
 // These are the MIME types that the handlers support.
@@ -48,7 +51,7 @@ func init() {
 			URLBasePath:     "/",
 			Language:        "en-US",
 			PrettyPrint:     false,
-			Limit:           10,
+			Limit:           DefaultFeatureLimit,
 		},
 		Logging: Logging{
 			Level:   "NONE",
