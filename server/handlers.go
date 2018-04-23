@@ -450,8 +450,8 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 			jsonError(w, err.Error(), HTTPStatusClientError)
 			return
 		}
-		if ps > config.MaxFeatureLimit {
-			ps = config.MaxFeatureLimit
+		if ps > uint64(config.Configuration.Server.MaxLimit) {
+			ps = uint64(config.Configuration.Server.MaxLimit)
 		}
 		limit = uint(ps)
 	}

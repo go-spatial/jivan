@@ -214,8 +214,8 @@ func GenerateOpenAPIDocument() {
 									Value: &openapi3.Schema{
 										Type:    "integer",
 										Min:     func(i int) *float64 { f64 := float64(i); return &f64 }(1),
-										Max:     func(i int) *float64 { f64 := float64(i); return &f64 }(config.MaxFeatureLimit),
-										Default: config.DefaultFeatureLimit,
+										Max:     func(u uint) *float64 { f64 := float64(u); return &f64 }(config.Configuration.Server.MaxLimit),
+										Default: config.Configuration.Server.DefaultLimit,
 									},
 								},
 								AllowEmptyValue: true,

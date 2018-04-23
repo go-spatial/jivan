@@ -32,9 +32,6 @@ import (
 const (
 	JSONContentType = "application/json"
 	HTMLContentType = "text/html"
-
-	DefaultFeatureLimit = 10
-	MaxFeatureLimit     = 1000
 )
 
 // These are the MIME types that the handlers support.
@@ -51,7 +48,8 @@ func init() {
 			URLBasePath:     "/",
 			Language:        "en-US",
 			PrettyPrint:     false,
-			Limit:           DefaultFeatureLimit,
+			DefaultLimit:    10,
+			MaxLimit:        1000,
 		},
 		Logging: Logging{
 			Level:   "NONE",
@@ -102,7 +100,8 @@ type Server struct {
 	Encoding        string
 	Language        string
 	PrettyPrint     bool
-	Limit           int
+	DefaultLimit    uint
+	MaxLimit        uint
 }
 
 type Logging struct {
