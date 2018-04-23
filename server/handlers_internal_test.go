@@ -190,7 +190,7 @@ func TestRoot(t *testing.T) {
 					},
 				},
 			},
-			contentType:        JSONContentType,
+			contentType:        config.JSONContentType,
 			expectedETag:       "fed4927c1d9b340e",
 			expectedStatusCode: 200,
 		},
@@ -289,7 +289,7 @@ func TestApi(t *testing.T) {
 			requestMethod:      HTTPMethodGET,
 			goContent:          wfs3.OpenAPI3Schema(),
 			overrideContent:    nil,
-			contentType:        JSONContentType,
+			contentType:        config.JSONContentType,
 			expectedETag:       "3b6ca0c9c15e1720",
 			expectedStatusCode: 200,
 		},
@@ -307,7 +307,7 @@ func TestApi(t *testing.T) {
 		var expectedContent []byte
 		var err error
 		switch tc.contentType {
-		case JSONContentType:
+		case config.JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling tc.goContent to JSON: %v", i, err)
@@ -365,7 +365,7 @@ func TestConformance(t *testing.T) {
 				},
 			},
 			overrideContent:    nil,
-			contentType:        JSONContentType,
+			contentType:        config.JSONContentType,
 			expectedETag:       "4385e7a21a681d7d",
 			expectedStatusCode: 200,
 		},
@@ -383,7 +383,7 @@ func TestConformance(t *testing.T) {
 		var expectedContent []byte
 		var err error
 		switch tc.contentType {
-		case JSONContentType:
+		case config.JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected content to json: %v", i, err)
@@ -433,12 +433,27 @@ func TestCollectionsMetaData(t *testing.T) {
 	}
 
 	csInfo := wfs3.CollectionsInfo{Links: []*wfs3.Link{}, Collections: []*wfs3.CollectionInfo{}}
-	csInfoSelf := wfs3.Link{Rel: "self", Href: collectionsUrl, Type: "application/json"}
-	csInfo.Links = append(csInfo.Links, &csInfoSelf)
+	// Set the self & alternate links
+	csInfo.Links = append(csInfo.Links, &wfs3.Link{Rel: "self", Href: collectionsUrl, Type: config.JSONContentType})
+	cURL, err := url.Parse(collectionsUrl)
+	if err != nil {
+		t.Errorf("Problem parsing collections URL: %v", err)
+	}
+	for _, sct := range config.SupportedContentTypes {
+		if sct == config.JSONContentType {
+			continue
+		}
+		url := cURL
+		q := url.Query()
+		q.Set("f", sct)
+		url.RawQuery = q.Encode()
+		csInfo.Links = append(csInfo.Links, &wfs3.Link{Rel: "alternate", Href: url.String(), Type: sct})
+	}
+
 	for _, cn := range cNames {
 		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
-		cInfo := wfs3.CollectionInfo{Name: cn, Links: []*wfs3.Link{{Rel: "self", Href: collectionUrl, Type: "application/json"}}}
-		cLink := wfs3.Link{Href: collectionUrl, Rel: "item", Type: "application/json"}
+		cInfo := wfs3.CollectionInfo{Name: cn, Links: []*wfs3.Link{{Rel: "self", Href: collectionUrl, Type: config.JSONContentType}}}
+		cLink := wfs3.Link{Href: collectionUrl, Rel: "item", Type: config.JSONContentType}
 
 		csInfo.Links = append(csInfo.Links, &cLink)
 		csInfo.Collections = append(csInfo.Collections, &cInfo)
@@ -459,7 +474,7 @@ func TestCollectionsMetaData(t *testing.T) {
 			requestMethod:      HTTPMethodGET,
 			goContent:          csInfo,
 			overrideContent:    nil,
-			contentType:        JSONContentType,
+			contentType:        config.JSONContentType,
 			expectedETag:       "86c51f1263aa1e87",
 			expectedStatusCode: 200,
 		},
@@ -477,7 +492,7 @@ func TestCollectionsMetaData(t *testing.T) {
 		var expectedContent []byte
 		var err error
 		switch tc.contentType {
-		case JSONContentType:
+		case config.JSONContentType:
 			expectedContent, err = json.Marshal(csInfo)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected collections info to json: %v", i, err)
@@ -511,6 +526,13 @@ func TestCollectionsMetaData(t *testing.T) {
 
 		if string(body) != string(expectedContent) {
 			t.Errorf("[%v] response content doesn't match expected", i)
+
+			t.Error("---")
+			t.Errorf("%v", string(body))
+			t.Error("---")
+			t.Errorf("%v", string(expectedContent))
+			t.Error("---")
+
 			reducedOutputError(t, body, expectedContent)
 		}
 	}
@@ -540,12 +562,12 @@ func TestSingleCollectionMetaData(t *testing.T) {
 					{
 						Rel:  "self",
 						Href: fmt.Sprintf("http://%v/collections/%v", serveAddress, "roads_lines"),
-						Type: JSONContentType,
+						Type: config.JSONContentType,
 					},
 				},
 			},
 			contentOverride:    nil,
-			contentType:        JSONContentType,
+			contentType:        config.JSONContentType,
 			expectedETag:       "a3020c6917d284ef",
 			expectedStatusCode: 200,
 			urlParams:          map[string]string{"name": "roads_lines"},
@@ -567,7 +589,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 		var expectedContent []byte
 		var err error
 		switch tc.contentType {
-		case JSONContentType:
+		case config.JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] Problem marshalling expected collection info: %v", i, err)
@@ -716,7 +738,7 @@ func TestCollectionFeatures(t *testing.T) {
 				},
 			},
 			contentOverride:    nil,
-			contentType:        JSONContentType,
+			contentType:        config.JSONContentType,
 			expectedETag:       "953ff7048ec325ce",
 			expectedStatusCode: 200,
 			urlParams: map[string]string{
@@ -815,7 +837,7 @@ func TestCollectionFeatures(t *testing.T) {
 				},
 			},
 			contentOverride:    nil,
-			contentType:        JSONContentType,
+			contentType:        config.JSONContentType,
 			expectedETag:       "953ff7048ec325ce",
 			expectedStatusCode: 200,
 			urlParams: map[string]string{
@@ -915,7 +937,7 @@ func TestCollectionFeatures(t *testing.T) {
 				},
 			},
 			contentOverride:    nil,
-			contentType:        JSONContentType,
+			contentType:        config.JSONContentType,
 			expectedETag:       "953ff7048ec325ce",
 			expectedStatusCode: 200,
 			urlParams: map[string]string{
@@ -1015,7 +1037,7 @@ func TestCollectionFeatures(t *testing.T) {
 				},
 			},
 			contentOverride:    nil,
-			contentType:        JSONContentType,
+			contentType:        config.JSONContentType,
 			expectedETag:       "953ff7048ec325ce",
 			expectedStatusCode: 200,
 			urlParams: map[string]string{
@@ -1036,7 +1058,7 @@ func TestCollectionFeatures(t *testing.T) {
 				"detail": "unable to parse time string: '2018-04-12_broken'",
 			},
 			contentOverride:    nil,
-			contentType:        JSONContentType,
+			contentType:        config.JSONContentType,
 			expectedETag:       "",
 			expectedStatusCode: HTTPStatusClientError,
 			urlParams: map[string]string{
@@ -1067,7 +1089,7 @@ func TestCollectionFeatures(t *testing.T) {
 		var expectedContent []byte
 		var err error
 		switch tc.contentType {
-		case JSONContentType:
+		case config.JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected content: %v", i, err)
@@ -1158,7 +1180,7 @@ func TestSingleCollectionFeature(t *testing.T) {
 				},
 			},
 			contentOverride:    nil,
-			contentType:        JSONContentType,
+			contentType:        config.JSONContentType,
 			expectedETag:       "355e6572aaf34629",
 			expectedStatusCode: 200,
 			urlParams: map[string]string{
@@ -1187,7 +1209,7 @@ func TestSingleCollectionFeature(t *testing.T) {
 		var expectedContent []byte
 		var err error
 		switch tc.contentType {
-		case JSONContentType:
+		case config.JSONContentType:
 			expectedContent, err = json.Marshal(tc.goContent)
 			if err != nil {
 				t.Errorf("[%v] problem marshalling expected content: %v", i, err)

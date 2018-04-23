@@ -47,11 +47,6 @@ import (
 const DEFAULT_RESULT_LIMIT = 10
 
 const (
-	JSONContentType = "application/json"
-	HTMLContentType = "text/html" // Not yet supported
-)
-
-const (
 	HTTPStatusOk          = 200
 	HTTPStatusNotModified = 304
 	HTTPStatusServerError = 500
@@ -91,7 +86,7 @@ func serveSchemeHostPortBase(r *http.Request) string {
 // If the type chosen from the request isn't supported, defaultContentType will be used.
 // TODO: Move defaultContentType to configuration.
 func supportedContentType(ct string) bool {
-	supportedContentTypes := []string{JSONContentType}
+	supportedContentTypes := []string{config.JSONContentType}
 	typeSupported := false
 	for _, sct := range supportedContentTypes {
 		if ct == sct {
@@ -103,7 +98,7 @@ func supportedContentType(ct string) bool {
 }
 
 func contentType(r *http.Request) string {
-	defaultContentType := JSONContentType
+	defaultContentType := config.JSONContentType
 	useType := ""
 	ctType := r.Header.Get("Content-Type")
 	acceptTypes := r.Header.Get("Accept")
@@ -161,7 +156,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 
 	var encodedContent []byte
 	var err error
-	if ct == JSONContentType {
+	if ct == config.JSONContentType {
 		encodedContent, err = json.Marshal(rootContent)
 	} else {
 		jsonError(w, "Content-Type: '"+ct+"' not supported.", HTTPStatusServerError)
@@ -209,7 +204,7 @@ func conformance(w http.ResponseWriter, r *http.Request) {
 
 	var encodedContent []byte
 	var err error
-	if ct == JSONContentType {
+	if ct == config.JSONContentType {
 		encodedContent, err = json.Marshal(c)
 	} else {
 		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
@@ -248,7 +243,7 @@ func openapi(w http.ResponseWriter, r *http.Request) {
 
 	ct := contentType(r)
 
-	if ct != JSONContentType {
+	if ct != config.JSONContentType {
 		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 		return
 	}
@@ -271,7 +266,7 @@ func openapi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: As of 2018-04-05 I can't find a reliable openapi3 document schema.  When one is published use if for validation here.
-	// if ct == JSONContentType {
+	// if ct == config.JSONContentType {
 	// 	err := wfs3.ValidateJSONResponseAgainstJSONSchema(encodedContent, jsonSchema)
 	// 	if err != nil {
 	// 		log.Printf(fmt.Sprintf("%v", err))
@@ -318,7 +313,7 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var encodedContent []byte
-	if ct == JSONContentType {
+	if ct == config.JSONContentType {
 		md.ContentType(ct)
 		encodedContent, err = json.Marshal(md)
 	} else {
@@ -370,13 +365,31 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// This needs to be done before adding the alternate links below, otherwise they will all be
+	//	converted to ct
+	md.ContentType(ct)
+
 	// Add self link to beginning of Link
-	selfLink := &wfs3.Link{Rel: "self", Href: r.URL.String()}
-	md.Links = append([]*wfs3.Link{selfLink}, md.Links...)
+	selfLink := &wfs3.Link{Rel: "self", Href: r.URL.String(), Type: config.JSONContentType}
+	altLinks := make([]*wfs3.Link, 0, 5)
+	for _, sct := range config.SupportedContentTypes {
+		if ct == sct {
+			continue
+		}
+		url := r.URL
+		q := url.Query()
+		q.Set("f", sct)
+		url.RawQuery = q.Encode()
+		altLink := &wfs3.Link{Rel: "alternate", Type: sct, Href: r.URL.String()}
+		altLinks = append(altLinks, altLink)
+	}
+	links := []*wfs3.Link{selfLink}
+	links = append(links, altLinks...)
+	links = append(links, md.Links...)
+	md.Links = links
 
 	var encodedContent []byte
-	if ct == JSONContentType {
-		md.ContentType(JSONContentType)
+	if ct == config.JSONContentType {
 		encodedContent, err = json.Marshal(md)
 	} else {
 		jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
@@ -520,7 +533,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	var encodedContent []byte
 	switch d := data.(type) {
 	case *wfs3.Feature:
-		if ct == JSONContentType {
+		if ct == config.JSONContentType {
 			// Generate self link
 			d.Self = r.URL.String()
 			d.Collection = fmt.Sprintf("http://%v/collections/%v", r.URL.Host, cName)
@@ -541,7 +554,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 			next = fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum+1, limit)
 		}
 
-		if ct == JSONContentType {
+		if ct == config.JSONContentType {
 			d.Self = self
 			d.Prev = prev
 			d.Next = next
@@ -569,7 +582,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		encodedContent = overrideContent.([]byte)
 	}
 
-	if ct == JSONContentType {
+	if ct == config.JSONContentType {
 		err = wfs3.ValidateJSONResponseAgainstJSONSchema(encodedContent, jsonSchema)
 		if err != nil {
 			log.Printf(fmt.Sprintf("%v", err))
