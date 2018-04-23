@@ -48,7 +48,8 @@ func init() {
 			URLBasePath:     "/",
 			Language:        "en-US",
 			PrettyPrint:     false,
-			Limit:           10,
+			DefaultLimit:    10,
+			MaxLimit:        1000,
 		},
 		Logging: Logging{
 			Level:   "NONE",
@@ -99,7 +100,8 @@ type Server struct {
 	Encoding        string
 	Language        string
 	PrettyPrint     bool
-	Limit           int
+	DefaultLimit    uint
+	MaxLimit        uint
 }
 
 type Logging struct {

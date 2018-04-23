@@ -204,6 +204,23 @@ func GenerateOpenAPIDocument() {
 								AllowEmptyValue: false,
 							},
 						},
+						&openapi3.ParameterRef{
+							Value: &openapi3.Parameter{
+								Name:        "limit",
+								Description: "Maximum number of results to return.",
+								In:          "query",
+								Required:    false,
+								Schema: &openapi3.SchemaRef{
+									Value: &openapi3.Schema{
+										Type:    "integer",
+										Min:     func(i int) *float64 { f64 := float64(i); return &f64 }(1),
+										Max:     func(u uint) *float64 { f64 := float64(u); return &f64 }(config.Configuration.Server.MaxLimit),
+										Default: config.Configuration.Server.DefaultLimit,
+									},
+								},
+								AllowEmptyValue: true,
+							},
+						},
 					},
 					Responses: openapi3.Responses{
 						"200": &openapi3.ResponseRef{
