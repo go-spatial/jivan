@@ -468,10 +468,35 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		pageNum = uint(pn)
 	}
 
+	qBBox := q["bbox"]
+	var bbox *geom.Extent
+	if len(qBBox) > 0 {
+		if len(qBBox) > 1 {
+			jsonError(w, "'bbox' parameter provided more than once", HTTPStatusClientError)
+			return
+		}
+
+		bbox_items := strings.Split(qBBox[0], ",")
+		if len(bbox_items) != 4 {
+			msg := fmt.Sprintf("'bbox' parameter has %v items, expecting 4: '%v'", len(bbox_items), qBBox[0])
+			jsonError(w, msg, HTTPStatusClientError)
+			return
+		} else {
+			bbox = &geom.Extent{}
+			for i, p := range bbox_items {
+				if bbox[i], err = strconv.ParseFloat(p, 64); err != nil {
+					msg := fmt.Sprintf("'bbox' parameter has invalid format for item %v/4: '%v' / '%v'", i+1, p, qBBox[0])
+					jsonError(w, msg, HTTPStatusClientError)
+					return
+				}
+			}
+		}
+	}
+
 	qTime := q["time"]
 	if len(qTime) > 0 {
 		if len(qTime) > 1 {
-			jsonError(w, "'time' parameter used more than once'", 400)
+			jsonError(w, "'time' parameter provided more than once'", HTTPStatusClientError)
 			return
 		}
 		ts := strings.Split(qTime[0], "/")
@@ -504,7 +529,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		// Last index we're interested in +1
 		stopIdx := startIdx + limit
 
-		data, featureTotal, contentId, err = wfs3.FeatureCollectionData(cName, startIdx, stopIdx, timeprops, &Provider, false)
+		data, featureTotal, contentId, err = wfs3.FeatureCollectionData(cName, bbox, startIdx, stopIdx, timeprops, &Provider, false)
 		jsonSchema = wfs3.FeatureCollectionJSONSchema
 	}
 

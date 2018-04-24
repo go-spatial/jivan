@@ -272,3 +272,15 @@ type Feature struct {
 	Self       string `json:"self,omitempty"`
 	Collection string `json:"collection,omitempty"`
 }
+
+func pint64(i int) *int64 {
+	i64 := int64(i)
+	return &i64
+}
+
+var BBoxSchema openapi3.Schema = openapi3.Schema{
+	Type:      "array",
+	Items:     &openapi3.SchemaRef{Value: openapi3.NewFloat64Schema()},
+	MinLength: int64(4),
+	MaxLength: pint64(4),
+}
