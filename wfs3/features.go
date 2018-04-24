@@ -62,6 +62,10 @@ func FeatureCollectionData(cName string, bbox *geom.Extent, startIdx, stopIdx ui
 		return nil, featureTotal, "", err
 	}
 
+	for _, cf := range cfs {
+		fmt.Println(cf.Tags)
+	}
+
 	featureTotal = uint(len(cfs))
 	originalStopIdx := stopIdx
 	if stopIdx > featureTotal {

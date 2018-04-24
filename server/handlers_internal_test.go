@@ -290,7 +290,7 @@ func TestApi(t *testing.T) {
 			goContent:          wfs3.OpenAPI3Schema(),
 			overrideContent:    nil,
 			contentType:        config.JSONContentType,
-			expectedETag:       "12ae8d8b49327ce6",
+			expectedETag:       "f223dfd5fa1499cf",
 			expectedStatusCode: 200,
 		},
 		// Happy-path HEAD request
@@ -298,7 +298,7 @@ func TestApi(t *testing.T) {
 			requestMethod:      HTTPMethodHEAD,
 			goContent:          nil,
 			overrideContent:    nil,
-			expectedETag:       "12ae8d8b49327ce6",
+			expectedETag:       "f223dfd5fa1499cf",
 			expectedStatusCode: 200,
 		},
 	}
@@ -1188,6 +1188,68 @@ func TestCollectionFeatures(t *testing.T) {
 				"bbox":  "98.6,Joe,27.3,99.7",
 			},
 		},
+		// Happy-path GET request w/ Property filter
+		{
+			requestMethod: HTTPMethodGET,
+			goContent: wfs3.FeatureCollection{
+				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Prev:           "",
+				Next:           "",
+				NumberMatched:  1,
+				NumberReturned: 1,
+				// Populate the embedded geojson FeatureCollection
+				FeatureCollection: geojson.FeatureCollection{
+					Features: []geojson.Feature{
+						{
+							ID: uint64ptr(8),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.6698795, 37.9390531},
+										{23.6698992, 37.9390386},
+										{23.6699119, 37.9390199},
+										{23.6699162, 37.9389989},
+										{23.6699117, 37.938978},
+										{23.6698987, 37.9389593},
+										{23.6698788, 37.938945},
+										{23.6698541, 37.9389366},
+										{23.6698272, 37.9389349},
+										{23.6698011, 37.9389403},
+										{23.6697787, 37.938952},
+										{23.6697622, 37.9389688},
+										{23.6697536, 37.9389889},
+										{23.6697537, 37.9390102},
+										{23.6697626, 37.9390302},
+										{23.6697793, 37.9390469},
+										{23.6698019, 37.9390585},
+										{23.669828, 37.9390636},
+										{23.6698549, 37.9390617},
+										{23.6698795, 37.9390531},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "helipad",
+								"osm_way_id": "265713911",
+								"source":     "bing",
+							},
+						},
+					},
+				},
+			},
+			contentOverride:    nil,
+			contentType:        config.JSONContentType,
+			expectedETag:       "953ff7048ec325ce",
+			expectedStatusCode: 200,
+			urlParams: map[string]string{
+				"name": "aviation_polygons",
+			},
+			queryParams: map[string]string{
+				"page":    "0",
+				"limit":   "3",
+				"aeroway": "helipad",
+			},
+		},
 	}
 
 	for i, tc := range testCases {
@@ -1242,6 +1304,7 @@ func TestCollectionFeatures(t *testing.T) {
 
 		if string(body) != string(expectedContent) {
 			t.Errorf("[%v] result doesn't match expected", i)
+			t.Errorf("[%v] result: \n---\n%v\n---\n", i, string(body))
 			reducedOutputError(t, body, expectedContent)
 		}
 	}
@@ -1358,10 +1421,6 @@ func TestSingleCollectionFeature(t *testing.T) {
 
 		if string(body) != string(expectedContent) {
 			t.Errorf("[%v] result doesn't match expected", i)
-			// bBuf := bytes.NewBufferString("")
-			// json.Indent(bBuf, body, "", "  ")
-			// fmt.Println(bBuf)
-
 			reducedOutputError(t, body, expectedContent)
 		}
 	}
