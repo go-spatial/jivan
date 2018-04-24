@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 
+	"github.com/go-spatial/geom"
 	"github.com/go-spatial/geom/encoding/geojson"
 	"github.com/go-spatial/go-wfs/data_provider"
 )
@@ -43,7 +44,7 @@ func FeatureData(cname string, fid uint64, p *data_provider.Provider, checkOnly 
 }
 
 //
-func FeatureCollectionData(cName string, startIdx, stopIdx uint, properties map[string]string, p *data_provider.Provider, checkOnly bool) (content *FeatureCollection, featureTotal uint, contentId string, err error) {
+func FeatureCollectionData(cName string, bbox *geom.Extent, startIdx, stopIdx uint, properties map[string]string, p *data_provider.Provider, checkOnly bool) (content *FeatureCollection, featureTotal uint, contentId string, err error) {
 	// TODO: This calculation of contentId assumes an unchanging data set.
 	// 	When a changing data set is needed this will have to be updated, hopefully after data providers can tell us
 	// 	something about updates.
@@ -56,7 +57,7 @@ func FeatureCollectionData(cName string, startIdx, stopIdx uint, properties map[
 	}
 
 	// collection features filtered for matches in properties if it is non-nil, otherwise all
-	cfs, err := p.CollectionFeatures(cName, properties, nil)
+	cfs, err := p.CollectionFeatures(cName, properties, bbox)
 	if err != nil {
 		return nil, featureTotal, "", err
 	}

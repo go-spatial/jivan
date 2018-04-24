@@ -218,7 +218,19 @@ func GenerateOpenAPIDocument() {
 										Default: config.Configuration.Server.DefaultLimit,
 									},
 								},
-								AllowEmptyValue: true,
+								AllowEmptyValue: false,
+							},
+						},
+						&openapi3.ParameterRef{
+							Value: &openapi3.Parameter{
+								Name:        "bbox",
+								Description: "Bounding box to limit results.",
+								In:          "query",
+								Required:    false,
+								Schema: &openapi3.SchemaRef{
+									Value: &BBoxSchema,
+								},
+								AllowEmptyValue: false,
 							},
 						},
 					},

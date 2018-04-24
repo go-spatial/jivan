@@ -290,7 +290,7 @@ func TestApi(t *testing.T) {
 			goContent:          wfs3.OpenAPI3Schema(),
 			overrideContent:    nil,
 			contentType:        config.JSONContentType,
-			expectedETag:       "d8d4ba56350e87e8",
+			expectedETag:       "12ae8d8b49327ce6",
 			expectedStatusCode: 200,
 		},
 		// Happy-path HEAD request
@@ -298,7 +298,7 @@ func TestApi(t *testing.T) {
 			requestMethod:      HTTPMethodHEAD,
 			goContent:          nil,
 			overrideContent:    nil,
-			expectedETag:       "d8d4ba56350e87e8",
+			expectedETag:       "12ae8d8b49327ce6",
 			expectedStatusCode: 200,
 		},
 	}
@@ -1079,6 +1079,113 @@ func TestCollectionFeatures(t *testing.T) {
 			expectedStatusCode: HTTPStatusOk,
 			urlParams: map[string]string{
 				"name": "aviation_polygons",
+			},
+		},
+		// Happy-path GET request w/ Bounding Box
+		{
+			requestMethod: HTTPMethodGET,
+			goContent: wfs3.FeatureCollection{
+				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
+				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
+				Next:           "",
+				NumberMatched:  5,
+				NumberReturned: 2,
+				// Populate the embedded geojson FeatureCollection
+				FeatureCollection: geojson.FeatureCollection{
+					Features: []geojson.Feature{
+						{
+							ID: uint64ptr(5),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.7400581, 37.8850307},
+										{23.7400919, 37.884972},
+										{23.7399529, 37.8849222},
+										{23.739979, 37.8848768},
+										{23.739275, 37.8846247},
+										{23.7391938, 37.884766},
+										{23.73991, 37.8850225},
+										{23.7399314, 37.8849853},
+										{23.7400581, 37.8850307},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315130",
+							},
+						},
+						{
+							ID: uint64ptr(6),
+							Geometry: geojson.Geometry{
+								Geometry: geom.Polygon{
+									{
+										{23.739719, 37.8856206},
+										{23.7396799, 37.8856886},
+										{23.739478, 37.8860396},
+										{23.7398555, 37.8861748},
+										{23.7398922, 37.886111},
+										{23.7402413, 37.8855038},
+										{23.7402659, 37.8854609},
+										{23.7402042, 37.8854388},
+										{23.7398885, 37.8853257},
+										{23.739719, 37.8856206},
+									},
+								},
+							},
+							Properties: map[string]interface{}{
+								"aeroway":    "terminal",
+								"building":   "yes",
+								"osm_way_id": "191315133",
+							},
+						},
+					},
+				},
+			},
+			contentOverride:    nil,
+			contentType:        config.JSONContentType,
+			expectedETag:       "953ff7048ec325ce",
+			expectedStatusCode: 200,
+			urlParams: map[string]string{
+				"name": "aviation_polygons",
+			},
+			queryParams: map[string]string{
+				"page":  "1",
+				"limit": "3",
+				"bbox":  "23.73901,37.88372,23.74178,37.88587",
+			},
+		},
+		// Bad GET due to badly formatted Bounding Box (3 items instead of 4)
+		{
+			requestMethod:      HTTPMethodGET,
+			goContent:          map[string]interface{}{"detail": "'bbox' parameter has 3 items, expecting 4: '98.6,27.3,99.7'"},
+			contentOverride:    nil,
+			contentType:        config.JSONContentType,
+			expectedStatusCode: HTTPStatusClientError,
+			urlParams: map[string]string{
+				"name": "aviation_polygons",
+			},
+			queryParams: map[string]string{
+				"page":  "1",
+				"limit": "3",
+				"bbox":  "98.6,27.3,99.7",
+			},
+		},
+		// Bad GET due to badly formatted Bounding Box (One item is invalid float representation)
+		{
+			requestMethod:      HTTPMethodGET,
+			goContent:          map[string]interface{}{"detail": "'bbox' parameter has invalid format for item 2/4: 'Joe' / '98.6,Joe,27.3,99.7'"},
+			contentOverride:    nil,
+			contentType:        config.JSONContentType,
+			expectedStatusCode: HTTPStatusClientError,
+			urlParams: map[string]string{
+				"name": "aviation_polygons",
+			},
+			queryParams: map[string]string{
+				"page":  "1",
+				"limit": "3",
+				"bbox":  "98.6,Joe,27.3,99.7",
 			},
 		},
 	}
