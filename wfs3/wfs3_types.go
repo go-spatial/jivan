@@ -28,9 +28,9 @@
 package wfs3
 
 import (
+	"github.com/go-spatial/geom/encoding/geojson"
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/util"
-	"github.com/go-spatial/geom/encoding/geojson"
 	"github.com/jban332/kin-openapi/openapi3"
 	"html/template"
 )
@@ -326,8 +326,38 @@ type FeatureCollection struct {
 	NumberReturned uint   `json:"numberReturned,omitempty"`
 }
 
+func (fc FeatureCollection) MarshalHTML(c config.Config) ([]byte, error) {
+	body := map[string]interface{}{"config": c, "data": fc}
+	links := []Link{{Rel: "self", Href: fc.Self}, {Rel: "prev", Href: fc.Prev}, {Rel: "next", Href: fc.Next}}
+
+	content, err := util.RenderTemplate(tmpl_collection_features, body)
+
+	if err != nil {
+		return content, err
+	}
+
+	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": links}
+
+	return util.RenderTemplate(tmpl_base, data)
+}
+
 type Feature struct {
 	geojson.Feature
 	Self       string `json:"self,omitempty"`
 	Collection string `json:"collection,omitempty"`
+}
+
+func (f Feature) MarshalHTML(c config.Config) ([]byte, error) {
+	body := map[string]interface{}{"config": c, "data": f}
+	links := []Link{{Rel: "self", Href: f.Self}}
+
+	content, err := util.RenderTemplate(tmpl_collection_feature, body)
+
+	if err != nil {
+		return content, err
+	}
+
+	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": links}
+
+	return util.RenderTemplate(tmpl_base, data)
 }

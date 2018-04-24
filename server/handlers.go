@@ -548,6 +548,8 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 			d.Self = r.URL.String()
 			d.Collection = fmt.Sprintf("http://%v/collections/%v", r.URL.Host, cName)
 			encodedContent, err = json.Marshal(d)
+		} else if ct == HTMLContentType {
+			encodedContent, err = d.MarshalHTML(config.Configuration)
 		} else {
 			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 			return
@@ -571,6 +573,8 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 			d.NumberMatched = featureTotal
 			d.NumberReturned = uint(len(d.Features))
 			encodedContent, err = json.Marshal(d)
+		} else if ct == HTMLContentType {
+			encodedContent, err = d.MarshalHTML(config.Configuration)
 		} else {
 			jsonError(w, "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 			return
@@ -599,10 +603,6 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 			jsonError(w, "response doesn't match schema", HTTPStatusServerError)
 			return
 		}
-	} else {
-		msg := fmt.Sprintf("unsupported content type: %v", ct)
-		log.Printf(msg)
-		jsonError(w, msg, HTTPStatusClientError)
 	}
 
 	w.WriteHeader(HTTPStatusOk)

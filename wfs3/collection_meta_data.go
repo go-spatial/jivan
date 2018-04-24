@@ -60,6 +60,13 @@ func CollectionsMetaData(p *data_provider.Provider, serveAddress string, checkOn
 
 		csInfo.Links = append(csInfo.Links, &cLink)
 		csInfo.Collections = append(csInfo.Collections, &cInfo)
+
+		// add HTML representations
+		collectionUrlHtml := fmt.Sprintf("%v/collections/%v?f=text/html", serveAddress, cn)
+		//cInfoHtml := CollectionInfo{Name: cn, Links: []*Link{{Rel: "alternate", Href: collectionUrlHtml, Type: "text/html"}}}
+		cLinkHtml := Link{Href: collectionUrlHtml, Rel: "item", Type: "text/html"}
+
+		csInfo.Links = append(csInfo.Links, &cLinkHtml)
 	}
 
 	return &csInfo, contentId, nil
