@@ -296,7 +296,6 @@ func property_filter(f *prv.Feature, properties map[string]string) (*prv.Feature
 	} else {
 		return nil, nil
 	}
-
 }
 
 // Get all features for a particular collection

@@ -233,6 +233,18 @@ func GenerateOpenAPIDocument() {
 								AllowEmptyValue: false,
 							},
 						},
+						&openapi3.ParameterRef{
+							Value: &openapi3.Parameter{
+								Name:        "<other>",
+								Description: "Any feature property name may be filtered on by including it as a query parameter",
+								In:          "query",
+								Required:    false,
+								Schema: &openapi3.SchemaRef{
+									Value: openapi3.NewStringSchema(),
+								},
+								AllowEmptyValue: false,
+							},
+						},
 					},
 					Responses: openapi3.Responses{
 						"200": &openapi3.ResponseRef{

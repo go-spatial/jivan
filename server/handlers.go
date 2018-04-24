@@ -438,6 +438,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := r.URL.Query()
+	reservedQParams := []string{"page", "limit", "time", "bbox"}
 	var limit, pageNum uint
 	var timeprops map[string]string
 
@@ -512,6 +513,24 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Collect additional property filters
+	properties := make(map[string]string)
+NEXT_QUERY_PARAM:
+	for k, v := range q {
+		for _, rqp := range reservedQParams {
+			if k == rqp {
+				continue NEXT_QUERY_PARAM
+			}
+		}
+
+		properties[k] = v[0]
+	}
+
+	// Add time-specific properties
+	for k, v := range timeprops {
+		properties[k] = v
+	}
+
 	var data interface{}
 	var jsonSchema string
 	// Hex string hash of content
@@ -529,7 +548,7 @@ func collectionData(w http.ResponseWriter, r *http.Request) {
 		// Last index we're interested in +1
 		stopIdx := startIdx + limit
 
-		data, featureTotal, contentId, err = wfs3.FeatureCollectionData(cName, bbox, startIdx, stopIdx, timeprops, &Provider, false)
+		data, featureTotal, contentId, err = wfs3.FeatureCollectionData(cName, bbox, startIdx, stopIdx, properties, &Provider, false)
 		jsonSchema = wfs3.FeatureCollectionJSONSchema
 	}
 
