@@ -24,7 +24,7 @@
 ###############################################################################
 
 all:
-	go build -o go-wfs main.go
+	go build -i -o go-wfs main.go
 clean:
 	rm -f go-wfs
 
