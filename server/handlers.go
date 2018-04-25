@@ -110,10 +110,6 @@ func contentType(r *http.Request) string {
 	// TODO: Parse acceptTypes properly
 	acceptTypes = acceptTypes
 
-	if !supportedContentType(useType) {
-		useType = defaultContentType
-	}
-
 	// if query string 'f' parameter is passed
 	// override HTTP Accept header
 	q := r.URL.Query()
@@ -123,6 +119,10 @@ func contentType(r *http.Request) string {
 		if qFormat[0] != useType {
 			useType = qFormat[0]
 		}
+	}
+
+	if !supportedContentType(useType) {
+		useType = defaultContentType
 	}
 
 	return useType

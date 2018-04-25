@@ -49,7 +49,7 @@ func (rc RootContent) ContentType(contentType string) RootContent {
 	return rc
 }
 
-func (rc RootContent) MarshalHTML(c config.Config) ([]byte, error) {
+func (rc *RootContent) MarshalHTML(c config.Config) ([]byte, error) {
 	body := map[string]interface{}{"config": c, "data": rc}
 
 	content, err := util.RenderTemplate(tmpl_root, body)
@@ -164,7 +164,7 @@ type CollectionInfo struct {
 	Crs         []string `json:"crs,omitempty"`
 }
 
-func (ci CollectionInfo) MarshalHTML(c config.Config) ([]byte, error) {
+func (ci *CollectionInfo) MarshalHTML(c config.Config) ([]byte, error) {
 	body := map[string]interface{}{"config": c, "data": ci}
 
 	content, err := util.RenderTemplate(tmpl_collection, body)
@@ -234,7 +234,7 @@ type CollectionsInfo struct {
 	Collections []*CollectionInfo `json:"collections"`
 }
 
-func (csi CollectionsInfo) MarshalHTML(c config.Config) ([]byte, error) {
+func (csi *CollectionsInfo) MarshalHTML(c config.Config) ([]byte, error) {
 	body := map[string]interface{}{"config": c, "data": csi}
 
 	content, err := util.RenderTemplate(tmpl_collections, body)
@@ -286,7 +286,7 @@ type ConformanceClasses struct {
 	ConformsTo []string `json:"conformsTo"`
 }
 
-func (ccs ConformanceClasses) MarshalHTML(c config.Config) ([]byte, error) {
+func (ccs *ConformanceClasses) MarshalHTML(c config.Config) ([]byte, error) {
 	body := map[string]interface{}{"config": c, "data": ccs}
 
 	content, err := util.RenderTemplate(tmpl_conformance, body)
@@ -326,7 +326,7 @@ type FeatureCollection struct {
 	NumberReturned uint   `json:"numberReturned,omitempty"`
 }
 
-func (fc FeatureCollection) MarshalHTML(c config.Config) ([]byte, error) {
+func (fc *FeatureCollection) MarshalHTML(c config.Config) ([]byte, error) {
 	body := map[string]interface{}{"config": c, "data": fc}
 	links := []Link{{Rel: "self", Href: fc.Self}, {Rel: "prev", Href: fc.Prev}, {Rel: "next", Href: fc.Next}}
 
@@ -347,7 +347,7 @@ type Feature struct {
 	Collection string `json:"collection,omitempty"`
 }
 
-func (f Feature) MarshalHTML(c config.Config) ([]byte, error) {
+func (f *Feature) MarshalHTML(c config.Config) ([]byte, error) {
 	body := map[string]interface{}{"config": c, "data": f}
 	links := []Link{{Rel: "self", Href: f.Self}}
 
