@@ -33,6 +33,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -369,18 +370,30 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 	//	converted to ct
 	md.ContentType(ct)
 
-	// Add self link to beginning of Link
-	selfLink := &wfs3.Link{Rel: "self", Href: r.URL.String(), Type: config.JSONContentType}
+	// Add self link to beginning of Links
+	selfHref := fmt.Sprintf("%v%v", serveSchemeHostPortBase(r), cmdPath)
+	selfURL, err := (&url.URL{}).Parse(selfHref)
+	if err != nil {
+		jsonError(w, "Unable to parse self link", 500)
+	}
+	selfURL.RawQuery = r.URL.Query().Encode()
+	selfLink := &wfs3.Link{Rel: "self", Href: selfURL.String(), Type: config.JSONContentType}
+
+	// Add alternative links after self link
 	altLinks := make([]*wfs3.Link, 0, 5)
 	for _, sct := range config.SupportedContentTypes {
 		if ct == sct {
 			continue
 		}
-		url := r.URL
-		q := url.Query()
+		altHref := fmt.Sprintf("%v%v", serveSchemeHostPortBase(r), cmdPath)
+		altURL, err := (&url.URL{}).Parse(altHref)
+		if err != nil {
+			jsonError(w, "Unable to parse alternative link", 500)
+		}
+		q := r.URL.Query()
 		q.Set("f", sct)
-		url.RawQuery = q.Encode()
-		altLink := &wfs3.Link{Rel: "alternate", Type: sct, Href: r.URL.String()}
+		altURL.RawQuery = q.Encode()
+		altLink := &wfs3.Link{Rel: "alternate", Type: sct, Href: altURL.String()}
 		altLinks = append(altLinks, altLink)
 	}
 	links := []*wfs3.Link{selfLink}
