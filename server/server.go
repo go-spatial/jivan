@@ -38,12 +38,7 @@ var Provider data_provider.Provider
 
 func StartServer(p data_provider.Provider) {
 	sconf := config.Configuration.Server
-	var bindAddress string
-	if sconf.BindPort != 80 && sconf.BindPort != 443 {
-		bindAddress = fmt.Sprintf("%v:%v", sconf.BindHost, sconf.BindPort)
-	} else {
-		bindAddress = sconf.BindHost
-	}
+	bindAddress := fmt.Sprintf("%v:%v", sconf.BindHost, sconf.BindPort)
 
 	fmt.Printf("Bound to: %v\n", bindAddress)
 	if sconf.URLHostPort != "" {
