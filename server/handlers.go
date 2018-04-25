@@ -591,14 +591,17 @@ NEXT_QUERY_PARAM:
 		}
 	case *wfs3.FeatureCollection:
 		// Generate self, previous, and next links
-		self := fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum, limit)
+		self := fmt.Sprintf(
+			"%v/collections/%v/items?page=%v&limit=%v", serveSchemeHostPortBase(r), cName, pageNum, limit)
 		var prev string
 		var next string
 		if pageNum > 0 {
-			prev = fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum-1, limit)
+			prev = fmt.Sprintf(
+				"%v/collections/%v/items?page=%v&limit=%v", serveSchemeHostPortBase(r), cName, pageNum-1, limit)
 		}
 		if featureTotal > (limit * (pageNum + 1)) {
-			next = fmt.Sprintf("http://%v%v?page=%v&limit=%v", r.URL.Host, r.URL.Path, pageNum+1, limit)
+			next = fmt.Sprintf(
+				"%v/collections/%v/items?page=%v&limit=%v", serveSchemeHostPortBase(r), cName, pageNum+1, limit)
 		}
 
 		if ct == config.JSONContentType {
