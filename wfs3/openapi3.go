@@ -126,18 +126,6 @@ func GenerateOpenAPIDocument() {
 				Description: "Provides details about all feature collections served",
 				Get: &openapi3.Operation{
 					OperationID: "getCollectionsMetaData",
-					Parameters: openapi3.Parameters{
-						&openapi3.ParameterRef{
-							Value: &openapi3.Parameter{
-								Description:     "Name of collection to retrieve metadata for.",
-								Name:            "name",
-								In:              "path",
-								Required:        false,
-								Schema:          &openapi3.SchemaRef{Value: openapi3.NewStringSchema()},
-								AllowEmptyValue: true,
-							},
-						},
-					},
 					Responses: openapi3.Responses{
 						"200": &openapi3.ResponseRef{
 							Value: &openapi3.Response{
