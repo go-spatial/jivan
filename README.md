@@ -2,7 +2,7 @@
 
 go-wfs is a [Go](https://golang.org) server implementation of [OGC WFS 3.0](https://github.com/opengeospatial/WFS_FES).
 
-**REQUIRES GO >= 1.7**
+**REQUIRES GO >= 1.8**
 
 server/
   routes.go: maps urls to functions (from handlers.go)
@@ -39,7 +39,9 @@ go get github.com/go-spatial/go-wfs
 # install dependencies
 go get github.com/golang/dep/...
 dep ensure
+go build -i -o go-wfs github.com/go-spatial/go-wfs
 ```
+For AWS Lambda deployments, add `-tags awslambda` when building
 
 ## Running
 

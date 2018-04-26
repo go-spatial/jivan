@@ -61,26 +61,6 @@ type HandlerError struct {
 	Details string `json:"detail"`
 }
 
-func serveSchemeHostPortBase(r *http.Request) string {
-	// Preferred host:port
-	php := config.Configuration.Server.URLHostPort
-	if php == "" {
-		php = r.Host
-	}
-	php = strings.TrimRight(php, "/")
-
-	// Preferred scheme
-	ps := config.Configuration.Server.URLScheme
-
-	// Preferred base path
-	pbp := strings.TrimRight(config.Configuration.Server.URLBasePath, "/")
-
-	// Preferred scheme / host / port / base
-	pshpb := fmt.Sprintf("%v://%v%v", ps, php, pbp)
-
-	return pshpb
-}
-
 // contentType() returns the Content-Type string that will be used for the response to this request.
 // This Content-Type will be chosen in order of increasing priority from:
 // request Content-Type, request Accept

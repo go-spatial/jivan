@@ -1,9 +1,8 @@
-// +build !awslambda
+// +build awslambda
 ///////////////////////////////////////////////////////////////////////////////
 //
 // The MIT License (MIT)
 // Copyright (c) 2018 Jivan Amara
-// Copyright (c) 2018 Tom Kralidis
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -32,6 +31,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/akrylysov/algnhsa"
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/data_provider"
 )
@@ -39,20 +39,9 @@ import (
 var Provider data_provider.Provider
 
 func StartServer(p data_provider.Provider) {
-	sconf := config.Configuration.Server
-	bindAddress := fmt.Sprintf("%v:%v", sconf.BindHost, sconf.BindPort)
-
-	fmt.Printf("Bound to: %v\n", bindAddress)
-	if sconf.URLHostPort != "" {
-		fmt.Printf("Expecting traffic at %v\n", sconf.URLHostPort)
-	}
-
 	Provider = p
-	handler := setUpRoutes()
-	err := http.ListenAndServe(bindAddress, handler)
-	if err != nil {
-		panic(fmt.Sprintf("Problem starting web server: %v", err))
-	}
+	h := setUpRoutes()
+	algnhsa.ListenAndServe(h, nil)
 }
 
 // Provides the preferred <scheme>://<host>:<port>/<base> portion of urls for use in responses.
@@ -61,15 +50,28 @@ func serveSchemeHostPortBase(r *http.Request) string {
 	// Preferred host:port
 	php := config.Configuration.Server.URLHostPort
 	if php == "" {
-		php = r.Host
+		php = r.Header["Host"][0]
 	}
 	php = strings.TrimRight(php, "/")
 
 	// Preferred scheme
-	ps := config.Configuration.Server.URLScheme
+	var ps string
+	fproto := r.Header["X-Forwarded-Proto"]
+	if len(fproto) > 0 && fproto[0] != "" {
+		ps = fproto[0]
+	} else {
+		ps = config.Configuration.Server.URLScheme
+	}
 
 	// Preferred base path
 	pbp := strings.TrimRight(config.Configuration.Server.URLBasePath, "/")
+	var stage string
+	if ctx, ok := algnhsa.ProxyRequestFromContext(r.Context()); ok {
+		stage = ctx.RequestContext.Stage
+	}
+	if stage != "" {
+		pbp = fmt.Sprintf("/%v%v", stage, pbp)
+	}
 
 	// Preferred scheme / host / port / base
 	pshpb := fmt.Sprintf("%v://%v%v", ps, php, pbp)
