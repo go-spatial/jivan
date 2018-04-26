@@ -1304,7 +1304,6 @@ func TestCollectionFeatures(t *testing.T) {
 
 		if string(body) != string(expectedContent) {
 			t.Errorf("[%v] result doesn't match expected", i)
-			t.Errorf("[%v] result: \n---\n%v\n---\n", i, string(body))
 			reducedOutputError(t, body, expectedContent)
 		}
 	}
