@@ -87,7 +87,7 @@ func serveSchemeHostPortBase(r *http.Request) string {
 // If the type chosen from the request isn't supported, defaultContentType will be used.
 // TODO: Move defaultContentType to configuration.
 func supportedContentType(ct string) bool {
-	supportedContentTypes := []string{config.JSONContentType}
+	supportedContentTypes := []string{config.JSONContentType, config.HTMLContentType}
 	typeSupported := false
 	for _, sct := range supportedContentTypes {
 		if ct == sct {
