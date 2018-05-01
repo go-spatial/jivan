@@ -44,7 +44,9 @@ type RootContent struct {
 
 func (rc RootContent) ContentType(contentType string) RootContent {
 	for _, l := range rc.Links {
-		l.ContentType(contentType)
+		if l.Type == "" {
+			l.ContentType(contentType)
+		}
 	}
 	return rc
 }
@@ -180,7 +182,9 @@ func (ci *CollectionInfo) MarshalHTML(c config.Config) ([]byte, error) {
 
 func (ci *CollectionInfo) ContentType(contentType string) {
 	for _, l := range ci.Links {
-		l.ContentType(contentType)
+		if l.Type == "" {
+			l.ContentType(contentType)
+		}
 	}
 }
 
@@ -250,7 +254,9 @@ func (csi *CollectionsInfo) MarshalHTML(c config.Config) ([]byte, error) {
 
 func (csi *CollectionsInfo) ContentType(contentType string) {
 	for _, l := range csi.Links {
-		l.ContentType(contentType)
+		if l.Type == "" {
+			l.ContentType(contentType)
+		}
 	}
 	for _, c := range csi.Collections {
 		c.ContentType(contentType)

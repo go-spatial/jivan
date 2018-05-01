@@ -452,10 +452,13 @@ func TestCollectionsMetaData(t *testing.T) {
 
 	for _, cn := range cNames {
 		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
-		cInfo := wfs3.CollectionInfo{Name: cn, Links: []*wfs3.Link{{Rel: "self", Href: collectionUrl, Type: config.JSONContentType}}}
+		collectionUrlHtml := fmt.Sprintf("http://%v/collections/%v?f=text/html", serveAddress, cn)
+		cInfo := wfs3.CollectionInfo{Name: cn, Links: []*wfs3.Link{{Rel: "self", Href: collectionUrl, Type: config.JSONContentType}, {Rel: "alternate", Href: collectionUrlHtml, Type: config.HTMLContentType}}}
 		cLink := wfs3.Link{Href: collectionUrl, Rel: "item", Type: config.JSONContentType}
+		cLinkHtml := wfs3.Link{Href: collectionUrlHtml, Rel: "item", Type: config.HTMLContentType}
 
 		csInfo.Links = append(csInfo.Links, &cLink)
+		csInfo.Links = append(csInfo.Links, &cLinkHtml)
 		csInfo.Collections = append(csInfo.Collections, &cInfo)
 	}
 
@@ -563,6 +566,10 @@ func TestSingleCollectionMetaData(t *testing.T) {
 						Rel:  "self",
 						Href: fmt.Sprintf("http://%v/collections/%v", serveAddress, "roads_lines"),
 						Type: config.JSONContentType,
+					}, {
+						Rel:  "self",
+						Href: fmt.Sprintf("http://%v/collections/%v?f=text/html", serveAddress, "roads_lines"),
+						Type: config.HTMLContentType,
 					},
 				},
 			},
