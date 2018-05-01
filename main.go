@@ -37,7 +37,9 @@ import (
 	"github.com/go-spatial/go-wfs/server"
 	"github.com/go-spatial/go-wfs/util"
 	"github.com/go-spatial/go-wfs/wfs3"
+	tegola_provider "github.com/go-spatial/tegola/provider"
 	"github.com/go-spatial/tegola/provider/gpkg"
+	"github.com/go-spatial/tegola/provider/postgis"
 )
 
 func main() {
@@ -51,7 +53,7 @@ func main() {
 	flag.StringVar(&bindIp, "b", "127.0.0.1", "IP address for the server to listen on")
 	flag.IntVar(&bindPort, "p", 9000, "port for the server to listen on")
 	flag.StringVar(&serveAddress, "s", "", "IP:Port that result urls will be constructed with (defaults to the IP:Port used in request)")
-	flag.StringVar(&dataSource, "d", "", "data source (path to .gpkg file)")
+	flag.StringVar(&dataSource, "d", "", "data source (path to .gpkg file or connection string to PostGIS database i.e 'user={user} password={password} dbname={dbname} host={host} port={port}')")
 	flag.StringVar(&configFile, "c", "", "config (path to .toml file)")
 
 	flag.Parse()
@@ -77,9 +79,16 @@ func main() {
 		config.Configuration.Server.URLHostPort = serveAddress
 	}
 
+	var autoconfig func(ds string) (map[string]interface{}, error)
+	var ntp func(config map[string]interface{}) (tegola_provider.Tiler, error)
 	if dataSource != "" {
+		// Is this a PostGIS conn string or GeoPackage path?
 		if _, err := os.Stat(config.Configuration.Providers.Data); os.IsNotExist(err) {
-			panic("datasource does not exist")
+			autoconfig = postgis.AutoConfig
+			ntp = postgis.NewTileProvider
+		} else {
+			autoconfig = gpkg.AutoConfig
+			ntp = gpkg.NewTileProvider
 		}
 	}
 	if dataSource == "" {
@@ -90,11 +99,12 @@ func main() {
 	}
 	config.Configuration.Providers.Data = dataSource
 
-	dataConfig, err := gpkg.AutoConfig(dataSource)
+	dataConfig, err := autoconfig(dataSource)
 	if err != nil {
-		panic(fmt.Sprintf("data auto-config failure for '%v': %v", dataSource, err))
+		panic(fmt.Sprintf("data provider auto-config failure for '%v': %v", dataSource, err))
 	}
-	dataProvider, err := gpkg.NewTileProvider(dataConfig)
+
+	dataProvider, err := ntp(dataConfig)
 	if err != nil {
 		panic(fmt.Sprintf("data provider creation error for '%v': %v", dataSource, err))
 	}
