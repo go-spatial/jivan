@@ -152,7 +152,7 @@ var tmpl_base = `<!doctype html>
 	</head>
 	<body>
 		<header>
-			<h1><a href="{{ .config.Server.URLBasePath }}?f=text/html">{{ .config.Metadata.Identification.Title }}</a></h1>
+			<h1><a href="{{ .config.Server.URLBasePath }}?f=text/html">{{ .config.Metadata.Identification.Title }}</a><a href="{{ .config.Server.URLBasePath }}"><img src="https://image.flaticon.com/icons/svg/136/136443.svg" width="50" height="50"/></a></h1>
 			<span itemprop="description">{{ .config.Metadata.Identification.Description }}</span>
 		</header>
 		<hr/>
@@ -173,7 +173,7 @@ var tmpl_root = `
 	</ul>`
 
 var tmpl_conformance = `
-<h2>Conformance</h2>
+<h2>Conformance <a href="{{ .config.Server.URLBasePath }}conformance"><img src="https://image.flaticon.com/icons/svg/136/136443.svg" width="50" height="50"/></a></h2>
         <ul>
         {{ range .data.ConformsTo }}
 	        <li><a href="{{ . }}">{{ . }}</a></li>
@@ -181,7 +181,7 @@ var tmpl_conformance = `
         </ul>`
 
 var tmpl_collections = `
-<h2>Collections</h2>
+<h2>Collections <a href="{{ .config.Server.URLBasePath }}collections"><img src="https://image.flaticon.com/icons/svg/136/136443.svg" width="50" height="50"/></a></h2>
 	<ul>
 	{{ range .data.Collections }}
 		<li><a href="./collections/{{ .Name }}?f=text/html">{{ .Name }}</a></li>
@@ -189,20 +189,20 @@ var tmpl_collections = `
 	</ul>`
 
 var tmpl_collection = `
-<h2>{{ .data.Name }} </h2>
+<h2>{{ .data.Name }} <a href="{{ .config.Server.URLBasePath }}collections/{{ .data.Name }}"><img src="https://image.flaticon.com/icons/svg/136/136443.svg" width="50" height="50"/></a></h2>
 	<span>{{ .data.Description }}</span>
 	<div><a href="./{{ .data.Name }}/items?f=text/html">Browse Features</a></div>
 	<h2>Links</h2>
 	<ul>
 		{{ range .data.Links }}
-		<li><a href="{{ .Href }}?f=text/html">{{ .Href }}?f=text/html</a></li>
+		<li><a href="{{ .Href }}">{{ .Href }}</a></li>
 		{{ end }}
 	</ul>`
 
 var tmpl_collection_features = `
 <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
 <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
-<h2>Features</h2>
+<h2>Features <a href="items"><img src="https://image.flaticon.com/icons/svg/136/136443.svg" width="50" height="50"/></a></h2>
 	<h2>Links</h2>
 	<table>
 		<tr>
@@ -276,7 +276,7 @@ var tmpl_collection_features = `
 var tmpl_collection_feature = `
 <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
 <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
-<h2>Feature</h2>
+<h2>Feature <a href="{{ .data.ID }}"><img src="https://image.flaticon.com/icons/svg/136/136443.svg" width="50" height="50"/></a></h2>
 	<h2>Links</h2>
 	<table>
 		<tr>
