@@ -205,7 +205,7 @@ func TestRoot(t *testing.T) {
 		// Schema error, Links type as []string instead of []wfs3.Link
 		{
 			requestMethod:      HTTPMethodGET,
-			goContent:          &HandlerError{Details: "response doesn't match schema"},
+			goContent:          &HandlerError{Code: "NoApplicableCode", Description: "response doesn't match schema"},
 			overrideContent:    `{ links: ["http://doesntmatter.com"] }`,
 			expectedStatusCode: 500,
 		},
@@ -1062,7 +1062,8 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: map[string]string{
-				"detail": "unable to parse time string: '2018-04-12_broken'",
+				"code":        "InvalidParameterValue",
+				"description": "unable to parse time string: '2018-04-12_broken'",
 			},
 			contentOverride:    nil,
 			contentType:        config.JSONContentType,
@@ -1166,7 +1167,7 @@ func TestCollectionFeatures(t *testing.T) {
 		// Bad GET due to badly formatted Bounding Box (3 items instead of 4)
 		{
 			requestMethod:      HTTPMethodGET,
-			goContent:          map[string]interface{}{"detail": "'bbox' parameter has 3 items, expecting 4: '98.6,27.3,99.7'"},
+			goContent:          map[string]interface{}{"code": "InvalidParameterValue", "description": "'bbox' parameter has 3 items, expecting 4: '98.6,27.3,99.7'"},
 			contentOverride:    nil,
 			contentType:        config.JSONContentType,
 			expectedStatusCode: HTTPStatusClientError,
@@ -1182,7 +1183,7 @@ func TestCollectionFeatures(t *testing.T) {
 		// Bad GET due to badly formatted Bounding Box (One item is invalid float representation)
 		{
 			requestMethod:      HTTPMethodGET,
-			goContent:          map[string]interface{}{"detail": "'bbox' parameter has invalid format for item 2/4: 'Joe' / '98.6,Joe,27.3,99.7'"},
+			goContent:          map[string]interface{}{"code": "InvalidParameterValue", "description": "'bbox' parameter has invalid format for item 2/4: 'Joe' / '98.6,Joe,27.3,99.7'"},
 			contentOverride:    nil,
 			contentType:        config.JSONContentType,
 			expectedStatusCode: HTTPStatusClientError,
