@@ -97,9 +97,7 @@ func CollectionMetaData(name string, p *data_provider.Provider, serveAddress str
 		return nil, "", fmt.Errorf("Invalid collection name: %v", name)
 	}
 
-	collectionUrl := fmt.Sprintf("%v/collections/%v", serveAddress, name)
-	collectionUrlHtml := fmt.Sprintf("%v?f=%v", collectionUrl, config.HTMLContentType)
-	cInfo := CollectionInfo{Name: name, Title: name, Links: []*Link{{Rel: "self", Href: collectionUrl}, {Rel: "self", Href: collectionUrlHtml, Type: config.HTMLContentType}}}
+	cInfo := CollectionInfo{Name: name, Title: name, Links: []*Link{}}
 
 	return &cInfo, contentId, nil
 }

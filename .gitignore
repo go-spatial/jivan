@@ -2,3 +2,4 @@ sandbox
 go-wfs
 .vscode/
 vendor/
+setup

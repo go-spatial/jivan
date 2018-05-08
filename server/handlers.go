@@ -306,6 +306,22 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	collectionUrlJson := fmt.Sprintf("%v/collections/%v", serveSchemeHostPortBase(r), cName)
+	collectionUrlHtml := fmt.Sprintf("%v/collections/%v?f=%v", serveSchemeHostPortBase(r), cName, config.HTMLContentType)
+	// Prepend these links to md.Links
+	plinks := []*wfs3.Link{}
+	switch ct {
+	case config.JSONContentType:
+		plinks = append(plinks, &wfs3.Link{Rel: "self", Href: collectionUrlJson, Type: config.JSONContentType})
+		plinks = append(plinks, &wfs3.Link{Rel: "alternate", Href: collectionUrlHtml, Type: config.HTMLContentType})
+	case config.HTMLContentType:
+		plinks = append(plinks, &wfs3.Link{Rel: "self", Href: collectionUrlHtml, Type: config.HTMLContentType})
+		plinks = append(plinks, &wfs3.Link{Rel: "alternate", Href: collectionUrlJson, Type: config.JSONContentType})
+	default:
+		jsonError(w, "InvalidParamaterValue", "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
+	}
+	md.Links = append(md.Links, plinks...)
+
 	w.Header().Set("ETag", contentId)
 	if r.Method == HTTPMethodHEAD {
 		if r.Header.Get("ETag") == contentId {
