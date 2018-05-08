@@ -162,13 +162,18 @@ var tmpl_base = `<!doctype html>
 	</body>
 </html>`
 
+// The /api/ endpoint doesn't support text/html
 var tmpl_root = `
 <h2><a href="conformance?f=text/html">Conformance</a></h2>
 <h2><a href="collections?f=text/html">Collections</a></h2>
 <h2>Links</h2>
 	<ul>
 	{{ range .data.Links }}
-	<li><a href="{{ .Href }}?f=text/html">{{ .Href }}?f=text/html</a></li>
+		{{ if (eq .Rel "service") }}
+			<li><a href="{{ .Href }}">{{ .Href }}</a></li>
+		{{ else }}
+			<li><a href="{{ .Href }}?f=text/html">{{ .Href }}?f=text/html</a></li>
+		{{ end }}
 	{{ end }}
 	</ul>`
 
