@@ -129,13 +129,54 @@ func jsonError(w http.ResponseWriter, code string, msg string, status int) {
 	}
 }
 
+// Provides a link for the given content type
+func ctLink(baselink, contentType string) string {
+	var l string
+	switch contentType {
+	case config.JSONContentType:
+		l = baselink
+	case config.HTMLContentType:
+		l = fmt.Sprintf("%v?f=%v", baselink, contentType)
+	default:
+		l = ""
+	}
+	return l
+}
+
 // Serves the root content for WFS3.
 func root(w http.ResponseWriter, r *http.Request) {
+	ct := contentType(r)
 	rPath := "/"
 	// This allows tests to set the result to whatever they want.
 	overrideContent := r.Context().Value("overrideContent")
 
-	rootContent, contentId := wfs3.Root(serveSchemeHostPortBase(r), false)
+	rootContent, contentId := wfs3.Root(false)
+
+	sshpb := serveSchemeHostPortBase(r)
+	apiUrl := fmt.Sprintf("%v/api", sshpb)
+	conformanceUrl := fmt.Sprintf("%v/conformance", sshpb)
+	collectionsUrl := fmt.Sprintf("%v/collections", sshpb)
+	rootUrl := fmt.Sprintf("%v/", sshpb)
+
+	alttypes := []string{}
+	switch ct {
+	case config.JSONContentType:
+		alttypes = append(alttypes, config.HTMLContentType)
+	case config.HTMLContentType:
+		alttypes = append(alttypes, config.JSONContentType)
+	}
+
+	var links []*wfs3.Link
+	links = append(links, &wfs3.Link{Href: ctLink(rootUrl, ct), Rel: "self", Type: ct})
+	for _, at := range alttypes {
+		links = append(links, &wfs3.Link{Href: ctLink(rootUrl, at), Rel: "alternate", Type: at})
+	}
+	links = append(links, &wfs3.Link{Href: ctLink(apiUrl, ct), Rel: "service", Type: ct})
+	links = append(links, &wfs3.Link{Href: ctLink(conformanceUrl, ct), Rel: "conformance", Type: ct})
+	links = append(links, &wfs3.Link{Href: ctLink(collectionsUrl, ct), Rel: "data", Type: ct})
+
+	rootContent.Links = links
+
 	w.Header().Set("ETag", contentId)
 	if r.Method == HTTPMethodHEAD {
 		if r.Header.Get("ETag") == contentId {
@@ -145,9 +186,6 @@ func root(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-
-	ct := contentType(r)
-	rootContent.ContentType(ct)
 
 	var encodedContent []byte
 	var err error

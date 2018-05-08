@@ -175,23 +175,32 @@ func TestRoot(t *testing.T) {
 					{
 						Href: fmt.Sprintf("http://%v/", serveAddress),
 						Rel:  "self",
+						Type: "application/json",
+					},
+					{
+						Href: fmt.Sprintf("http://%v/?f=text/html", serveAddress),
+						Rel:  "alternate",
+						Type: "text/html",
 					},
 					{
 						Href: fmt.Sprintf("http://%v/api", serveAddress),
 						Rel:  "service",
+						Type: "application/json",
 					},
 					{
 						Href: fmt.Sprintf("http://%v/conformance", serveAddress),
 						Rel:  "conformance",
+						Type: "application/json",
 					},
 					{
 						Href: fmt.Sprintf("http://%v/collections", serveAddress),
 						Rel:  "data",
+						Type: "application/json",
 					},
 				},
 			},
 			contentType:        config.JSONContentType,
-			expectedETag:       "fed4927c1d9b340e",
+			expectedETag:       "temp_content_id",
 			expectedStatusCode: 200,
 		},
 		// Happy path HEAD test case
@@ -199,7 +208,7 @@ func TestRoot(t *testing.T) {
 			requestMethod:      HTTPMethodHEAD,
 			goContent:          nil,
 			contentType:        "",
-			expectedETag:       "fed4927c1d9b340e",
+			expectedETag:       "temp_content_id",
 			expectedStatusCode: 200,
 		},
 		// Schema error, Links type as []string instead of []wfs3.Link
@@ -217,7 +226,6 @@ func TestRoot(t *testing.T) {
 		// --- Collect expected response body
 		switch gc := tc.goContent.(type) {
 		case *wfs3.RootContent:
-			gc.ContentType(tc.contentType)
 			expectedContent, err = json.Marshal(gc)
 			if err != nil {
 				t.Errorf("Problem marshalling expected content: %v", err)

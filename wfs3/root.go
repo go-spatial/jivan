@@ -27,46 +27,15 @@
 
 package wfs3
 
-import (
-	"fmt"
-	"hash/fnv"
-)
-
 // checkOnly indicates that the caller doesn't care about the content, only the contentId
 // contentId is a string that changes as the content changes, useful for ETag & caching.
-func Root(serveAddress string, checkOnly bool) (content *RootContent, contentId string) {
-	hasher := fnv.New64()
-	hasher.Write([]byte(serveAddress))
-	contentId = fmt.Sprintf("%x", hasher.Sum64())
+func Root(checkOnly bool) (content *RootContent, contentId string) {
+	contentId = "temp_content_id"
 	if checkOnly {
 		return nil, contentId
 	}
 
-	apiUrl := fmt.Sprintf("%v/api", serveAddress)
-	conformanceUrl := fmt.Sprintf("%v/conformance", serveAddress)
-	collectionsUrl := fmt.Sprintf("%v/collections", serveAddress)
-	selfUrl := fmt.Sprintf("%v/", serveAddress)
-
-	content = &RootContent{
-		Links: []*Link{
-			{
-				Href: selfUrl,
-				Rel:  "self",
-			},
-			{
-				Href: apiUrl,
-				Rel:  "service",
-			},
-			{
-				Href: conformanceUrl,
-				Rel:  "conformance",
-			},
-			{
-				Href: collectionsUrl,
-				Rel:  "data",
-			},
-		},
-	}
+	content = &RootContent{}
 
 	return content, contentId
 }

@@ -28,11 +28,12 @@
 package wfs3
 
 import (
+	"html/template"
+
 	"github.com/go-spatial/geom/encoding/geojson"
 	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/util"
 	"github.com/jban332/kin-openapi/openapi3"
-	"html/template"
 )
 
 // --- @See http://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/root.yaml
@@ -40,15 +41,6 @@ import (
 // What the endpoint at "/" returns
 type RootContent struct {
 	Links []*Link `json:"links"`
-}
-
-func (rc RootContent) ContentType(contentType string) RootContent {
-	for _, l := range rc.Links {
-		if l.Type == "" {
-			l.ContentType(contentType)
-		}
-	}
-	return rc
 }
 
 func (rc *RootContent) MarshalHTML(c config.Config) ([]byte, error) {
