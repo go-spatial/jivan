@@ -567,7 +567,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 						Href: fmt.Sprintf("http://%v/collections/%v", serveAddress, "roads_lines"),
 						Type: config.JSONContentType,
 					}, {
-						Rel:  "self",
+						Rel:  "alternate",
 						Href: fmt.Sprintf("http://%v/collections/%v?f=text/html", serveAddress, "roads_lines"),
 						Type: config.HTMLContentType,
 					},
