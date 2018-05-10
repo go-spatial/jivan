@@ -338,13 +338,11 @@ func (fc *FeatureCollection) MarshalHTML(c config.Config) ([]byte, error) {
 
 type Feature struct {
 	geojson.Feature
-	Self       string `json:"self,omitempty"`
-	Collection string `json:"collection,omitempty"`
+	Links []*Link `json:"links,omitempty"`
 }
 
 func (f *Feature) MarshalHTML(c config.Config) ([]byte, error) {
 	body := map[string]interface{}{"config": c, "data": f}
-	links := []Link{{Rel: "self", Href: f.Self}}
 
 	content, err := util.RenderTemplate(tmpl_collection_feature, body)
 
@@ -352,7 +350,7 @@ func (f *Feature) MarshalHTML(c config.Config) ([]byte, error) {
 		return content, err
 	}
 
-	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": links}
+	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": f.Links}
 
 	return util.RenderTemplate(tmpl_base, data)
 }

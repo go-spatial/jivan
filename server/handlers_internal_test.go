@@ -1369,7 +1369,7 @@ func TestCollectionFeatures(t *testing.T) {
 	}
 }
 
-func TestSingleCollectionFeature(t *testing.T) {
+func TestSingleFeature(t *testing.T) {
 	serveAddress := "tdd.net"
 
 	type TestCase struct {
@@ -1388,8 +1388,17 @@ func TestSingleCollectionFeature(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.Feature{
-				Self:       fmt.Sprintf("http://%v/collections/roads_lines/items/18", serveAddress),
-				Collection: fmt.Sprintf("http://%v/collections/roads_lines", serveAddress),
+				Links: []*wfs3.Link{
+					{Rel: "self", Type: config.JSONContentType,
+						Href: fmt.Sprintf("http://%v/collections/roads_lines/items/18", serveAddress),
+					},
+					{Rel: "alternate", Type: config.HTMLContentType,
+						Href: fmt.Sprintf("http://%v/collections/roads_lines/items/18?f=text%%2Fhtml", serveAddress),
+					},
+					{Rel: "collection", Type: config.JSONContentType,
+						Href: fmt.Sprintf("http://%v/collections/roads_lines", serveAddress),
+					},
+				},
 				// Populate embedded geojson Feature
 				Feature: geojson.Feature{
 					ID: &i18,
