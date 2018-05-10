@@ -43,7 +43,8 @@ before_script:
 # script always run to completion (set +e). All of these code checks are must haves
 # in a modern Go project.
 script:
-  - go build main.go
+  - go build -o go-wfs main.go
+  - go build -tags awslambda -o go-wfs-awslambda main.go
   - go test -v ./...
   # - test -z $(gofmt -s -l $GO_FILES)         # Fail if a .go file hasn't been formatted with gofmt
   # - go test -v -race ./...                   # Run all the tests with the race detector enabled
@@ -51,3 +52,14 @@ script:
   # - megacheck ./...                          # "go vet on steroids" + linter
   # - gocyclo -over 19 $GO_FILES               # forbid code with huge functions
   # - golint -set_exit_status $(go list ./...) # one last linte
+
+deploy:
+  provider: releases
+  api_key:
+    secure: K3wdPRVqCKclA046izmzCWbkgSn+/UgPAdhGhsOXYGm3nycphWF1sh1sAwx/hyUNLG/uA72kEvWMwZsXjbF+Y5nILUCThPTHn82rREiRFMSOhIWOyZKIzrgWa0EFlN7Pap0bcVwLYh8HB6iI2HB3tEnA78FtSVTB0PiE7RJLKzqOcQGqhxhB+TmcgMVpZO/0Zu2Xnwb55tL3CQytdj+qpVmJdGqxCT/YmZVjtYdYZ2cKi23/Ut++F4xKjR1FHhaG2VtU1h5gAI0N7ox/dtzuCvBlXlWc/BdYXhYAwG0Lkiybj5IKA1dUdx3SeJPCSyI107Q6jpFRFsWlo0FyqpQFqnO2XLVCn74VCgJWdpfwgIWxN0lfWjnEhB86b9xuae3iuAJPOnHmAxbs9NY0fwkjyRtHCY8DURRXhWiw1wk869XDYiavOeshY29UIaGHULQO16vXXZjWxxHHA32HCrrOggkAzshOKqAtZTE0wWq2zqJJFFAIiAdMNpLK51Nir7ZKfepjgy+y1f8YrVfm7jQlIHKZPBtcB466A8NZeBnvQLsM68a4HJtwW2QVHbju9edSD7U1NLluTqU8R1WZvLzJJ12ITQTLRCcInIy0wyodHDm37Cw2kRgNam41XjNG1O/exw/x4t18PlYdgW43umPecQu8zuTOFNjWP6m3yixuwFs=
+  file:
+    - go-wfs
+    - go-wfs-awslambda
+  skip_cleanup: true
+  on:
+    tags: true
