@@ -317,16 +317,13 @@ var ConformanceClassesSchema openapi3.Schema = openapi3.Schema{
 
 type FeatureCollection struct {
 	geojson.FeatureCollection
-	Self           string `json:"self,omitempty"`
-	Prev           string `json:"prev",omitempty`
-	Next           string `json:"next",omitempty`
-	NumberMatched  uint   `json:"numberMatched,omitempty"`
-	NumberReturned uint   `json:"numberReturned,omitempty"`
+	Links          []*Link `json:"links,omitempty"`
+	NumberMatched  uint    `json:"numberMatched,omitempty"`
+	NumberReturned uint    `json:"numberReturned,omitempty"`
 }
 
 func (fc *FeatureCollection) MarshalHTML(c config.Config) ([]byte, error) {
 	body := map[string]interface{}{"config": c, "data": fc}
-	links := []Link{{Rel: "self", Href: fc.Self}, {Rel: "prev", Href: fc.Prev}, {Rel: "next", Href: fc.Next}}
 
 	content, err := util.RenderTemplate(tmpl_collection_features, body)
 
@@ -334,7 +331,7 @@ func (fc *FeatureCollection) MarshalHTML(c config.Config) ([]byte, error) {
 		return content, err
 	}
 
-	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": links}
+	data := map[string]interface{}{"config": c, "body": template.HTML(content), "links": fc.Links}
 
 	return util.RenderTemplate(tmpl_base, data)
 }

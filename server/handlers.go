@@ -130,15 +130,26 @@ func jsonError(w http.ResponseWriter, code string, msg string, status int) {
 
 // Provides a link for the given content type
 func ctLink(baselink, contentType string) string {
+	if !supportedContentType(contentType) {
+		panic(fmt.Sprintf("unsupported content type: %v", contentType))
+	}
+
+	u, err := url.Parse(baselink)
+	if err != nil {
+		log.Printf("Invalid link '%v', will return empty string.", baselink)
+		return ""
+	}
+	q := u.Query()
+
 	var l string
 	switch contentType {
-	case config.JSONContentType:
-		l = baselink
-	case config.HTMLContentType:
-		l = fmt.Sprintf("%v?f=%v", baselink, contentType)
+	case config.Configuration.Server.DefaultMimeType:
 	default:
-		l = ""
+		q["f"] = []string{contentType}
 	}
+
+	u.RawQuery = q.Encode()
+	l = u.String()
 	return l
 }
 
@@ -439,13 +450,8 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 	md.ContentType(ct)
 
 	// Add self link to beginning of Links
-	selfHref := fmt.Sprintf("%v%v", serveSchemeHostPortBase(r), cmdPath)
-	selfURL, err := (&url.URL{}).Parse(selfHref)
-	if err != nil {
-		jsonError(w, "NoApplicableCode", "Unable to parse self link", 500)
-	}
-	selfURL.RawQuery = r.URL.Query().Encode()
-	selfLink := &wfs3.Link{Rel: "self", Href: selfURL.String(), Type: config.JSONContentType}
+	selfHrefBase := fmt.Sprintf("%v%v", serveSchemeHostPortBase(r), cmdPath)
+	selfLink := &wfs3.Link{Rel: "self", Href: ctLink(selfHrefBase, ct), Type: ct}
 
 	// Add alternative links after self link
 	altLinks := make([]*wfs3.Link, 0, 5)
@@ -453,20 +459,33 @@ func collectionsMetaData(w http.ResponseWriter, r *http.Request) {
 		if ct == sct {
 			continue
 		}
-		altHref := fmt.Sprintf("%v%v", serveSchemeHostPortBase(r), cmdPath)
-		altURL, err := (&url.URL{}).Parse(altHref)
-		if err != nil {
-			jsonError(w, "NoApplicableCode", "Unable to parse alternative link", 500)
+		altLinks = append(altLinks, &wfs3.Link{Rel: "alternate", Href: ctLink(selfHrefBase, sct), Type: sct})
+	}
+
+	// Add item links after alt links
+	ilinks := make([]*wfs3.Link, 0, len(md.Collections))
+	for _, c := range md.Collections {
+		chref := fmt.Sprintf("%v/%v", selfHrefBase, c.Name)
+		// self & alternate links
+		c.Links = append(c.Links, &wfs3.Link{Rel: "self", Href: ctLink(chref, ct), Type: ct})
+		ilinks = append(ilinks, &wfs3.Link{Rel: "item", Href: ctLink(chref, ct), Type: ct})
+		for _, sct := range config.SupportedContentTypes {
+			if ct == sct {
+				continue
+			}
+			c.Links = append(c.Links, &wfs3.Link{Rel: "alternate", Href: ctLink(chref, sct), Type: sct})
+			ilinks = append(ilinks, &wfs3.Link{Rel: "item", Href: ctLink(chref, sct), Type: sct})
 		}
-		q := r.URL.Query()
-		q.Set("f", sct)
-		altURL.RawQuery = q.Encode()
-		altLink := &wfs3.Link{Rel: "alternate", Type: sct, Href: altURL.String()}
-		altLinks = append(altLinks, altLink)
+		// item links
+		ihref := fmt.Sprintf("%v/%v/items", selfHrefBase, c.Name)
+		for _, sct := range config.SupportedContentTypes {
+			c.Links = append(c.Links, &wfs3.Link{Rel: "item", Href: ctLink(ihref, sct), Type: sct})
+		}
 	}
 	links := []*wfs3.Link{selfLink}
 	links = append(links, altLinks...)
 	links = append(links, md.Links...)
+	links = append(links, ilinks...)
 	md.Links = links
 
 	var encodedContent []byte
@@ -662,6 +681,14 @@ NEXT_QUERY_PARAM:
 		return
 	}
 
+	// Alternate content types
+	var altcts []string
+	switch ct {
+	case config.JSONContentType:
+		altcts = append(altcts, config.HTMLContentType)
+	case config.HTMLContentType:
+		altcts = append(altcts, config.JSONContentType)
+	}
 	var encodedContent []byte
 	switch d := data.(type) {
 	case *wfs3.Feature:
@@ -685,16 +712,39 @@ NEXT_QUERY_PARAM:
 		if pageNum > 0 {
 			prev = fmt.Sprintf(
 				"%v/collections/%v/items?page=%v&limit=%v", serveSchemeHostPortBase(r), cName, pageNum-1, limit)
+			purl, err := url.Parse(prev)
+			if err != nil {
+				jsonError(w, "NoApplicableCode", "problem parsing generated 'prev' link", 500)
+				return
+			}
+			purl.RawQuery = purl.Query().Encode()
+			prev = purl.String()
 		}
 		if featureTotal > (limit * (pageNum + 1)) {
 			next = fmt.Sprintf(
 				"%v/collections/%v/items?page=%v&limit=%v", serveSchemeHostPortBase(r), cName, pageNum+1, limit)
+			nurl, err := url.Parse(next)
+			if err != nil {
+				jsonError(w, "NoApplicableCode", "problem parsing generated 'next' link", 500)
+				return
+			}
+			nurl.RawQuery = nurl.Query().Encode()
+			next = nurl.String()
 		}
 
 		if ct == config.JSONContentType {
-			d.Self = self
-			d.Prev = prev
-			d.Next = next
+			d.Links = append(d.Links, &wfs3.Link{Rel: "self", Href: ctLink(self, ct), Type: ct})
+			var alts = []*wfs3.Link{}
+			for _, act := range altcts {
+				alts = append(alts, &wfs3.Link{Rel: "alternate", Href: ctLink(self, act), Type: act})
+			}
+			d.Links = append(d.Links, alts...)
+			if prev != "" {
+				d.Links = append(d.Links, &wfs3.Link{Rel: "prev", Href: prev, Type: ct})
+			}
+			if next != "" {
+				d.Links = append(d.Links, &wfs3.Link{Rel: "next", Href: next, Type: ct})
+			}
 			d.NumberMatched = featureTotal
 			d.NumberReturned = uint(len(d.Features))
 			encodedContent, err = json.Marshal(d)
