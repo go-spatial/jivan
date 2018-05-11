@@ -32,7 +32,6 @@ import (
 	"hash/fnv"
 	"log"
 
-	"github.com/go-spatial/go-wfs/config"
 	"github.com/go-spatial/go-wfs/data_provider"
 )
 
@@ -55,15 +54,11 @@ func CollectionsMetaData(p *data_provider.Provider, serveAddress string, checkOn
 
 	csInfo := CollectionsInfo{Links: []*Link{}, Collections: []*CollectionInfo{}}
 	for _, cn := range cNames {
-		collectionUrl := fmt.Sprintf("%v/collections/%v", serveAddress, cn)
-		collectionUrlHtml := fmt.Sprintf("%v?f=%v", collectionUrl, config.HTMLContentType)
-		cInfo := CollectionInfo{Name: cn, Links: []*Link{{Rel: "self", Href: collectionUrl}, {Rel: "alternate", Href: collectionUrlHtml, Type: config.HTMLContentType}}}
-		cLink := Link{Href: collectionUrl, Rel: "item"}
-		cLinkHtml := Link{Href: collectionUrlHtml, Rel: "item", Type: config.HTMLContentType}
-
-		csInfo.Links = append(csInfo.Links, &cLink)
-		csInfo.Links = append(csInfo.Links, &cLinkHtml)
-		csInfo.Collections = append(csInfo.Collections, &cInfo)
+		cInfo, _, err := CollectionMetaData(cn, p, serveAddress, checkOnly)
+		if err != nil {
+			return nil, "", err
+		}
+		csInfo.Collections = append(csInfo.Collections, cInfo)
 	}
 
 	return &csInfo, contentId, nil

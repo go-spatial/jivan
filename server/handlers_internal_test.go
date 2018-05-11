@@ -178,7 +178,7 @@ func TestRoot(t *testing.T) {
 						Type: "application/json",
 					},
 					{
-						Href: fmt.Sprintf("http://%v/?f=text/html", serveAddress),
+						Href: fmt.Sprintf("http://%v/?f=text%%2Fhtml", serveAddress),
 						Rel:  "alternate",
 						Type: "text/html",
 					},
@@ -457,16 +457,35 @@ func TestCollectionsMetaData(t *testing.T) {
 		url.RawQuery = q.Encode()
 		csInfo.Links = append(csInfo.Links, &wfs3.Link{Rel: "alternate", Href: url.String(), Type: sct})
 	}
+	// Set the item links
+	for _, cn := range cNames {
+		basehref := fmt.Sprintf("%v/%v", collectionsUrl, cn)
+		csInfo.Links = append(csInfo.Links, &wfs3.Link{Rel: "item", Href: basehref, Type: "application/json"})
+		for _, sct := range []string{config.HTMLContentType} {
+			// Converting from a string to a URL then back to string correctly/consistently encodes elements.
+			ihref := fmt.Sprintf("%v?f=%v", basehref, sct)
+			iurl, err := url.Parse(ihref)
+			if err != nil {
+				t.Errorf("Unable to parase url string: '%v'", ihref)
+			}
+			iurl.RawQuery = iurl.Query().Encode()
+			csInfo.Links = append(csInfo.Links, &wfs3.Link{Rel: "item", Href: iurl.String(), Type: sct})
+		}
+	}
 
+	// Fill in the Collections property
 	for _, cn := range cNames {
 		collectionUrl := fmt.Sprintf("http://%v/collections/%v", serveAddress, cn)
-		collectionUrlHtml := fmt.Sprintf("http://%v/collections/%v?f=text/html", serveAddress, cn)
-		cInfo := wfs3.CollectionInfo{Name: cn, Links: []*wfs3.Link{{Rel: "self", Href: collectionUrl, Type: config.JSONContentType}, {Rel: "alternate", Href: collectionUrlHtml, Type: config.HTMLContentType}}}
-		cLink := wfs3.Link{Href: collectionUrl, Rel: "item", Type: config.JSONContentType}
-		cLinkHtml := wfs3.Link{Href: collectionUrlHtml, Rel: "item", Type: config.HTMLContentType}
+		collectionUrlHtml := fmt.Sprintf("http://%v/collections/%v?f=text%%2Fhtml", serveAddress, cn)
+		itemUrl := fmt.Sprintf("http://%v/collections/%v/items", serveAddress, cn)
+		itemUrlHtml := fmt.Sprintf("http://%v/collections/%v/items?f=text%%2Fhtml", serveAddress, cn)
+		cInfo := wfs3.CollectionInfo{Name: cn, Title: cn, Links: []*wfs3.Link{
+			{Rel: "self", Href: collectionUrl, Type: config.JSONContentType},
+			{Rel: "alternate", Href: collectionUrlHtml, Type: config.HTMLContentType},
+			{Rel: "item", Href: itemUrl, Type: config.JSONContentType},
+			{Rel: "item", Href: itemUrlHtml, Type: config.HTMLContentType},
+		}}
 
-		csInfo.Links = append(csInfo.Links, &cLink)
-		csInfo.Links = append(csInfo.Links, &cLinkHtml)
 		csInfo.Collections = append(csInfo.Collections, &cInfo)
 	}
 
@@ -536,13 +555,14 @@ func TestCollectionsMetaData(t *testing.T) {
 		}
 
 		if string(body) != string(expectedContent) {
-			t.Errorf("[%v] response content doesn't match expected", i)
+			// These are nice if the reduced output doesn't give you enough context
+			// t.Logf("---")
+			// t.Logf("%v", string(body))
+			// t.Logf("---")
+			// t.Logf("%v", string(expectedContent))
+			// t.Logf("---")
 
-			t.Error("---")
-			t.Errorf("%v", string(body))
-			t.Error("---")
-			t.Errorf("%v", string(expectedContent))
-			t.Error("---")
+			t.Errorf("[%v] response content doesn't match expected", i)
 
 			reducedOutputError(t, body, expectedContent)
 		}
@@ -576,7 +596,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 						Type: config.JSONContentType,
 					}, {
 						Rel:  "alternate",
-						Href: fmt.Sprintf("http://%v/collections/%v?f=text/html", serveAddress, "roads_lines"),
+						Href: fmt.Sprintf("http://%v/collections/%v?f=text%%2Fhtml", serveAddress, "roads_lines"),
 						Type: config.HTMLContentType,
 					},
 					{
@@ -585,7 +605,7 @@ func TestSingleCollectionMetaData(t *testing.T) {
 						Type: config.JSONContentType,
 					}, {
 						Rel:  "item",
-						Href: fmt.Sprintf("http://%v/collections/%v/items?f=text/html", serveAddress, "roads_lines"),
+						Href: fmt.Sprintf("http://%v/collections/%v/items?f=text%%2Fhtml", serveAddress, "roads_lines"),
 						Type: config.HTMLContentType,
 					},
 				},
@@ -680,9 +700,12 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
-				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
-				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				Links: []*wfs3.Link{
+					{Rel: "self", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=1", serveAddress), Type: "application/json"},
+					{Rel: "alternate", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?f=text%%2Fhtml&limit=3&page=1", serveAddress), Type: "text/html"},
+					{Rel: "prev", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=0", serveAddress), Type: "application/json"},
+					{Rel: "next", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=2", serveAddress), Type: "application/json"},
+				},
 				NumberMatched:  8,
 				NumberReturned: 3,
 				// Populate the embedded geojson FeatureCollection
@@ -779,9 +802,12 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
-				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
-				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				Links: []*wfs3.Link{
+					{Rel: "self", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=1", serveAddress), Type: "application/json"},
+					{Rel: "alternate", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?f=text%%2Fhtml&limit=3&page=1", serveAddress), Type: "text/html"},
+					{Rel: "prev", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=0", serveAddress), Type: "application/json"},
+					{Rel: "next", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=2", serveAddress), Type: "application/json"},
+				},
 				NumberMatched:  8,
 				NumberReturned: 3,
 				// Populate the embedded geojson FeatureCollection
@@ -879,9 +905,12 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
-				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
-				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				Links: []*wfs3.Link{
+					{Rel: "self", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=1", serveAddress), Type: "application/json"},
+					{Rel: "alternate", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?f=text%%2Fhtml&limit=3&page=1", serveAddress), Type: "text/html"},
+					{Rel: "prev", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=0", serveAddress), Type: "application/json"},
+					{Rel: "next", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=2", serveAddress), Type: "application/json"},
+				},
 				NumberMatched:  8,
 				NumberReturned: 3,
 				// Populate the embedded geojson FeatureCollection
@@ -979,9 +1008,12 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
-				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
-				Next:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=2&limit=3", serveAddress),
+				Links: []*wfs3.Link{
+					{Rel: "self", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=1", serveAddress), Type: "application/json"},
+					{Rel: "alternate", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?f=text%%2Fhtml&limit=3&page=1", serveAddress), Type: "text/html"},
+					{Rel: "prev", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=0", serveAddress), Type: "application/json"},
+					{Rel: "next", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=2", serveAddress), Type: "application/json"},
+				},
 				NumberMatched:  8,
 				NumberReturned: 3,
 				// Populate the embedded geojson FeatureCollection
@@ -1110,9 +1142,11 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=1&limit=3", serveAddress),
-				Prev:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
-				Next:           "",
+				Links: []*wfs3.Link{
+					{Rel: "self", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=1", serveAddress), Type: "application/json"},
+					{Rel: "alternate", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?f=text%%2Fhtml&limit=3&page=1", serveAddress), Type: "text/html"},
+					{Rel: "prev", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=0", serveAddress), Type: "application/json"},
+				},
 				NumberMatched:  5,
 				NumberReturned: 2,
 				// Populate the embedded geojson FeatureCollection
@@ -1217,9 +1251,10 @@ func TestCollectionFeatures(t *testing.T) {
 		{
 			requestMethod: HTTPMethodGET,
 			goContent: wfs3.FeatureCollection{
-				Self:           fmt.Sprintf("http://%v/collections/aviation_polygons/items?page=0&limit=3", serveAddress),
-				Prev:           "",
-				Next:           "",
+				Links: []*wfs3.Link{
+					{Rel: "self", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?limit=3&page=0", serveAddress), Type: "application/json"},
+					{Rel: "alternate", Href: fmt.Sprintf("http://%v/collections/aviation_polygons/items?f=text%%2Fhtml&limit=3&page=0", serveAddress), Type: "text/html"},
+				},
 				NumberMatched:  1,
 				NumberReturned: 1,
 				// Populate the embedded geojson FeatureCollection
