@@ -69,6 +69,10 @@ func serveSchemeHostPortBase(r *http.Request) string {
 	if ctx, ok := algnhsa.ProxyRequestFromContext(r.Context()); ok {
 		stage = ctx.RequestContext.Stage
 	}
+	// If you've mapped a custom domain for the API Gateway including the stage,
+	//	you don't want to include the stage name in the path.
+	stage = ""
+
 	if stage != "" {
 		pbp = fmt.Sprintf("/%v%v", stage, pbp)
 	}
