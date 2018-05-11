@@ -689,13 +689,23 @@ NEXT_QUERY_PARAM:
 	case config.HTMLContentType:
 		altcts = append(altcts, config.JSONContentType)
 	}
+
 	var encodedContent []byte
 	switch d := data.(type) {
 	case *wfs3.Feature:
+		// Generate links
+		shref := fmt.Sprintf("%v/collections/%v/items/%v", serveSchemeHostPortBase(r), cName, fid)
+		for _, sct := range config.SupportedContentTypes {
+			rel := "alternate"
+			if sct == ct {
+				rel = "self"
+			}
+			d.Links = append(d.Links, &wfs3.Link{Rel: rel, Href: ctLink(shref, sct), Type: sct})
+		}
+		chref := fmt.Sprintf("%v/collections/%v", serveSchemeHostPortBase(r), cName)
+		d.Links = append(d.Links, &wfs3.Link{Rel: "collection", Href: ctLink(chref, ct), Type: ct})
+
 		if ct == config.JSONContentType {
-			// Generate self link
-			d.Self = r.URL.String()
-			d.Collection = fmt.Sprintf("http://%v/collections/%v", r.URL.Host, cName)
 			encodedContent, err = json.Marshal(d)
 		} else if ct == config.HTMLContentType {
 			encodedContent, err = d.MarshalHTML(config.Configuration)
