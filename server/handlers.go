@@ -66,7 +66,6 @@ type HandlerError struct {
 // This Content-Type will be chosen in order of increasing priority from:
 // request Content-Type, request Accept
 // If the type chosen from the request isn't supported, defaultContentType will be used.
-// TODO: Move defaultContentType to configuration.
 func supportedContentType(ct string) bool {
 	supportedContentTypes := []string{config.JSONContentType, config.HTMLContentType}
 	typeSupported := false
@@ -344,21 +343,29 @@ func collectionMetaData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	collectionUrlJson := fmt.Sprintf("%v/collections/%v", serveSchemeHostPortBase(r), cName)
-	collectionUrlHtml := fmt.Sprintf("%v/collections/%v?f=%v", serveSchemeHostPortBase(r), cName, config.HTMLContentType)
-	// Prepend these links to md.Links
-	plinks := []*wfs3.Link{}
+	collectionMdUrlBase := fmt.Sprintf("%v/collections/%v", serveSchemeHostPortBase(r), cName)
+	collectionDataUrlBase := fmt.Sprintf("%v/collections/%v/items", serveSchemeHostPortBase(r), cName)
+	altcts := []string{}
 	switch ct {
 	case config.JSONContentType:
-		plinks = append(plinks, &wfs3.Link{Rel: "self", Href: collectionUrlJson, Type: config.JSONContentType})
-		plinks = append(plinks, &wfs3.Link{Rel: "alternate", Href: collectionUrlHtml, Type: config.HTMLContentType})
+		altcts = append(altcts, config.HTMLContentType)
 	case config.HTMLContentType:
-		plinks = append(plinks, &wfs3.Link{Rel: "self", Href: collectionUrlHtml, Type: config.HTMLContentType})
-		plinks = append(plinks, &wfs3.Link{Rel: "alternate", Href: collectionUrlJson, Type: config.JSONContentType})
+		altcts = append(altcts, config.JSONContentType)
 	default:
 		jsonError(w, "InvalidParamaterValue", "Content-Type: ''"+ct+"'' not supported.", HTTPStatusServerError)
 	}
-	md.Links = append(md.Links, plinks...)
+	// Prepend these self-pointing links to md.Links
+	plinks := []*wfs3.Link{}
+	plinks = append(plinks, &wfs3.Link{Rel: "self", Href: ctLink(collectionMdUrlBase, ct), Type: ct})
+	for _, act := range altcts {
+		plinks = append(plinks, &wfs3.Link{Rel: "alternate", Href: ctLink(collectionMdUrlBase, act), Type: act})
+	}
+	// Include these links to actual data
+	plinks = append(plinks, &wfs3.Link{Rel: "item", Href: ctLink(collectionDataUrlBase, ct), Type: ct})
+	for _, act := range altcts {
+		plinks = append(plinks, &wfs3.Link{Rel: "item", Href: ctLink(collectionDataUrlBase, act), Type: act})
+	}
+	md.Links = append(plinks, md.Links...)
 
 	w.Header().Set("ETag", contentId)
 	if r.Method == HTTPMethodHEAD {
