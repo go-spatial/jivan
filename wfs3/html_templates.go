@@ -208,7 +208,16 @@ var tmpl_collection_features = `
 <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
 <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
 <h2>Features <a href="items"><img src="https://image.flaticon.com/icons/svg/136/136443.svg" width="50" height="50"/></a></h2>
+        <h2><a href="./?f=text/html">Collection</a></h2>
 	<h2>Links</h2>
+	{{ range .data.Links }}
+		{{ if (eq .Rel "prev") }}
+		<span><a href="{{ .Href }}&amp;f=text/html">Prev</a></span>
+		{{ end }}
+		{{ if (eq .Rel "next") }}
+		<span><a href="{{ .Href }}&amp;f=text/html">Next</a></span>
+		{{ end }}
+	{{ end }}
 	<table>
 		<tr>
 			<td>
