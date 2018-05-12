@@ -208,7 +208,14 @@ var tmpl_collection_features = `
 <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
 <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
 <h2>Features <a href="items"><img src="https://image.flaticon.com/icons/svg/136/136443.svg" width="50" height="50"/></a></h2>
-        <h2><a href="./?f=text/html">Collection</a></h2>
+	{{ range .data.Links }}
+		{{ if (eq .Rel "self") }}
+        		<h2><a href="{{ .Href }}">Collection</a></h2>
+		{{ end }}
+		{{ if (eq .Rel "alternate") }}
+        		<h2><a href="{{ .Href }}"><img src="https://image.flaticon.com/icons/svg/136/136443.svg" width="50" height="50"/></a></h2>
+		{{ end }}
+	{{ end }}
 	<h2>Links</h2>
 	{{ range .data.Links }}
 		{{ if (eq .Rel "prev") }}
@@ -290,6 +297,11 @@ var tmpl_collection_features = `
 var tmpl_collection_feature = `
 <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
 <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+{{ range .data.Links }}
+	{{ if (eq .Rel "collection") }}
+		<h2><a href="{{ .Href }}">Collection</a></h2>
+	{{ end }}
+{{ end }}
 <h2>Feature <a href="{{ .data.ID }}"><img src="https://image.flaticon.com/icons/svg/136/136443.svg" width="50" height="50"/></a></h2>
 	<h2>Links</h2>
 	<table>
