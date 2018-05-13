@@ -742,21 +742,22 @@ NEXT_QUERY_PARAM:
 			next = nurl.String()
 		}
 
+		d.Links = append(d.Links, &wfs3.Link{Rel: "self", Href: ctLink(self, ct), Type: ct})
+		var alts = []*wfs3.Link{}
+		for _, act := range altcts {
+			alts = append(alts, &wfs3.Link{Rel: "alternate", Href: ctLink(self, act), Type: act})
+		}
+		d.Links = append(d.Links, alts...)
+		if prev != "" {
+			d.Links = append(d.Links, &wfs3.Link{Rel: "prev", Href: prev, Type: ct})
+		}
+		if next != "" {
+			d.Links = append(d.Links, &wfs3.Link{Rel: "next", Href: next, Type: ct})
+		}
+		d.NumberMatched = featureTotal
+		d.NumberReturned = uint(len(d.Features))
+
 		if ct == config.JSONContentType {
-			d.Links = append(d.Links, &wfs3.Link{Rel: "self", Href: ctLink(self, ct), Type: ct})
-			var alts = []*wfs3.Link{}
-			for _, act := range altcts {
-				alts = append(alts, &wfs3.Link{Rel: "alternate", Href: ctLink(self, act), Type: act})
-			}
-			d.Links = append(d.Links, alts...)
-			if prev != "" {
-				d.Links = append(d.Links, &wfs3.Link{Rel: "prev", Href: prev, Type: ct})
-			}
-			if next != "" {
-				d.Links = append(d.Links, &wfs3.Link{Rel: "next", Href: next, Type: ct})
-			}
-			d.NumberMatched = featureTotal
-			d.NumberReturned = uint(len(d.Features))
 			encodedContent, err = json.Marshal(d)
 		} else if ct == config.HTMLContentType {
 			encodedContent, err = d.MarshalHTML(config.Configuration)
