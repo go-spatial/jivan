@@ -30,7 +30,7 @@
   version = "0.3.0"
 
 [[constraint]]
-  branch = "postgis_autoconfig"
+  branch = "filterer_implementation"
   name = "github.com/go-spatial/tegola"
 
 [[constraint]]
