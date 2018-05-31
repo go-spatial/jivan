@@ -30,8 +30,12 @@
   version = "0.3.0"
 
 [[constraint]]
-  branch = "filterer_implementation"
   name = "github.com/go-spatial/tegola"
+  branch = "filterer_implementation"
+
+[[constraint]]
+  name = "github.com/go-spatial/geom"
+  branch = "master"
 
 [[constraint]]
   branch = "master"

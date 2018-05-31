@@ -36,7 +36,7 @@ func FeatureData(cname string, fid uint64, p *data_provider.Provider, checkOnly 
 	pf := pfs[0]
 	content = &Feature{
 		Feature: geojson.Feature{
-			ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}, Properties: pf.Tags,
+			ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}, Properties: pf.Properties,
 		},
 	}
 
@@ -77,7 +77,7 @@ func FeatureCollectionData(cName string, bbox *geom.Extent, startIdx, stopIdx ui
 	gfs := make([]geojson.Feature, stopIdx-startIdx)
 	for i, pf := range cfs[startIdx:stopIdx] {
 		gfs[i] = geojson.Feature{
-			ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}, Properties: pf.Tags,
+			ID: &pf.ID, Geometry: geojson.Geometry{Geometry: pf.Geometry}, Properties: pf.Properties,
 		}
 	}
 

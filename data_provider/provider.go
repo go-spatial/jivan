@@ -124,7 +124,7 @@ func feature_time_intersects_time_filter(f *prv.Feature, start_time_str, stop_ti
 	// Feature start, feature stop, feature timestamp
 	var fstart_str, fstop_str, fts_str string
 
-	for k, v := range f.Tags {
+	for k, v := range f.Properties {
 		switch k {
 		case "start_time":
 			fstart_str = v.(string)
@@ -283,7 +283,7 @@ func property_filter(f *prv.Feature, properties map[string]string) (*prv.Feature
 			continue
 		}
 
-		if v != f.Tags[k] {
+		if v != f.Properties[k] {
 			return nil, nil
 		}
 	}
