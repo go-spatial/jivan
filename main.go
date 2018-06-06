@@ -93,6 +93,8 @@ func main() {
 	}
 	if dataSource == "" {
 		dataSource = util.DefaultGpkg()
+		autoconfig = gpkg.AutoConfig
+		ntp = gpkg.NewTileProvider
 	}
 	if dataSource == "" {
 		panic("no datasource")

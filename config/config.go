@@ -96,17 +96,17 @@ type Server struct {
 	URLScheme       string `toml:"url_scheme"`
 	URLHostPort     string `toml:"url_hostport"`
 	URLBasePath     string `toml:"url_basepath"`
-	DefaultMimeType string
-	Encoding        string
-	Language        string
-	PrettyPrint     bool
-	DefaultLimit    uint
-	MaxLimit        uint
+	DefaultMimeType string `toml:"default_mimetype"`
+	Encoding        string `toml:"encoding"`
+	Language        string `toml:"language"`
+	PrettyPrint     bool   `toml:"pretty_print"`
+	DefaultLimit    uint   `toml:"paging_limit"`
+	MaxLimit        uint   `toml:"paging_maxlimit"`
 }
 
 type Logging struct {
-	Level   string
-	Logfile string
+	Level   string `toml:"level"`
+	Logfile string `toml:"logfile"`
 }
 
 type Metadata struct {
@@ -116,38 +116,38 @@ type Metadata struct {
 }
 
 type Identification struct {
-	Title             string
-	Description       string
-	Keywords          []string
-	KeywordsType      string
-	Fees              string
-	AccessConstraints string
+	Title             string   `toml:"title"`
+	Description       string   `toml:"description"`
+	Keywords          []string `toml:"keywords"`
+	KeywordsType      string   `toml:"keywords_type"`
+	Fees              string   `toml:"fees"`
+	AccessConstraints string   `toml:"accessconstraints"`
 }
 
 type ServiceProvider struct {
-	Name string
-	URL  string
+	Name string `toml:"name"`
+	URL  string `toml:"url"`
 }
 
 type Contact struct {
-	Name            string
-	Position        string
-	Address         string
-	City            string
-	StateOrProvince string
-	PostalCode      string
-	Country         string
-	Phone           string
-	Fax             string
-	Email           string
-	URL             string
-	Hours           string
-	Instructions    string
-	Role            string
+	Name            string `toml:"name"`
+	Position        string `toml:"postition"`
+	Address         string `toml:"address"`
+	City            string `toml:"city"`
+	StateOrProvince string `toml:"stateorprovince"`
+	PostalCode      string `toml:"postalcode"`
+	Country         string `toml:"country"`
+	Phone           string `toml:"phone"`
+	Fax             string `toml:"fax"`
+	Email           string `toml:"email"`
+	URL             string `toml:"url"`
+	Hours           string `toml:"hours"`
+	Instructions    string `toml:"instructions"`
+	Role            string `toml:"role"`
 }
 
 type Providers struct {
-	Data string
+	Data string `toml:"data"`
 }
 
 type Config struct {

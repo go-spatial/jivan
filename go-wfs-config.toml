@@ -4,11 +4,12 @@
   url_scheme = "http"
   url_hostport = "geo.kralidis.ca"
   url_basepath = "/go-wfs/"
-  mimetype = "application/json; charset=UTF-8"
+  default_mimetype = "application/json; charset=UTF-8"
   encoding = "utf-8"
   language = "en-US"
   pretty_print = true
-  limit = 10
+  paging_limit = 10
+  paging_maxlimit = 1000
 
 [logging]
   level = "INFO"
