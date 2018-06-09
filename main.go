@@ -37,6 +37,7 @@ import (
 	"github.com/go-spatial/go-wfs/server"
 	"github.com/go-spatial/go-wfs/util"
 	"github.com/go-spatial/go-wfs/wfs3"
+	"github.com/go-spatial/tegola/dict"
 	tegola_provider "github.com/go-spatial/tegola/provider"
 	"github.com/go-spatial/tegola/provider/gpkg"
 	"github.com/go-spatial/tegola/provider/postgis"
@@ -79,8 +80,8 @@ func main() {
 		config.Configuration.Server.URLHostPort = serveAddress
 	}
 
-	var autoconfig func(ds string) (map[string]interface{}, error)
-	var ntp func(config map[string]interface{}) (tegola_provider.Tiler, error)
+	var autoconfig func(ds string) (dict.Dicter, error)
+	var ntp func(config dict.Dicter) (tegola_provider.Tiler, error)
 	if dataSource != "" {
 		// Is this a PostGIS conn string or GeoPackage path?
 		if _, err := os.Stat(config.Configuration.Providers.Data); os.IsNotExist(err) {
