@@ -298,7 +298,7 @@ func TestApi(t *testing.T) {
 			goContent:          wfs3.OpenAPI3Schema(),
 			overrideContent:    nil,
 			contentType:        config.JSONContentType,
-			expectedETag:       "d8f29989aea96bd9",
+			expectedETag:       "9594694f73aedc17",
 			expectedStatusCode: 200,
 		},
 		// Happy-path HEAD request
@@ -306,7 +306,7 @@ func TestApi(t *testing.T) {
 			requestMethod:      HTTPMethodHEAD,
 			goContent:          nil,
 			overrideContent:    nil,
-			expectedETag:       "d8f29989aea96bd9",
+			expectedETag:       "9594694f73aedc17",
 			expectedStatusCode: 200,
 		},
 	}
