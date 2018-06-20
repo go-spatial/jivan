@@ -35,7 +35,7 @@ import (
 	"log"
 
 	"github.com/go-spatial/jivan/config"
-	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 var openAPI3Schema *openapi3.Swagger

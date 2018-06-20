@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/jban332/kin-openapi/openapi3"
-	"github.com/jban332/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/xeipuuv/gojsonschema"
 )
 
