@@ -24,9 +24,9 @@
 ###############################################################################
 
 all:
-	go build -i -o go-wfs main.go
+	go build -i -o jivan main.go
 clean:
-	rm -f go-wfs
+	rm -f jivan
 
 format:
 	gofmt -s -l -w .

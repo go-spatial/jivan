@@ -158,7 +158,7 @@ var tmpl_base = `<!doctype html>
 		<hr/>
 		{{ .body }}
 		<hr/>
-		<footer>Powered by <a title="go-wfs" href="https://github.com/go-spatial/go-wfs">go-wfs</a><img width="50" height="50" src="https://raw.githubusercontent.com/go-spatial/branding/master/go-spatial.png"/></footer>
+		<footer>Powered by <a title="jivan" href="https://github.com/go-spatial/jivan">jivan</a><img width="50" height="50" src="https://raw.githubusercontent.com/go-spatial/branding/master/go-spatial.png"/></footer>
 	</body>
 </html>`
 

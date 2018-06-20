@@ -24,7 +24,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// go-wfs project openapi3.go
+// jivan project openapi3.go
 
 package wfs3
 
@@ -34,7 +34,7 @@ import (
 	"hash/fnv"
 	"log"
 
-	"github.com/go-spatial/go-wfs/config"
+	"github.com/go-spatial/jivan/config"
 	"github.com/jban332/kin-openapi/openapi3"
 )
 

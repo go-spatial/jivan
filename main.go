@@ -24,7 +24,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// go-wfs project main.go
+// jivan project main.go
 package main
 
 import (
@@ -32,11 +32,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/go-spatial/go-wfs/config"
-	"github.com/go-spatial/go-wfs/data_provider"
-	"github.com/go-spatial/go-wfs/server"
-	"github.com/go-spatial/go-wfs/util"
-	"github.com/go-spatial/go-wfs/wfs3"
+	"github.com/go-spatial/jivan/config"
+	"github.com/go-spatial/jivan/data_provider"
+	"github.com/go-spatial/jivan/server"
+	"github.com/go-spatial/jivan/util"
+	"github.com/go-spatial/jivan/wfs3"
 	"github.com/go-spatial/tegola/dict"
 	tegola_provider "github.com/go-spatial/tegola/provider"
 	"github.com/go-spatial/tegola/provider/gpkg"

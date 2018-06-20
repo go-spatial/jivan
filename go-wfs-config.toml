@@ -3,7 +3,7 @@
   bind_port = 9000
   url_scheme = "http"
   url_hostport = "geo.kralidis.ca"
-  url_basepath = "/go-wfs/"
+  url_basepath = "/jivan/"
   default_mimetype = "application/json; charset=UTF-8"
   encoding = "utf-8"
   language = "en-US"
@@ -13,19 +13,19 @@
 
 [logging]
   level = "INFO"
-  #logfile = "/tmp/go-wfs.log"
+  #logfile = "/tmp/jivan.log"
 
 [metadata]
   [metadata.identification]
-    title = "go-wfs"
-    description = "go-wfs is a Go server implementation of OGC WFS 3.0"
+    title = "jivan"
+    description = "jivan is a Go server implementation of OGC WFS 3.0"
     keywords = [ "geospatial", "features", "collections", "access" ]
     keywords_type = "theme"
     fees = "None"
     accessconstraints = "None"
     [metadata.provider]
       name = "Organization Name"
-      url = "https://github.com/go-spatial/go-wfs"
+      url = "https://github.com/go-spatial/jivan"
     [metadata.contact]
       name = "Lastname, Firstname"
       position = "Position Title"

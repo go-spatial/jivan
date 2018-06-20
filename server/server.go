@@ -32,8 +32,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-spatial/go-wfs/config"
-	"github.com/go-spatial/go-wfs/data_provider"
+	"github.com/go-spatial/jivan/config"
+	"github.com/go-spatial/jivan/data_provider"
 )
 
 var Provider data_provider.Provider
