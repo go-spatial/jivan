@@ -57,8 +57,8 @@ func init() {
 		},
 		Metadata: Metadata{
 			Identification: Identification{
-				Title:             "go-wfs",
-				Description:       "go-wfs is a Go server implementation of OGC WFS 3.0",
+				Title:             "jivan",
+				Description:       "jivan is a Go server implementation of OGC WFS 3.0",
 				Keywords:          []string{"geospatial", "features", "collections", "access"},
 				KeywordsType:      "theme",
 				Fees:              "None",
@@ -66,7 +66,7 @@ func init() {
 			},
 			ServiceProvider: ServiceProvider{
 				Name: "Organization Name",
-				URL:  "https://github.com/go-spatial/go-wfs",
+				URL:  "https://github.com/go-spatial/jivan",
 			},
 			Contact: Contact{
 				Name:            "Lastname, Firstname",

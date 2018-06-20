@@ -23,7 +23,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// go-wfs project collection_meta_data.go
+// jivan project collection_meta_data.go
 
 package wfs3
 
@@ -32,7 +32,7 @@ import (
 	"hash/fnv"
 	"log"
 
-	"github.com/go-spatial/go-wfs/data_provider"
+	"github.com/go-spatial/jivan/data_provider"
 )
 
 func CollectionsMetaData(p *data_provider.Provider, serveAddress string, checkOnly bool) (content *CollectionsInfo, contentId string, err error) {

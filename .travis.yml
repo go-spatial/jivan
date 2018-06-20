@@ -43,8 +43,8 @@ before_script:
 # script always run to completion (set +e). All of these code checks are must haves
 # in a modern Go project.
 script:
-  - go build -o go-wfs main.go
-  - go build -tags awslambda -o go-wfs-lambda main.go
+  - go build -o jivan main.go
+  - go build -tags awslambda -o jivan-lambda main.go
   # Not sure why, but aws seems to insist on prepending "index." to the lambda handler name
   - go test -v ./...
   # - test -z $(gofmt -s -l $GO_FILES)         # Fail if a .go file hasn't been formatted with gofmt
@@ -59,8 +59,8 @@ deploy:
     api_key:
       secure: K3wdPRVqCKclA046izmzCWbkgSn+/UgPAdhGhsOXYGm3nycphWF1sh1sAwx/hyUNLG/uA72kEvWMwZsXjbF+Y5nILUCThPTHn82rREiRFMSOhIWOyZKIzrgWa0EFlN7Pap0bcVwLYh8HB6iI2HB3tEnA78FtSVTB0PiE7RJLKzqOcQGqhxhB+TmcgMVpZO/0Zu2Xnwb55tL3CQytdj+qpVmJdGqxCT/YmZVjtYdYZ2cKi23/Ut++F4xKjR1FHhaG2VtU1h5gAI0N7ox/dtzuCvBlXlWc/BdYXhYAwG0Lkiybj5IKA1dUdx3SeJPCSyI107Q6jpFRFsWlo0FyqpQFqnO2XLVCn74VCgJWdpfwgIWxN0lfWjnEhB86b9xuae3iuAJPOnHmAxbs9NY0fwkjyRtHCY8DURRXhWiw1wk869XDYiavOeshY29UIaGHULQO16vXXZjWxxHHA32HCrrOggkAzshOKqAtZTE0wWq2zqJJFFAIiAdMNpLK51Nir7ZKfepjgy+y1f8YrVfm7jQlIHKZPBtcB466A8NZeBnvQLsM68a4HJtwW2QVHbju9edSD7U1NLluTqU8R1WZvLzJJ12ITQTLRCcInIy0wyodHDm37Cw2kRgNam41XjNG1O/exw/x4t18PlYdgW43umPecQu8zuTOFNjWP6m3yixuwFs=
     file:
-      - go-wfs
-      - go-wfs-lambda
+      - jivan
+      - jivan-lambda
     skip_cleanup: true
     on:
       tags: true
@@ -72,13 +72,13 @@ deploy:
     region: "us-east-1"
     # Weird tweak to get a valid path to root-level executable.  AWS joins module_name & handler_name with a '.'
     module_name: "./"
-    handler_name: "/go-wfs-lambda"
+    handler_name: "/jivan-lambda"
     # This is the access key for IAM user "wfs3-features-deploy"
     access_key_id: "AKIAJAKF2C4LV4PWUMUQ"
     secret_access_key:
       secure: xBJSf38Fr5TxUfadxhhjO9u7wFVA131kf11v+BVcYT5ks+pm6YaAbflD/xSi/Rc+9KMKIiHy2598MegKZZnDbYOp7bJDK55LN4DsN0hQsk32ht3ebEOKu75AIl8/sSvLVDCh0cWbjrguQyh+wntEPPn3t45VnwBehEd8W/k4iV+3nPeqN9TNwFfjkqomIpZRKhs9Uqttvpb3Mhq5EFrje3X8G+cOj1egzpdlRlXQgKH2YIMs94t7NCXF/ntT8RAQjob1IdLf6i1N6DDUipXNROz64WqmWrzmK3CzbRSd9IBtTQ+pvfjGbwet8rQ9nuZdrJND1b+QBqq2WC2Xl82Q9bFjrmM7Z1gkW65tiFQ0tX4YOOT1w1Ws6aR+lRjd37pipGyKubQD9NaTxPZCtRrhCo7K1ROVArqsBdpkWgm7GsCElX0BFCjk/xI4kE0l+Ve3iG6+JmkCzabRAKq2EhM09rDmjRxWZ/MGVzNjOojaxkaxyxf1lYqTIMJn9zyCVmXnTrDSZgCERdoMeEiDcQlzRu/T+kM5n5fL1gbpoKxwTVeiYn3SJfE9BWXFbs1024wKpejy7X6k3UOoZUdq2XWeoXPq/sB2grco3p5NuS4O00nLMto8m5EBH4DcRyFa2W8d3qXNQbbe4lPN0OxzwwcTMh2MBtxfpm7K68tCBLEGkPA=
     file:
-      - go-wfs-lambda
+      - jivan-lambda
       - test_data/athens-osm-20170921.gpkg
     skip_cleanup: true
     on:

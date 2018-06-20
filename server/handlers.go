@@ -38,9 +38,9 @@ import (
 	"strings"
 
 	"github.com/go-spatial/geom"
-	"github.com/go-spatial/go-wfs/config"
-	"github.com/go-spatial/go-wfs/data_provider"
-	"github.com/go-spatial/go-wfs/wfs3"
+	"github.com/go-spatial/jivan/config"
+	"github.com/go-spatial/jivan/data_provider"
+	"github.com/go-spatial/jivan/wfs3"
 	"github.com/julienschmidt/httprouter"
 )
 

@@ -23,7 +23,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// go-wfs project handlers_internal_test.go
+// jivan project handlers_internal_test.go
 
 // TODO: The package var serveAddress from server.go is used extensively here.  Update
 //	for safe test parallelism.
@@ -46,9 +46,9 @@ import (
 
 	"github.com/go-spatial/geom"
 	"github.com/go-spatial/geom/encoding/geojson"
-	"github.com/go-spatial/go-wfs/config"
-	"github.com/go-spatial/go-wfs/data_provider"
-	"github.com/go-spatial/go-wfs/wfs3"
+	"github.com/go-spatial/jivan/config"
+	"github.com/go-spatial/jivan/data_provider"
+	"github.com/go-spatial/jivan/wfs3"
 	"github.com/go-spatial/tegola/provider/gpkg"
 	"github.com/julienschmidt/httprouter"
 )
@@ -298,7 +298,7 @@ func TestApi(t *testing.T) {
 			goContent:          wfs3.OpenAPI3Schema(),
 			overrideContent:    nil,
 			contentType:        config.JSONContentType,
-			expectedETag:       "d8f29989aea96bd9",
+			expectedETag:       "9594694f73aedc17",
 			expectedStatusCode: 200,
 		},
 		// Happy-path HEAD request
@@ -306,7 +306,7 @@ func TestApi(t *testing.T) {
 			requestMethod:      HTTPMethodHEAD,
 			goContent:          nil,
 			overrideContent:    nil,
-			expectedETag:       "d8f29989aea96bd9",
+			expectedETag:       "9594694f73aedc17",
 			expectedStatusCode: 200,
 		},
 	}

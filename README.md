@@ -1,11 +1,11 @@
-# jivan (जीवन) [![Build Status](https://travis-ci.org/go-spatial/go-wfs.png)](https://travis-ci.org/go-spatial/go-wfs)
+# jivan (जीवन) [![Build Status](https://travis-ci.org/go-spatial/jivan.png)](https://travis-ci.org/go-spatial/jivan)
 
-go-wfs is a [Go](https://golang.org) server implementation of [OGC WFS 3.0](https://github.com/opengeospatial/WFS_FES).
+jivan is a [Go](https://golang.org) server implementation of [OGC WFS 3.0](https://github.com/opengeospatial/WFS_FES).
 
 **REQUIRES GO >= 1.8**
 
 This project provides a straightforward and simple way to publish your geospatial data on the web.
-go-wfs currently supports [GeoPackage](http://www.geopackage.org/spec/) and
+jivan currently supports [GeoPackage](http://www.geopackage.org/spec/) and
 [PostGIS](https://postgis.net/) backends.  Providers implement a straightforward interface
 so others can be added fairly easily.
 
@@ -19,7 +19,7 @@ collection.  Support to customize the data published, including collections base
 a short coding effort away.
 
 * You can also provide a config file.  Configuration support is in a fairly early state.
-Take a look at `go-wfs-config.toml` for an example, and keep in mind::
+Take a look at `jivan-config.toml` for an example, and keep in mind::
   * Currently the [logging] section is not used
   * From the [metadata] section, only the following are currently used:
     * title
@@ -34,18 +34,18 @@ Take a look at `go-wfs-config.toml` for an example, and keep in mind::
     * paging_maxlimit
 
 GeoPackage Example:
-`go-wfs -d /path/to/my.gpkg`
+`jivan -d /path/to/my.gpkg`
 
 PostGIS Example:
-`go-wfs -d 'host=my.dbhost.org port=5432 dbname=mydbname user=myuser password=mypassword'`
+`jivan -d 'host=my.dbhost.org port=5432 dbname=mydbname user=myuser password=mypassword'`
 
 Then visit http://127.0.0.1:9000 to view your data as a wfs3 service.
 
-**go-wfs** provides a number of handy flags to customize where it binds and the links it generates
+**jivan** provides a number of handy flags to customize where it binds and the links it generates
 in results to make it simple for sysadmins to, for example, deploy behind a proxy.
-Run `go-wfs --help` for details.
+Run `jivan --help` for details.
 
-See go-wfs-config.toml
+See jivan-config.toml
 **TODO**: TOML configuration files
 
 Currently supported TOML:
@@ -54,7 +54,7 @@ Currently supported TOML:
 
 ## Bugs and Issues
 All bug reports, enhancement requests, and other issues are managed on
-[GitHub](https://github.com/go-spatial/go-wfs).
+[GitHub](https://github.com/go-spatial/jivan).
 
 
 # Developer Notes
@@ -88,13 +88,13 @@ Take a look at `server/routes.go` for a concise list of supported URLs.
 # create directory for local env
 mkdir /path/to/golang-env
 export GOPATH=/path/to/golang-env
-# install go-wfs
-go get github.com/go-spatial/go-wfs
+# install jivan
+go get github.com/go-spatial/jivan
 # install 'dep' dependency manager
 go get github.com/golang/dep/...
 # install dependencies in vendor/
 dep ensure
-go build -i -o go-wfs github.com/go-spatial/go-wfs
+go build -i -o jivan github.com/go-spatial/jivan
 ```
 To build for AWS Lambda deployments, add `-tags awslambda` when building
 

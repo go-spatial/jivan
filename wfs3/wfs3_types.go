@@ -23,7 +23,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// go-wfs project wfs3_schema.go
+// jivan project wfs3_schema.go
 
 package wfs3
 
@@ -31,9 +31,9 @@ import (
 	"html/template"
 
 	"github.com/go-spatial/geom/encoding/geojson"
-	"github.com/go-spatial/go-wfs/config"
-	"github.com/go-spatial/go-wfs/util"
-	"github.com/jban332/kin-openapi/openapi3"
+	"github.com/go-spatial/jivan/config"
+	"github.com/go-spatial/jivan/util"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // --- @See http://raw.githubusercontent.com/opengeospatial/WFS_FES/master/core/openapi/schemas/root.yaml

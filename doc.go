@@ -24,10 +24,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// go-wfs project doc.go
+// jivan project doc.go
 
 /*
-go-wfs document
+jivan document
 */
 package main
 
