@@ -2,6 +2,7 @@
 //
 // The MIT License (MIT)
 // Copyright (c) 2018 Jivan Amara
+// Copyright (c) 2019 Tom Kralidis
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -41,7 +42,7 @@ func Conformance() (content *ConformanceClasses, contentId string) {
 		ConformsTo: []string{
 			"http://www.opengis.net/spec/wfs-1/3.0/req/core",
 			"http://www.opengis.net/spec/wfs-1/3.0/req/geojson",
-			// TODO: "http://www.opengis.net/spec/wfs-1/3.0/req/html",
+			"http://www.opengis.net/spec/wfs-1/3.0/req/html",
 		},
 	}
 
